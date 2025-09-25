@@ -1,5 +1,9 @@
+import SignIn from "./pages/SignIn";
+
 function App() {
-  return <p>Hello World!</p>;
+  return (
+    <SignIn />
+  );
 }
 
 export default App;
