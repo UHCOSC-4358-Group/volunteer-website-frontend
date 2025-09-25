@@ -94,6 +94,18 @@ function SearchSVG({ size = 64 }: { size?: number }) {
   );
 }
 
+interface EventCardProps {
+  name: string;
+  org: string;
+  category: string;
+  description: string;
+  date: string;
+  timerange: [string, string];
+  place: string;
+  currVolunteers: number;
+  maxVolunteers: number;
+}
+
 const DUMMY_DATA: EventCardProps[] = [
   {
     name: "Park Cleanup",
@@ -132,18 +144,6 @@ const DUMMY_DATA: EventCardProps[] = [
     maxVolunteers: 25,
   },
 ];
-
-interface EventCardProps {
-  name: string;
-  org: string;
-  category: string;
-  description: string;
-  date: string;
-  timerange: [string, string];
-  place: string;
-  currVolunteers: number;
-  maxVolunteers: number;
-}
 
 function ClockSVG({ size }: { size: number }) {
   return (
@@ -224,9 +224,13 @@ function EventCard(props: EventCardProps) {
           </div>
         </div>
       </div>
-      <div>
-        <button>View Details</button>
-        <button>Signed up</button>
+      <div className="flex justify-around font-semibold text-white">
+        <button className="pt-1 pb-1 pl-8 pr-8 shadow-lg bg-(--color-blue) rounded-3xl">
+          View Details
+        </button>
+        <button className="pt-1 pb-1 pl-8 pr-8 shadow-lg bg-(--color-jade) rounded-3xl">
+          Signed up
+        </button>
       </div>
     </div>
   );
