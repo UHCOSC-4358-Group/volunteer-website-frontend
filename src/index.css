@@ -1,1 +1,13 @@
 @import "tailwindcss";
+
+:root {
+  --color-jade: #26a96c;
+  --color-light-green: #80ed99;
+  --color-eggshell: #f0eadf;
+  --color-light-turq: #38a3a5;
+  --color-blue: #22577a;
+}
+
+body {
+  background-color: var(--color-eggshell);
+}
