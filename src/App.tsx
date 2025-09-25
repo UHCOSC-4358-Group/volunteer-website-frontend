@@ -1,5 +1,7 @@
+import VolunteerProfile from './pages-js30/VolunteerProfile';
+
 function App() {
-  return <p>Hello World!</p>;
+  return <VolunteerProfile />;
 }
 
 export default App;
