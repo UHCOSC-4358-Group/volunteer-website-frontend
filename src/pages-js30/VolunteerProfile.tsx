@@ -13,7 +13,7 @@ import {
   LocationPinSVG,
   VolunteerSVG,
   NotificationBellSVG,
-} from "../assets/SVG";
+} from "../assets/Svg";
 
 interface EventCardProps {
   name: string;
