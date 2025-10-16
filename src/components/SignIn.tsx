@@ -11,6 +11,9 @@ import type { ChangeEvent, FormEvent } from "react";
 // FaLock = lock icon
 import { FaUser, FaLock } from "react-icons/fa";
 
+// Import useNavigate hook from react-router-dom for navigation
+import { useNavigate } from "react-router-dom";
+
 // Import our external CSS file for styling
 import "./SignIn.css";
 
@@ -34,20 +37,80 @@ const SignIn: React.FC = () => {
     confirmPassword: "",
   });
 
+  // State for loading and errors
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>("");
+
+  // Initialize navigation
+  const navigate = useNavigate();
+
   // Handle input changes
   // Called whenever user types in an input field
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+    // Clear error when user starts typing
+    if (error) setError("");
+  };
+
+  // Mock registration function - replace with your actual API call
+  const registerUser = async (userData: FormData): Promise<void> => {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Add your actual registration logic here
+    console.log("Registering user:", userData);
+    
+    // For demo purposes, always succeed. In real app, check response
+    return Promise.resolve();
+  };
+
+  // Mock login function - replace with your actual API call
+  const loginUser = async (userData: FormData): Promise<void> => {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Add your actual login logic here
+    console.log("Logging in user:", userData);
+    
+    // For demo purposes, always succeed. In real app, check response
+    return Promise.resolve();
   };
 
   // Handle form submission
-  // Prevents page refresh and logs the form data
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault(); // stops default page reload on form submit
-    if (isRegister) {
-      console.log("Registering:", formData);
-    } else {
-      console.log("Logging in:", formData);
+    
+    setLoading(true);
+    setError("");
+
+    try {
+      if (isRegister) {
+        // Registration logic
+        if (formData.password !== formData.confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+        
+        await registerUser(formData);
+        console.log("Registration successful:", formData);
+        
+        // Redirect to volunteer profile after successful registration
+        navigate('/volunteer-profile');
+        
+      } else {
+        // Login logic
+        await loginUser(formData);
+        console.log("Login successful:", formData);
+        
+        // Redirect to dashboard or home page after successful login
+        navigate('/dashboard'); // or '/home' or wherever you want users to go after login
+      }
+    } catch (err) {
+      // Handle errors from API or validation
+      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      setError(errorMessage);
+      console.error("Auth error:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -66,6 +129,13 @@ const SignIn: React.FC = () => {
           {isRegister ? "Register to get started" : "Sign in to your account"}
         </p>
 
+        {/* Error message display */}
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
+
         {/* Form section */}
         <form onSubmit={handleSubmit} className="auth-form">
           {/* Email input with user icon */}
@@ -78,6 +148,7 @@ const SignIn: React.FC = () => {
               value={formData.email}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
 
@@ -91,6 +162,7 @@ const SignIn: React.FC = () => {
               value={formData.password}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
 
@@ -105,13 +177,18 @@ const SignIn: React.FC = () => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
+                disabled={loading}
               />
             </div>
           )}
 
           {/* Submit button */}
-          <button type="submit" className="auth-button">
-            {isRegister ? "Register" : "Sign In"}
+          <button 
+            type="submit" 
+            className="auth-button"
+            disabled={loading}
+          >
+            {loading ? "Processing..." : (isRegister ? "Register" : "Sign In")}
           </button>
         </form>
 
@@ -120,12 +197,12 @@ const SignIn: React.FC = () => {
           {isRegister ? (
             <p>
               Already have an account?{" "}
-              <span onClick={() => setIsRegister(false)}>Sign In</span>
+              <span onClick={() => !loading && setIsRegister(false)}>Sign In</span>
             </p>
           ) : (
             <p>
-              Don’t have an account?{" "}
-              <span onClick={() => setIsRegister(true)}>Sign Up</span>
+              Don't have an account?{" "}
+              <span onClick={() => !loading && setIsRegister(true)}>Sign Up</span>
             </p>
           )}
         </div>

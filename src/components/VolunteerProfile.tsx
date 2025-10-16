@@ -2,7 +2,7 @@ import { useState } from "react";
 import {
   NotificationModal,
   type Notification,
-} from "../components-js30/NotificationModal";
+} from "../components/NotificationModal";
 import {
   HamburgerMenuSVG,
   SearchSVG,
