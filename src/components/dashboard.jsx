@@ -395,6 +395,9 @@ export default function OrgDashboard() {
   const goHistory = () => {
     navigate('/volunteer-history');
   };
+  const goUserMode = () => {
+    navigate('/volunteer-profile');
+  };
 
   return (
     <div className={`min-h-screen w-full transition-colors duration-300 ${
@@ -418,6 +421,7 @@ export default function OrgDashboard() {
             <Button onClick={goCreateEvent} darkMode={darkMode}>Create Event</Button>
             <Button variant="secondary" onClick={goOpenMatching} darkMode={darkMode}>Open Matching</Button>
             <Button variant="subtle" onClick={goHistory} darkMode={darkMode}>Volunteer History</Button>
+            <Button variant= "secondary" onClick={goUserMode} darkMode={darkMode}>User View</Button>
           </div>
         </div>
       </header>
