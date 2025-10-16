@@ -53,7 +53,7 @@ const DUMMY_DATA: EventCardProps[] = [
     maxVolunteers: 30,
   },
   {
-    name: "Food Bank Packing",
+    name: "Food Bank Packinggggggg",
     org: "Houston Food Network",
     category: "Community",
     description:
