@@ -102,7 +102,7 @@ const SignIn: React.FC = () => {
         console.log("Login successful:", formData);
         
         // Redirect to dashboard or home page after successful login
-        navigate('/Profile'); // 
+        navigate('/volunteer-profile'); // 
       }
     } catch (err) {
       // Handle errors from API or validation
