@@ -5,6 +5,7 @@ import OrgDashboard from "./components/dashboard";
 // @ts-ignore
 import VolunteerHistory from "./components/volunteerHistory";
 import Profile from "./components/Profile";
+// @ts-ignore
 import CreateEvent from "./components/CreateEvent";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
