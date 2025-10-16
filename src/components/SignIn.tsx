@@ -94,7 +94,7 @@ const SignIn: React.FC = () => {
         console.log("Registration successful:", formData);
         
         // Redirect to volunteer profile after successful registration
-        navigate('/volunteer-profile');
+        navigate('/Profile'); 
         
       } else {
         // Login logic
@@ -102,7 +102,7 @@ const SignIn: React.FC = () => {
         console.log("Login successful:", formData);
         
         // Redirect to dashboard or home page after successful login
-        navigate('/dashboard'); // or '/home' or wherever you want users to go after login
+        navigate('/Profile'); // 
       }
     } catch (err) {
       // Handle errors from API or validation
