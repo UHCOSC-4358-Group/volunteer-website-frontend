@@ -387,10 +387,10 @@ export default function OrgDashboard() {
   const navigate = useNavigate();
 
   const goCreateEvent = () => {
-    alert("Go to: /admin/events/new");
+    navigate('/create-event');
   };
   const goOpenMatching = () => {
-    alert("Go to: /admin/matching");
+    navigate('/open-matching');
   };
   const goHistory = () => {
     navigate('/volunteer-history');

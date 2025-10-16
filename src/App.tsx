@@ -6,19 +6,21 @@ import OrgDashboard from "./components/dashboard";
 // @ts-ignore
 import VolunteerHistory from "./components/volunteerHistory";
 import Profile from "./components/Profile";
-
+import CreateEvent from "./components/createEvent";
 import { Routes, Route } from "react-router-dom";
 
 function App() {
   return (
+    <div>
     <Routes>
-      
       <Route path="/" element={<SignIn />} />
       <Route path= "/Profile" element= {<Profile />} />
       <Route path="/volunteer-profile" element={<VolunteerProfile />} />
       <Route path="/OrgDashboard" element={<OrgDashboard />} />
+      <Route path="/create-event" element={<CreateEvent />} />
       <Route path="/volunteer-history" element={<VolunteerHistory />} />
     </Routes>
+    </div>
   );
 }
 
