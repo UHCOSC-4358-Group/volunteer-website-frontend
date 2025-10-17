@@ -91,7 +91,7 @@ function CreateEvent() {
       localStorage.setItem('events', JSON.stringify(updatedEvents));
 
       // Redirect to Events Page after successful creation
-      navigate('/EventCard');
+      navigate('/event-page');
       
     } catch (error) {
       console.error('Error creating event:', error);

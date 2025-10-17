@@ -10,6 +10,7 @@ export default function Layout() {
         <NavLink to="/volunteer-profile" className={link}>Profile</NavLink>
         <NavLink to="/volunteer-history" className={link}>History</NavLink>
         <NavLink to="/OrgDashboard" className={link}>Dashboard</NavLink>
+        <NavLink to="/event-page" className={link}>Events</NavLink> {/* Here we can see all the events, and create one also */}
       </nav>
       <main className="p-6">
         <Outlet />

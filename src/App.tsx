@@ -5,7 +5,9 @@ import OrgDashboard from "./components/dashboard";
 // @ts-ignore
 import VolunteerHistory from "./components/volunteerHistory";
 import Profile from "./components/Profile";
+// @ts-ignore
 import CreateEvent from "./components/CreateEvent";
+import EventsPage from './components/EventPage';
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 // App functionality with routing
@@ -20,6 +22,7 @@ function App() {
         <Route path="/volunteer-history" element={<VolunteerHistory />} />
         <Route path="/OrgDashboard" element={<OrgDashboard />} />
         <Route path="/create-event" element={<CreateEvent />} />
+        <Route path="/event-page" element={<EventsPage />} />
       </Route>
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/volunteer-profile" replace />} />
