@@ -24,9 +24,13 @@ const PALETTE = {
   sand: "#F0EADF",
 };
 
-function CreateEvent() {
+const CreateEvent = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date().toISOString().split('T')[0];
+
   const [formData, setFormData] = useState<Omit<Event, 'id' | 'volunteersSignedUp'>>({
     name: "",
     date: "",
@@ -154,6 +158,7 @@ function CreateEvent() {
                 name="date"
                 value={formData.date}
                 onChange={handleInputChange}
+                min= {today} // Prevent selecting past dates
                 required
                 className="w-full p-3 rounded border focus:outline-none focus:ring-2"
                 style={{ borderColor: PALETTE.mint }}
