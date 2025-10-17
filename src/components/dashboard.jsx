@@ -390,7 +390,7 @@ export default function OrgDashboard() {
     navigate('/create-event');
   };
   const goOpenMatching = () => {
-    navigate('/open-matching');
+    navigate('/matching');
   };
   const goHistory = () => {
     navigate('/volunteer-history');

@@ -8,6 +8,8 @@ import Profile from "./components/Profile";
 // @ts-ignore
 import CreateEvent from "./components/CreateEvent";
 import EventsPage from './components/EventPage';
+// @ts-ignore
+import Matching from "./components/Matching";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 // App functionality with routing
@@ -23,6 +25,7 @@ function App() {
         <Route path="/OrgDashboard" element={<OrgDashboard />} />
         <Route path="/create-event" element={<CreateEvent />} />
         <Route path="/event-page" element={<EventsPage />} />
+        <Route path="/matching" element={<Matching />} />
       </Route>
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/volunteer-profile" replace />} />
