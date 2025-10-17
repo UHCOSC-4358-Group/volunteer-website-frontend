@@ -1,6 +1,5 @@
 import React from "react";
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   NotificationModal,
   type Notification,
@@ -17,16 +16,18 @@ import {
   NotificationBellSVG,
 } from "../assets/Svg";
 
-interface EventCardProps {
+interface Event {
+  id: number;
   name: string;
-  org: string;
-  category: string;
-  description: string;
   date: string;
-  timerange: [string, string];
-  place: string;
-  currVolunteers: number;
+  time: string;
+  location: string;
+  type: string;
+  description: string;
+  organization: string;
+  volunteersSignedUp: number;
   maxVolunteers: number;
+  requirements: string[];
 }
 
 /** Brand palette */
@@ -37,46 +38,6 @@ const PALETTE = {
   mint: "#80ED99",
   sand: "#F0EADF",
 };
-
-
-const DUMMY_DATA: EventCardProps[] = [
-  {
-    name: "Park Cleanup",
-    org: "Green City Org",
-    category: "Environment",
-    description:
-      "Help remove litter and sort recyclables to keep our community park clean.",
-    date: "2025-10-12",
-    timerange: ["9:00 AM", "12:00 PM"],
-    place: "Memorial Park, Houston, TX",
-    currVolunteers: 18,
-    maxVolunteers: 30,
-  },
-  {
-    name: "Food Bank Packinggggggg",
-    org: "Houston Food Network",
-    category: "Community",
-    description:
-      "Sort and pack food boxes for local families in need. Light lifting involved.",
-    date: "2025-10-20",
-    timerange: ["9:00 AM", "12:00 PM"],
-    place: "Downtown Distribution Center, Houston, TX",
-    currVolunteers: 42,
-    maxVolunteers: 60,
-  },
-  {
-    name: "River Restoration",
-    org: "Bayou Guardians",
-    category: "Environment",
-    description:
-      "Plant native species along the bayou and document invasive plants.",
-    date: "2025-11-05",
-    timerange: ["9:00 AM", "12:00 PM"],
-    place: "Buffalo Bayou, Houston, TX",
-    currVolunteers: 12,
-    maxVolunteers: 25,
-  },
-];
 
 function Card({
   icon = <CalendarSVG size={64} />,
@@ -105,10 +66,10 @@ function Card({
   );
 }
 
-function EventCard(props: EventCardProps) {
-  const { name, org, category, description, date, timerange, place, currVolunteers, maxVolunteers } = props;
+function EventCard(props: Event) {
+  const { name, organization, type, description, date, time, location, volunteersSignedUp, maxVolunteers } = props;
 
-  const capacityPct = Math.min(100, Math.round((currVolunteers / maxVolunteers) * 100));
+  const capacityPct = Math.min(100, Math.round((volunteersSignedUp / maxVolunteers) * 100));
   const capacityBarColor = capacityPct > 80 ? "#e67e22" : PALETTE.green;
 
   return (
@@ -125,11 +86,11 @@ function EventCard(props: EventCardProps) {
             className="text-sm pt-1 pb-1 pl-3 pr-3 font-semibold rounded-xl"
             style={{ backgroundColor: PALETTE.teal, color: "#fff" }}
           >
-            {category}
+            {type}
           </div>
         </div>
         <div className="font-normal" style={{ color: "#64748B" }}>
-            {org}
+            {organization}
         </div>
       </div>
 
@@ -138,25 +99,23 @@ function EventCard(props: EventCardProps) {
 
         <div className="flex items-center gap-2">
           <CalendarSVG size={20} />
-          <div>{date}</div>
+          <div>{new Date(date).toLocaleDateString()}</div>
         </div>
 
         <div className="flex items-center gap-2">
           <ClockSVG size={20} />
-          <div>
-            {timerange[0]} - {timerange[1]}
-          </div>
+          <div>{time}</div>
         </div>
 
         <div className="flex items-center gap-2">
           <LocationPinSVG size={20} />
-          <div>{place}</div>
+          <div>{location}</div>
         </div>
 
         <div className="flex items-center gap-2">
           <VolunteerSVG size={20} />
           <div>
-            {currVolunteers} / {maxVolunteers} volunteers
+            {volunteersSignedUp} / {maxVolunteers} volunteers
           </div>
         </div>
 
@@ -193,21 +152,36 @@ function EventCard(props: EventCardProps) {
 
 function VolunteerProfile() {
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [signedUpEvents, setSignedUpEvents] = useState<Event[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Load signed-up events from localStorage
+  useEffect(() => {
+    const savedEvents = localStorage.getItem('signedUpEvents');
+    if (savedEvents) {
+      setSignedUpEvents(JSON.parse(savedEvents));
+    }
+  }, []);
+
+  // Filter events based on search
+  const filteredEvents = signedUpEvents.filter(event => 
+    event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    event.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Calculate upcoming events (events with future dates)
+  const upcomingEvents = signedUpEvents.filter(event => new Date(event.date) >= new Date());
 
   const notifications: Notification[] = [
     {
-      title: "Event Reminder",
-      description: "Your Park Cleanup event is tomorrow at 9:00 AM",
+      title: "Event Summary",
+      description: `You have ${upcomingEvents.length} upcoming event${upcomingEvents.length !== 1 ? 's' : ''}`,
     },
-    {
-      title: "New Event Available",
-      description: "Beach Cleanup event has been posted for next weekend",
-    },
-    {
-      title: "Event Cancelled",
-      description:
-        "The River Restoration event on Nov 5th has been cancelled due to weather",
-    },
+    ...(upcomingEvents.length > 0 ? [{
+      title: "Next Event",
+      description: `${upcomingEvents[0]?.name} on ${new Date(upcomingEvents[0]?.date).toLocaleDateString()}`
+    }] : [])
   ];
 
   return (
@@ -235,14 +209,17 @@ function VolunteerProfile() {
       </header>
 
       {/* Main */}
-      <main style={{ backgroundColor: PALETTE.sand, minHeight: "100%", }}>
+      <main style={{ backgroundColor: PALETTE.sand, minHeight: "100%" }}>
         <section>
           <div className="p-8 text-2xl">
             <div className="flex justify-between">
               <div>
                 <div style={{ color: PALETTE.navy }}>Welcome back, Alex!</div>
                 <div className="text-lg" style={{ color: "#64748B" }}>
-                  Ready to make a difference today?
+                  {signedUpEvents.length === 0 
+                    ? "Ready to make a difference today?" 
+                    : `You have ${upcomingEvents.length} upcoming event${upcomingEvents.length !== 1 ? 's' : ''}`
+                  }
                 </div>
               </div>
               <div className="flex gap-4">
@@ -279,17 +256,17 @@ function VolunteerProfile() {
           <div className="flex justify-around gap-8 p-4 flex-col items-center md:flex-row">
             <Card
               icon={<VolunteerSVG size={64} />}
-              title="21"
-              subtitle="Events completed"
+              title={signedUpEvents.length.toString()}
+              subtitle="Total events"
             />
             <Card
               icon={<ClockSVG size={64} />}
-              title="63"
+              title={(signedUpEvents.length * 3).toString()} // Estimate 3 hours per event
               subtitle="Hours volunteered"
             />
             <Card
               icon={<SearchSVG size={64} />}
-              title="4"
+              title={upcomingEvents.length.toString()}
               subtitle="Upcoming events"
             />
           </div>
@@ -301,10 +278,13 @@ function VolunteerProfile() {
             <div className="grid grid-rows-2 md:grid-rows-1 md:grid-cols-3 gap-2 md:justify-items-between justify-center items-center max-w-6xl mx-auto">
               <div className="md:col-span-1">
                 <div className="text-2xl" style={{ color: PALETTE.navy }}>
-                  Your Upcoming Events
+                  Your Events
                 </div>
                 <div className="text-xl" style={{ color: "#64748B" }}>
-                  Events you've signed up for
+                  {signedUpEvents.length === 0 
+                    ? "Events you've signed up for" 
+                    : `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''} found`
+                  }
                 </div>
               </div>
 
@@ -317,12 +297,14 @@ function VolunteerProfile() {
                 </button>
                 <input
                   type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 pr-4 py-2 rounded-full w-full focus:outline-none transition-all bg-white"
                   style={{
                     border: `1px solid ${PALETTE.mint}`,
                     boxShadow: `0 0 0 0 rgba(0,0,0,0)`,
                   }}
-                  placeholder="Search Events"
+                  placeholder="Search your events"
                   onFocus={(e) =>
                     (e.currentTarget.style.boxShadow = `0 0 0 3px rgba(56,163,165,0.2)`)
                   }
@@ -333,10 +315,34 @@ function VolunteerProfile() {
           </div>
 
           {/* Event cards */}
-          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pt-5 pb-5 gap-4 md:gap-8 justify-items-center w-[clamp(1rem, 5vw, 8rem)]">
-            {DUMMY_DATA.map((cardData) => (
-              <EventCard key={cardData.name} {...cardData} />
-            ))}
+          <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pt-5 pb-5 gap-4 md:gap-8 justify-items-center max-w-7xl mx-auto">
+            {filteredEvents.length === 0 ? (
+              <div className="col-span-3 text-center p-12 bg-white rounded-2xl shadow-md">
+                <div className="text-6xl mb-4" style={{ color: PALETTE.mint }}>📋</div>
+                <h3 className="text-xl font-semibold mb-2" style={{ color: PALETTE.navy }}>
+                  {signedUpEvents.length === 0 ? "No Events Signed Up Yet" : "No Events Match Your Search"}
+                </h3>
+                <p className="mb-6" style={{ color: PALETTE.teal }}>
+                  {signedUpEvents.length === 0 
+                    ? "Browse available events and sign up to see them here!" 
+                    : "Try adjusting your search terms."
+                  }
+                </p>
+                {signedUpEvents.length === 0 && (
+                  <a 
+                    href="/events"
+                    className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
+                    style={{ backgroundColor: PALETTE.teal, color: "white" }}
+                  >
+                    Browse Events
+                  </a>
+                )}
+              </div>
+            ) : (
+              filteredEvents.map((event) => (
+                <EventCard key={event.id} {...event} />
+              ))
+            )}
           </div>
         </section>
       </main>

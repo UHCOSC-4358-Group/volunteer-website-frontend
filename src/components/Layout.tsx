@@ -6,8 +6,8 @@ export default function Layout() {
 
   return (
     <div>
-      <nav className="p-4 bg-[#22577A] text-white flex gap-4">
-        <NavLink to="/volunteer-profile" className={link}>Profile</NavLink>
+      <nav className="p-4 bg-[#38A3A5] text-white flex gap-4">
+        <NavLink to="/volunteer-profile" className={link}>User View</NavLink>
         <NavLink to="/volunteer-history" className={link}>History</NavLink>
         <NavLink to="/OrgDashboard" className={link}>Dashboard</NavLink>
         <NavLink to="/event-page" className={link}>Events</NavLink> {/* Here we can see all the events, and create one also */}
