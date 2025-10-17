@@ -49,9 +49,31 @@ function EventsPage() {
   });
 
   const handleSignUp = (eventId: number) => {
-    // Update the event to increase volunteersSignedUp
+    const eventToSignUp = events.find(event => event.id === eventId);
+    
+    if (!eventToSignUp) {
+      alert("Event not found!");
+      return;
+    }
+
+    // Check if event is already full
+    if (eventToSignUp.volunteersSignedUp >= eventToSignUp.maxVolunteers) {
+      alert("This event is already full!");
+      return;
+    }
+
+    // Check if user already signed up for this event
+    const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
+    const alreadySignedUp = signedUpEvents.some((e: Event) => e.id === eventId);
+    
+    if (alreadySignedUp) {
+      alert("You have already signed up for this event!");
+      return;
+    }
+
+    // Update the main events list - increment volunteersSignedUp
     const updatedEvents = events.map(event => {
-      if (event.id === eventId && event.volunteersSignedUp < event.maxVolunteers) {
+      if (event.id === eventId) {
         return {
           ...event,
           volunteersSignedUp: event.volunteersSignedUp + 1
@@ -63,15 +85,17 @@ function EventsPage() {
     setEvents(updatedEvents);
     localStorage.setItem('events', JSON.stringify(updatedEvents));
     
-    // Also save to user's signed-up events
-    const eventToSignUp = events.find(event => event.id === eventId);
-    if (eventToSignUp) {
-      const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
-      const updatedSignedUpEvents = [...signedUpEvents, { ...eventToSignUp, volunteersSignedUp: eventToSignUp.volunteersSignedUp + 1 }];
-      localStorage.setItem('signedUpEvents', JSON.stringify(updatedSignedUpEvents));
-    }
+    // Save to user's signed-up events
+    const updatedSignedUpEvents = [
+      ...signedUpEvents, 
+      { 
+        ...eventToSignUp, 
+        volunteersSignedUp: eventToSignUp.volunteersSignedUp + 1  // Use the updated count
+      }
+    ];
+    localStorage.setItem('signedUpEvents', JSON.stringify(updatedSignedUpEvents));
     
-    alert(`Successfully signed up for ${events.find(e => e.id === eventId)?.name}!`);
+    alert(`Successfully signed up for ${eventToSignUp.name}!`);
   };
 
   return (
