@@ -16,8 +16,6 @@ interface Event {
   requirements: string[];
 }
 
-const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
 const PALETTE = {
   navy: "#22577A",
   teal: "#38A3A5", 
@@ -29,6 +27,7 @@ const PALETTE = {
 function CreateEvent() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [formData, setFormData] = useState<Omit<Event, 'id' | 'volunteersSignedUp'>>({
     name: "",
     date: "",
@@ -328,7 +327,6 @@ function CreateEvent() {
                     ×
                   </button>
                 )}
-                {errors.requirements && <p className="text-red-500 text-sm">{errors.requirements}</p>}
               </div>
             ))}
             <button
