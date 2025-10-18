@@ -84,6 +84,10 @@ const SignIn: React.FC = () => {
     setError("");
 
     try {
+      if(formData.password.length < 6) {
+        throw new Error("Password must be at least 6 characters long");
+      }
+
       if (isRegister) {
         // Registration logic
         if (formData.password !== formData.confirmPassword) {

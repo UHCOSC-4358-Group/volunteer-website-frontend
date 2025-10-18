@@ -12,6 +12,7 @@ const PALETTE = {
 function Profile() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [formData, setFormData] = useState({
     fullName: "",
     address1: "",
@@ -65,8 +66,47 @@ function Profile() {
     }
   };
 
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
+    else if (formData.fullName.length > 50)
+      newErrors.fullName = "Full name cannot exceed 50 characters.";
+
+    if (!formData.address1.trim()) newErrors.address1 = "Address 1 is required.";
+    else if (formData.address1.length > 100)
+      newErrors.address1 = "Address 1 cannot exceed 100 characters.";
+
+    if (formData.address2.length > 100)
+      newErrors.address2 = "Address 2 cannot exceed 100 characters.";
+
+    if (!formData.city.trim()) newErrors.city = "City is required.";
+    else if (formData.city.length > 100)
+      newErrors.city = "City cannot exceed 100 characters.";
+
+    if (!formData.state) newErrors.state = "State is required.";
+
+    if (!formData.zip.trim()) newErrors.zip = "Zip code is required.";
+    else if (!/^\d{5,9}$/.test(formData.zip))
+      newErrors.zip = "Zip code must be between 5 and 9 digits.";
+
+    if (formData.skills.length === 0)
+      newErrors.skills = "Please select at least one skill.";
+
+    if (formData.availability.length === 0)
+      newErrors.availability = "Please select at least one available date.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if(!validateForm()) {
+      alert('Please fix the highlighted errors before submitting.');
+      return;
+    }
 
     setLoading(true);
 

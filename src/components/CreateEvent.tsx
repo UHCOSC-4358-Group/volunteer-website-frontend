@@ -16,6 +16,8 @@ interface Event {
   requirements: string[];
 }
 
+const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
 const PALETTE = {
   navy: "#22577A",
   teal: "#38A3A5", 
@@ -24,13 +26,9 @@ const PALETTE = {
   sand: "#F0EADF",
 };
 
-const CreateEvent = () => {
+function CreateEvent() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-
-  // Get today's date in YYYY-MM-DD format
-  const today = new Date().toISOString().split('T')[0];
-
   const [formData, setFormData] = useState<Omit<Event, 'id' | 'volunteersSignedUp'>>({
     name: "",
     date: "",
@@ -77,8 +75,48 @@ const CreateEvent = () => {
     }
   };
 
+  const validateForm = () => {
+    const newErrors: { [key: string]: string } = {};
+
+    if (!formData.name.trim()) newErrors.name = "Event name is required.";
+    else if (formData.name.length > 100)
+      newErrors.name = "Event name cannot exceed 100 characters.";
+
+    if (!formData.date.trim()) newErrors.date = "Event date is required.";
+
+    if (!formData.time.trim()) newErrors.time = "Event time is required.";
+
+    if (!formData.location.trim()) newErrors.location = "Event location is required.";
+
+    if (!formData.type.trim()) newErrors.type = "Event type is required.";
+
+    if (!formData.description.trim())
+      newErrors.description = "Event description is required.";
+    else if (formData.description.length > 500)
+      newErrors.description = "Event description cannot exceed 500 characters.";
+
+    if (formData.requirements.some(req => !req.trim()))
+      newErrors.requirements = "Each requirement must have text (or remove empty ones).";
+
+    if (!formData.organization.trim())
+      newErrors.organization = "Organization name is required.";
+
+    if (formData.maxVolunteers < 1)
+      newErrors.maxVolunteers = "Maximum volunteers must be at least 1.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      alert('Please fix the errors in the form before submitting.');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -128,6 +166,7 @@ const CreateEvent = () => {
               style={{ borderColor: PALETTE.mint }}
               disabled={loading}
             />
+            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
           </div>
 
           {/* Organization */}
@@ -145,6 +184,7 @@ const CreateEvent = () => {
               style={{ borderColor: PALETTE.mint }}
               disabled={loading}
             />
+            {errors.organization && <p className="text-red-500 text-sm">{errors.organization}</p>}
           </div>
 
           {/* Date and Time */}
@@ -158,12 +198,12 @@ const CreateEvent = () => {
                 name="date"
                 value={formData.date}
                 onChange={handleInputChange}
-                min= {today} // Prevent selecting past dates
                 required
                 className="w-full p-3 rounded border focus:outline-none focus:ring-2"
                 style={{ borderColor: PALETTE.mint }}
                 disabled={loading}
               />
+              {errors.date && <p className="text-red-500 text-sm">{errors.date}</p>}
             </div>
             <div>
               <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
@@ -179,6 +219,7 @@ const CreateEvent = () => {
                 style={{ borderColor: PALETTE.mint }}
                 disabled={loading}
               />
+              {errors.time && <p className="text-red-500 text-sm">{errors.time}</p>}
             </div>
           </div>
 
@@ -197,6 +238,7 @@ const CreateEvent = () => {
               style={{ borderColor: PALETTE.mint }}
               disabled={loading}
             />
+            {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
           </div>
 
           {/* Event Type */}
@@ -220,6 +262,7 @@ const CreateEvent = () => {
               <option value="Healthcare">Healthcare</option>
               <option value="Other">Other</option>
             </select>
+            {errors.type && <p className="text-red-500 text-sm">{errors.type}</p>}
           </div>
 
           {/* Max Volunteers */}
@@ -238,6 +281,7 @@ const CreateEvent = () => {
               style={{ borderColor: PALETTE.mint }}
               disabled={loading}
             />
+            {errors.maxVolunteers && <p className="text-red-500 text-sm">{errors.maxVolunteers}</p>}
           </div>
 
           {/* Description */}
@@ -255,6 +299,7 @@ const CreateEvent = () => {
               style={{ borderColor: PALETTE.mint }}
               disabled={loading}
             />
+            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
           </div>
 
           {/* Requirements */}
@@ -283,6 +328,7 @@ const CreateEvent = () => {
                     ×
                   </button>
                 )}
+                {errors.requirements && <p className="text-red-500 text-sm">{errors.requirements}</p>}
               </div>
             ))}
             <button
