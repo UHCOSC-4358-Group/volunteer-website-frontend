@@ -99,7 +99,7 @@ function EventCard(props: Event) {
 
         <div className="flex items-center gap-2">
           <CalendarSVG size={20} />
-          <div>{new Date(date).toLocaleDateString()}</div>
+          <div>{new Date(date + 'T00:00:00').toLocaleDateString()}</div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -171,7 +171,12 @@ function VolunteerProfile() {
   );
 
   // Calculate upcoming events (events with future dates)
-  const upcomingEvents = signedUpEvents.filter(event => new Date(event.date) >= new Date());
+  const upcomingEvents = signedUpEvents.filter(event => {
+    const eventDate = new Date(event.date + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to midnight for fair comparison
+    return eventDate >= today;
+  });
 
   const notifications: Notification[] = [
     {
@@ -180,7 +185,7 @@ function VolunteerProfile() {
     },
     ...(upcomingEvents.length > 0 ? [{
       title: "Next Event",
-      description: `${upcomingEvents[0]?.name} on ${new Date(upcomingEvents[0]?.date).toLocaleDateString()}`
+      description: `${upcomingEvents[0]?.name} on ${new Date(upcomingEvents[0]?.date + 'T12:00:00').toLocaleDateString()}`
     }] : [])
   ];
 
