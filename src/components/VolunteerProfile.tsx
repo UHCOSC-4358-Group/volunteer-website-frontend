@@ -220,7 +220,7 @@ function VolunteerProfile() {
             >
               Contact
             </Link>
-            <ProfileSVG size={48} />
+            <ProfileSVG size={45} />
           </div>
         </nav>
       </header>

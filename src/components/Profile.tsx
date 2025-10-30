@@ -15,6 +15,7 @@ function Profile() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [formData, setFormData] = useState({
     fullName: "",
+    DOB: "",
     address1: "",
     address2: "",
     city: "",
@@ -103,6 +104,29 @@ function Profile() {
       newErrors.fullName = "Full name must be at least 5 characters.";
     } else if (!/^[a-zA-Z\s'-]+$/.test(formData.fullName)) {
       newErrors.fullName = "Full name can only contain letters, spaces, hyphens, and apostrophes.";
+    }
+
+    // Date of Birth validation
+    if (!formData.DOB) {
+      newErrors.DOB = "Date of Birth is required.";
+    } else {
+      const dob = new Date(formData.DOB);
+      const today = new Date();
+
+      let age = today.getFullYear() - dob.getFullYear();
+      const monthDiff = today.getMonth() - dob.getMonth();
+
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--; // now valid since age is declared with let
+      }
+
+      if (isNaN(dob.getTime()) || age < 0) {
+        newErrors.DOB = "Invalid Date of Birth.";
+      }
+
+      if (age < 18) {
+        newErrors.DOB = "You must be at least 18 years old.";
+      }
     }
 
     // Address 1 validation
@@ -246,6 +270,28 @@ function Profile() {
             {errors.fullName && (
               <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
                 {errors.fullName}
+              </p>
+            )}
+          </div>
+          {/* Date of Birth */}
+          <div className="col-span-1">
+            <label htmlFor="DOB" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
+              Date of Birth *
+            </label>
+            <input
+              id="DOB"
+              type="date"
+              value={formData.DOB}
+              onChange={handleInputChange}
+              className="w-full p-2 rounded border focus:outline-none focus:ring-2"
+              style={{
+                borderColor: errors.DOB ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.DOB ? '2px' : '1px'
+              }}
+            />
+            {errors.DOB && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.DOB}
               </p>
             )}
           </div>
