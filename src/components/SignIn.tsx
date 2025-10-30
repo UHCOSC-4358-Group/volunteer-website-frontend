@@ -29,6 +29,7 @@ interface FormData {
 const SignIn: React.FC = () => {
   // State to track whether user is on Register page or Login page
   const [isRegister, setIsRegister] = useState<boolean>(false);
+  const [role, setRole] = useState<"volunteer" | "organizer" | "">("");
 
   // State to store form input values (email, password, confirmPassword)
   const [formData, setFormData] = useState<FormData>({
@@ -137,6 +138,31 @@ const SignIn: React.FC = () => {
         {error && (
           <div className="error-message">
             {error}
+          </div>
+        )}
+
+        {/* Role Selection */}
+        {isRegister && (
+          <div className="role-selection">
+            <p className="register-text">Registering as: </p>
+            <div className="role-options">
+              <button
+                type="button"
+                className={`role-button ${role === "volunteer" ? "active" : ""}`}
+                onClick={() => setRole("volunteer")}
+                disabled={loading}
+              >
+                Volunteer
+              </button>
+              <button
+                type="button"
+                className={`role-button ${role === "organizer" ? "active" : ""}`}
+                onClick={() => setRole("organizer")}
+                disabled={loading}
+              >
+                Organizer
+              </button>
+            </div>
           </div>
         )}
 
