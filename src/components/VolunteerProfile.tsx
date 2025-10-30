@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
   NotificationModal,
@@ -151,6 +152,7 @@ function EventCard(props: Event) {
 }
 
 function VolunteerProfile() {
+  const navigate = useNavigate();
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [signedUpEvents, setSignedUpEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -334,13 +336,13 @@ function VolunteerProfile() {
                   }
                 </p>
                 {signedUpEvents.length === 0 && (
-                  <a 
-                    href="/events"
-                    className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
-                    style={{ backgroundColor: PALETTE.teal, color: "white" }}
-                  >
-                    Browse Events
-                  </a>
+                  <button
+                  onClick={() => navigate('/user-event-site')}
+                  className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
+                  style={{ backgroundColor: PALETTE.teal, color: "white" }}
+                > 
+                  Browse Events
+                </button>
                 )}
               </div>
             ) : (
