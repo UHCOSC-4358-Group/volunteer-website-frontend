@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -207,9 +208,18 @@ function VolunteerProfile() {
           </div>
 
           <div className="hidden sm:flex gap-4 items-center">
-            <a href="/">Features</a>
-            <a href="/">About</a>
-            <a href="/">Contact</a>
+            <Link
+              to="/about"
+              className="hover:opacity-80 transition-opacity"
+            >
+              About
+            </Link>
+            <Link
+              to="/contact"
+              className="hover:opacity-80 transition-opacity"
+            >
+              Contact
+            </Link>
             <ProfileSVG size={48} />
           </div>
         </nav>

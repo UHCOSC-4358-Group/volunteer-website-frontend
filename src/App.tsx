@@ -14,6 +14,10 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 // @ts-ignore
 import UserEventSite from "./components/userEventSite";
+// @ts-ignore
+import about, { AboutPage } from "./components/aboutPage";
+// @ts-ignore
+import contact, { ContactPage } from "./components/contactPage";
 // App functionality with routing
 function App() {
   return (
@@ -29,6 +33,8 @@ function App() {
         <Route path="/event-page" element={<EventsPage />} />
         <Route path="/matching" element={<Matching />} />
         <Route path="/user-event-site" element={<UserEventSite />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
       </Route>
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/volunteer-profile" replace />} />
