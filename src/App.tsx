@@ -12,6 +12,8 @@ import EventsPage from './components/EventPage';
 import Matching from "./components/Matching";
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
+// @ts-ignore
+import UserEventSite from "./components/userEventSite";
 // App functionality with routing
 function App() {
   return (
@@ -26,6 +28,7 @@ function App() {
         <Route path="/create-event" element={<CreateEvent />} />
         <Route path="/event-page" element={<EventsPage />} />
         <Route path="/matching" element={<Matching />} />
+        <Route path="/user-event-site" element={<UserEventSite />} />
       </Route>
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/volunteer-profile" replace />} />
