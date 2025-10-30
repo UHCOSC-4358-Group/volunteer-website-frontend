@@ -31,6 +31,14 @@ function Profile() {
       ...prev,
       [id]: value
     }));
+    // Clear error for this field when user starts typing
+    if (errors[id]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[id];
+        return newErrors;
+      });
+    }
   };
 
   const handleSkillsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -39,6 +47,14 @@ function Profile() {
       ...prev,
       skills: selectedSkills
     }));
+    // Clear error when skills are selected
+    if (errors.skills) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.skills;
+        return newErrors;
+      });
+    }
   };
 
   const addNewSkill = () => {
@@ -63,38 +79,94 @@ function Profile() {
       skillsSelect.appendChild(option);
       
       skillInput.value = '';
+      
+      // Clear skills error if it exists
+      if (errors.skills) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.skills;
+          return newErrors;
+        });
+      }
     }
   };
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required.";
-    else if (formData.fullName.length > 50)
+    // Full Name validation
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required.";
+    } else if (formData.fullName.length > 50) {
       newErrors.fullName = "Full name cannot exceed 50 characters.";
+    } else if (formData.fullName.length < 5) {
+      newErrors.fullName = "Full name must be at least 5 characters.";
+    } else if (!/^[a-zA-Z\s'-]+$/.test(formData.fullName)) {
+      newErrors.fullName = "Full name can only contain letters, spaces, hyphens, and apostrophes.";
+    }
 
-    if (!formData.address1.trim()) newErrors.address1 = "Address 1 is required.";
-    else if (formData.address1.length > 100)
+    // Address 1 validation
+    if (!formData.address1.trim()) {
+      newErrors.address1 = "Address 1 is required.";
+    } else if (formData.address1.length > 100) {
       newErrors.address1 = "Address 1 cannot exceed 100 characters.";
+    } else if (formData.address1.length < 10) {
+      newErrors.address1 = "Address 1 must be at least 10 characters.";
+    }
 
-    if (formData.address2.length > 100)
+    // Address 2 validation (optional but has length limit)
+    if (formData.address2.length > 100) {
       newErrors.address2 = "Address 2 cannot exceed 100 characters.";
+    }
 
-    if (!formData.city.trim()) newErrors.city = "City is required.";
-    else if (formData.city.length > 100)
+    // City validation
+    if (!formData.city.trim()) {
+      newErrors.city = "City is required.";
+    } else if (formData.city.length > 100) {
       newErrors.city = "City cannot exceed 100 characters.";
+    } else if (formData.city.length < 4) {
+      newErrors.city = "City must be at least 4 characters.";
+    } else if (!/^[a-zA-Z\s'-]+$/.test(formData.city)) {
+      newErrors.city = "City can only contain letters, spaces, hyphens, and apostrophes.";
+    }
 
-    if (!formData.state) newErrors.state = "State is required.";
+    // State validation
+    if (!formData.state) {
+      newErrors.state = "State is required.";
+    }
 
-    if (!formData.zip.trim()) newErrors.zip = "Zip code is required.";
-    else if (!/^\d{5,9}$/.test(formData.zip))
+    // Zip code validation
+    if (!formData.zip.trim()) {
+      newErrors.zip = "Zip code is required.";
+    } else if (!/^\d{5,9}$/.test(formData.zip)) {
       newErrors.zip = "Zip code must be between 5 and 9 digits.";
+    }
 
-    if (formData.skills.length === 0)
+    // Skills validation
+    if (formData.skills.length === 0) {
       newErrors.skills = "Please select at least one skill.";
+    }
 
-    if (formData.availability.length === 0)
+    // Preferences validation (optional but recommended min length if provided)
+    if (formData.preferences.trim() && formData.preferences.length < 10) {
+      newErrors.preferences = "Preferences should be at least 10 characters if provided.";
+    } else if (formData.preferences.length > 500) {
+      newErrors.preferences = "Preferences cannot exceed 500 characters.";
+    }
+
+    // Availability validation
+    if (!formData.availability.trim()) {
       newErrors.availability = "Please select at least one available date.";
+    } else {
+      // Validate that the date is not in the past
+      const selectedDate = new Date(formData.availability);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        newErrors.availability = "Availability date cannot be in the past.";
+      }
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -163,12 +235,19 @@ function Profile() {
               id="fullName"
               type="text"
               maxLength={50}
-              required
               value={formData.fullName}
               onChange={handleInputChange}
               className="w-full p-2 rounded border focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.fullName ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.fullName ? '2px' : '1px'
+              }}
             />
+            {errors.fullName && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.fullName}
+              </p>
+            )}
           </div>
 
           {/* Address 1 */}
@@ -180,12 +259,19 @@ function Profile() {
               id="address1"
               type="text"
               maxLength={100}
-              required
               value={formData.address1}
               onChange={handleInputChange}
               className="w-full p-2 rounded border focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.address1 ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.address1 ? '2px' : '1px'
+              }}
             />
+            {errors.address1 && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.address1}
+              </p>
+            )}
           </div>
 
           {/* Address 2 */}
@@ -200,8 +286,16 @@ function Profile() {
               value={formData.address2}
               onChange={handleInputChange}
               className="w-full p-2 rounded border focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.address2 ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.address2 ? '2px' : '1px'
+              }}
             />
+            {errors.address2 && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.address2}
+              </p>
+            )}
           </div>
 
           {/* City */}
@@ -213,12 +307,19 @@ function Profile() {
               id="city"
               type="text"
               maxLength={100}
-              required
               value={formData.city}
               onChange={handleInputChange}
               className="w-full p-2 rounded border focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.city ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.city ? '2px' : '1px'
+              }}
             />
+            {errors.city && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.city}
+              </p>
+            )}
           </div>
 
           {/* State */}
@@ -228,11 +329,13 @@ function Profile() {
             </label>
             <select
               id="state"
-              required
               value={formData.state}
               onChange={handleInputChange}
               className="w-full p-2 rounded border focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.state ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.state ? '2px' : '1px'
+              }}
             >
               <option value="">Select a state</option>
               <option value="AK">Alaska</option>
@@ -287,6 +390,11 @@ function Profile() {
               <option value="WV">West Virginia</option>
               <option value="WY">Wyoming</option>
             </select>
+            {errors.state && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.state}
+              </p>
+            )}
           </div>
 
           {/* Zip Code */}
@@ -298,12 +406,19 @@ function Profile() {
               id="zip"
               type="text"
               maxLength={9}
-              required
               value={formData.zip}
               onChange={handleInputChange}
               className="w-full p-2 rounded border focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.zip ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.zip ? '2px' : '1px'
+              }}
             />
+            {errors.zip && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.zip}
+              </p>
+            )}
           </div>
 
           {/* Skills (full width) */}
@@ -314,11 +429,13 @@ function Profile() {
             <select
               id="skills"
               multiple
-              required
               value={formData.skills}
               onChange={handleSkillsChange}
               className="w-full p-2 rounded border h-28 focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.skills ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.skills ? '2px' : '1px'
+              }}
             >
               <option value="teaching">Teaching</option>
               <option value="cooking">Cooking</option>
@@ -328,6 +445,11 @@ function Profile() {
             <p className="text-xs mt-1" style={{ color: PALETTE.teal }}>
               Hold Ctrl (Windows) or ⌘ (Mac) to select multiple.
             </p>
+            {errors.skills && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.skills}
+              </p>
+            )}
           </div>
 
           {/* Add Skills (full width) */}
@@ -361,11 +483,24 @@ function Profile() {
             <textarea
               id="preferences"
               rows={3}
+              maxLength={500}
               value={formData.preferences}
               onChange={handleInputChange}
               className="w-full p-2 rounded border focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.preferences ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.preferences ? '2px' : '1px'
+              }}
+              placeholder="Describe your preferences, interests, or any special requirements..."
             ></textarea>
+            <p className="text-xs mt-1" style={{ color: PALETTE.teal }}>
+              Optional. If provided, please write at least 10 characters.
+            </p>
+            {errors.preferences && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.preferences}
+              </p>
+            )}
           </div>
 
           {/* Availability */}
@@ -376,12 +511,20 @@ function Profile() {
             <input
               id="availability"
               type="date"
-              required
+              min={new Date().toISOString().split('T')[0]}
               value={formData.availability}
               onChange={handleInputChange}
               className="w-full p-2 rounded border focus:outline-none focus:ring-2"
-              style={{ borderColor: PALETTE.mint }}
+              style={{ 
+                borderColor: errors.availability ? '#ef4444' : PALETTE.mint,
+                borderWidth: errors.availability ? '2px' : '1px'
+              }}
             />
+            {errors.availability && (
+              <p className="text-xs mt-1" style={{ color: '#ef4444' }}>
+                {errors.availability}
+              </p>
+            )}
           </div>
         </div>
 
