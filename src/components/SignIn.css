@@ -57,6 +57,27 @@
   gap: 18px;
 }
 
+/* Roles */
+.role-button {
+  padding: 0.6rem 1.2rem;
+  border-radius: 9999px;
+  border: 2px solid #80ED99;
+  background-color: #E0F7F9;
+  color: #22577A;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.role-button.hover {
+  background-color: #38A3A5;
+  color: white;
+}
+
+.role-button.active {
+  background-color: #26A96C;
+  color: white;
+}
+
 /* Input */
 .input-group input {
   width: 100%;
