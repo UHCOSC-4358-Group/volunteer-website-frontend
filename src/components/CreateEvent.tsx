@@ -77,31 +77,76 @@ function CreateEvent() {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.name.trim()) newErrors.name = "Event name is required.";
-    else if (formData.name.length > 100)
+    // Event Name validation
+    if (!formData.name.trim()) {
+      newErrors.name = "Event name is required.";
+    } else if (formData.name.length < 3) {
+      newErrors.name = "Event name must be at least 3 characters.";
+    } else if (formData.name.length > 100) {
       newErrors.name = "Event name cannot exceed 100 characters.";
+    }
 
-    if (!formData.date.trim()) newErrors.date = "Event date is required.";
-
-    if (!formData.time.trim()) newErrors.time = "Event time is required.";
-
-    if (!formData.location.trim()) newErrors.location = "Event location is required.";
-
-    if (!formData.type.trim()) newErrors.type = "Event type is required.";
-
-    if (!formData.description.trim())
-      newErrors.description = "Event description is required.";
-    else if (formData.description.length > 500)
-      newErrors.description = "Event description cannot exceed 500 characters.";
-
-    if (formData.requirements.some(req => !req.trim()))
-      newErrors.requirements = "Each requirement must have text (or remove empty ones).";
-
-    if (!formData.organization.trim())
+    // Organization validation
+    if (!formData.organization.trim()) {
       newErrors.organization = "Organization name is required.";
+    } else if (formData.organization.length < 2) {
+      newErrors.organization = "Organization name must be at least 2 characters.";
+    } else if (formData.organization.length > 100) {
+      newErrors.organization = "Organization name cannot exceed 100 characters.";
+    }
 
-    if (formData.maxVolunteers < 1)
+    // Date validation
+    if (!formData.date.trim()) {
+      newErrors.date = "Event date is required.";
+    } else {
+      const selectedDate = new Date(formData.date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        newErrors.date = "Event date cannot be in the past.";
+      }
+    }
+
+    // Time validation
+    if (!formData.time.trim()) {
+      newErrors.time = "Event time is required.";
+    }
+
+    // Location validation
+    if (!formData.location.trim()) {
+      newErrors.location = "Event location is required.";
+    } else if (formData.location.length < 3) {
+      newErrors.location = "Event location must be at least 3 characters.";
+    } else if (formData.location.length > 200) {
+      newErrors.location = "Event location cannot exceed 200 characters.";
+    }
+
+    // Event Type validation
+    if (!formData.type.trim()) {
+      newErrors.type = "Event type is required.";
+    }
+
+    // Description validation
+    if (!formData.description.trim()) {
+      newErrors.description = "Event description is required.";
+    } else if (formData.description.length < 10) {
+      newErrors.description = "Event description must be at least 10 characters.";
+    } else if (formData.description.length > 500) {
+      newErrors.description = "Event description cannot exceed 500 characters.";
+    }
+
+    // Requirements validation
+    if (formData.requirements.some(req => req.trim() && req.length < 3)) {
+      newErrors.requirements = "Each requirement must be at least 3 characters or left empty to remove.";
+    }
+
+    // Max Volunteers validation
+    if (formData.maxVolunteers < 1) {
       newErrors.maxVolunteers = "Maximum volunteers must be at least 1.";
+    } else if (formData.maxVolunteers > 1000) {
+      newErrors.maxVolunteers = "Maximum volunteers cannot exceed 1000.";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -197,12 +242,15 @@ function CreateEvent() {
                 name="date"
                 value={formData.date}
                 onChange={handleInputChange}
-                required
+                min={new Date().toISOString().split('T')[0]}
                 className="w-full p-3 rounded border focus:outline-none focus:ring-2"
-                style={{ borderColor: PALETTE.mint }}
+                style={{ 
+                  borderColor: errors.date ? '#ef4444' : PALETTE.mint,
+                  borderWidth: errors.date ? '2px' : '1px'
+                }}
                 disabled={loading}
               />
-              {errors.date && <p className="text-red-500 text-sm">{errors.date}</p>}
+              {errors.date && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.date}</p>}
             </div>
             <div>
               <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
@@ -213,14 +261,17 @@ function CreateEvent() {
                 name="time"
                 value={formData.time}
                 onChange={handleInputChange}
-                required
                 className="w-full p-3 rounded border focus:outline-none focus:ring-2"
-                style={{ borderColor: PALETTE.mint }}
+                style={{ 
+                  borderColor: errors.time ? '#ef4444' : PALETTE.mint,
+                  borderWidth: errors.time ? '2px' : '1px'
+                }}
                 disabled={loading}
               />
-              {errors.time && <p className="text-red-500 text-sm">{errors.time}</p>}
+              {errors.time && <p className="text-xs mt-1" style={{ color: '#ef4444' }}>{errors.time}</p>}
             </div>
           </div>
+
 
           {/* Location */}
           <div>
