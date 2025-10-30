@@ -216,7 +216,7 @@ export function AboutPage() {
         className="p-8 font-bold text-white text-center mt-12"
         style={{ backgroundColor: PALETTE.teal }}
       >
-        <div>Made with ❤️ by COSC 4353 team</div>
+        <div>Made with by COSC 4353 team</div>
       </footer>
     </div>
   );

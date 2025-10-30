@@ -58,7 +58,7 @@ export function ContactPage() {
               <p className="text-gray-700 mb-2">volunteerhub@cosc4353.edu</p>
               <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
               <button
-                onClick={() => window.location.href = 'mailto:volunteerhub@cosc4358.edu'}
+                onClick={() => window.location.href = 'mailto:volunteerhub@cosc4353.edu'}
                 className="mt-4 font-semibold py-2 px-6 rounded-full transition-transform hover:scale-105"
                 style={{ 
                   backgroundColor: PALETTE.teal, 
@@ -97,7 +97,7 @@ export function ContactPage() {
               </h3>
               <p className="text-gray-700 mb-1">Computer Science Department</p>
               <p className="text-gray-700 mb-1">University Building</p>
-              <p className="text-gray-700 mb-2">Room 4358</p>
+              <p className="text-gray-700 mb-2">Room 4353</p>
               <p className="text-sm text-gray-500">Stop by during office hours</p>
             </div>
 
