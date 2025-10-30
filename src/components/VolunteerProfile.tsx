@@ -9,7 +9,6 @@ import {
 import {
   HamburgerMenuSVG,
   SearchSVG,
-  SettingsCogSVG,
   ProfileSVG,
   CalendarSVG,
   ClockSVG,
@@ -155,8 +154,21 @@ function EventCard(props: Event) {
 function VolunteerProfile() {
   const navigate = useNavigate();
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [signedUpEvents, setSignedUpEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Mock user data - in a real app, this would come from authentication context
+  const userProfile = {
+    name: "Alex Johnson",
+    email: "alex.johnson@example.com",
+    phone: "(555) 123-4567",
+    address: "123 Main Street, Houston, TX 77002",
+    bio: "Passionate volunteer with 3 years of experience in community service. Love helping with environmental and educational causes.",
+    skills: ["Teaching", "Event Planning", "First Aid Certified", "Bilingual (Spanish)"],
+    joinDate: "January 2024",
+    totalHours: 45
+  };
 
   // Load signed-up events from localStorage
   useEffect(() => {
@@ -220,10 +232,117 @@ function VolunteerProfile() {
             >
               Contact
             </Link>
-            <ProfileSVG size={45} />
+            <Link
+              to="/contact"
+              className="hover:opacity-80 transition-opacity"
+            >
+            </Link>
+            <button 
+              onClick={() => setIsEditProfileModalOpen(true)}
+              className="hover:opacity-80 transition-opacity p-1"
+            >
+              <ProfileSVG size={45} />
+            </button>
           </div>
         </nav>
       </header>
+
+      {isEditProfileModalOpen && (
+  <div
+    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+    onClick={() => setIsEditProfileModalOpen(false)}
+  >
+    <div
+      className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-screen overflow-y-auto"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold" style={{ color: PALETTE.navy }}>
+            My Profile
+          </h2>
+          <button
+            onClick={() => setIsEditProfileModalOpen(false)}
+            className="text-2xl hover:opacity-80"
+            style={{ color: PALETTE.teal }}
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="space-y-4 text-sm">
+          <div>
+            <div className="font-semibold" style={{ color: PALETTE.navy }}>Name</div>
+            <div style={{ color: "#475569" }}>{userProfile?.name ?? "-"}</div>
+          </div>
+          <div>
+            <div className="font-semibold" style={{ color: PALETTE.navy }}>Email</div>
+            <div style={{ color: "#475569" }}>{userProfile?.email ?? "-"}</div>
+          </div>
+          <div>
+            <div className="font-semibold" style={{ color: PALETTE.navy }}>Phone</div>
+            <div style={{ color: "#475569" }}>{userProfile?.phone ?? "-"}</div>
+          </div>
+          <div>
+            <div className="font-semibold" style={{ color: PALETTE.navy }}>Address</div>
+            <div style={{ color: "#475569" }}>{userProfile?.address ?? "-"}</div>
+          </div>
+          <div>
+            <div className="font-semibold" style={{ color: PALETTE.navy }}>Bio</div>
+            <div style={{ color: "#475569" }}>{userProfile?.bio ?? "-"}</div>
+          </div>
+          <div>
+            <div className="font-semibold" style={{ color: PALETTE.navy }}>Skills</div>
+            <div style={{ color: "#475569" }}>
+              {(userProfile?.skills && userProfile.skills.length > 0)
+                ? userProfile.skills.join(", ")
+                : "-"}
+            </div>
+          </div>
+          <div>
+            <div className="font-semibold" style={{ color: PALETTE.navy }}>Member Since</div>
+            <div style={{ color: "#475569" }}>{userProfile?.joinDate ?? "-"}</div>
+          </div>
+          <div>
+            <div className="font-semibold" style={{ color: PALETTE.navy }}>Total Hours Volunteered</div>
+            <div style={{ color: "#475569" }}>
+              {userProfile?.totalHours != null ? `${userProfile.totalHours} hours` : "-"}
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={() => setIsEditProfileModalOpen(false)}
+            className="flex-1 font-semibold py-3 rounded-full border transition-transform hover:scale-105"
+            style={{
+              borderColor: PALETTE.teal,
+              color: PALETTE.teal,
+              backgroundColor: "white",
+            }}
+          >
+            Close
+          </button>
+          <button
+            onClick={() => {
+              setIsEditProfileModalOpen(false);
+              navigate('/Profile'); 
+            }}
+            className="flex-1 font-semibold py-3 rounded-full transition-transform hover:scale-105"
+            style={{ backgroundColor: PALETTE.teal, color: "white" }}
+          >
+            Edit Profile
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
 
       {/* Main */}
       <main style={{ backgroundColor: PALETTE.sand, minHeight: "100%" }}>
@@ -254,12 +373,6 @@ function VolunteerProfile() {
                       {notifications.length}
                     </span>
                   )}
-                </button>
-                <button
-                  className="border p-3 rounded-xl transition-colors bg-white"
-                  style={{ borderColor: PALETTE.mint }}
-                >
-                  <SettingsCogSVG size={30} />
                 </button>
               </div>
             </div>

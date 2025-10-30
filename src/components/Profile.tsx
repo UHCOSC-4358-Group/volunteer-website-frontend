@@ -242,7 +242,7 @@ function Profile() {
         style={{ backgroundColor: "#fff", borderTop: `6px solid ${PALETTE.teal}` }}
       >
         <h2 className="text-2xl font-bold mb-1 text-center" style={{ color: PALETTE.navy }}>
-          Create User Profile
+          User Profile Information
         </h2>
         <p className="text-sm text-center mb-8" style={{ color: PALETTE.teal }}>
           * required field
