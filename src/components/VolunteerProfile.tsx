@@ -31,13 +31,33 @@ interface Event {
   requirements: string[];
 }
 
-/** Brand palette */
+interface UserProfile {
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  bio: string;
+  skills: string[];
+  joinDate: string;
+  totalHours: number;
+}
+
 const PALETTE = {
   navy: "#22577A",
   teal: "#38A3A5",
   green: "#26A96C",
   mint: "#80ED99",
   sand: "#F0EADF",
+};
+
+// Helper function to format skills from form data
+const formatSkills = (skills: string[]): string[] => {
+  return skills.map(skill => {
+    return skill
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  });
 };
 
 function Card({
@@ -120,7 +140,6 @@ function EventCard(props: Event) {
           </div>
         </div>
 
-        {/* capacity bar */}
         <div className="mt-3 h-2 w-full rounded-full" style={{ backgroundColor: "#eef7f0" }}>
           <div
             className="h-2 rounded-full"
@@ -157,39 +176,61 @@ function VolunteerProfile() {
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [signedUpEvents, setSignedUpEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
-  // Mock user data - in a real app, this would come from authentication context
-  const userProfile = {
-    name: "Alex Johnson",
-    email: "alex.johnson@example.com",
-    phone: "(555) 123-4567",
-    address: "123 Main Street, Houston, TX 77002",
-    bio: "Passionate volunteer with 3 years of experience in community service. Love helping with environmental and educational causes.",
-    skills: ["Teaching", "Event Planning", "First Aid Certified", "Bilingual (Spanish)"],
-    joinDate: "January 2024",
-    totalHours: 45
-  };
+  // Load user profile from localStorage
+  useEffect(() => {
+    const savedProfile = localStorage.getItem('volunteerProfile');
+    if (savedProfile) {
+      const profileData = JSON.parse(savedProfile);
+      
+      // Transform the profile data to match UserProfile interface
+      const transformedProfile: UserProfile = {
+        name: profileData.fullName || "User",
+        email: "user@example.com", // You may want to add this to Profile form
+        phone: "(555) 000-0000", // You may want to add this to Profile form
+        address: [
+          profileData.address1,
+          profileData.address2,
+          `${profileData.city}, ${profileData.state} ${profileData.zip}`
+        ].filter(Boolean).join(', '),
+        bio: profileData.preferences || "No bio provided yet.",
+        skills: formatSkills(profileData.skills),
+        joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        totalHours: 0 // This will be calculated from events
+      };
+      
+      setUserProfile(transformedProfile);
+    }
+  }, []);
 
   // Load signed-up events from localStorage
   useEffect(() => {
     const savedEvents = localStorage.getItem('signedUpEvents');
     if (savedEvents) {
-      setSignedUpEvents(JSON.parse(savedEvents));
+      const events = JSON.parse(savedEvents);
+      setSignedUpEvents(events);
+      
+      // Update total hours based on events (estimate 3 hours per event)
+      if (userProfile) {
+        setUserProfile({
+          ...userProfile,
+          totalHours: events.length * 3
+        });
+      }
     }
   }, []);
 
-  // Filter events based on search
   const filteredEvents = signedUpEvents.filter(event => 
     event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
     event.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate upcoming events (events with future dates)
   const upcomingEvents = signedUpEvents.filter(event => {
     const eventDate = new Date(event.date + 'T00:00:00');
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to midnight for fair comparison
+    today.setHours(0, 0, 0, 0);
     return eventDate >= today;
   });
 
@@ -204,9 +245,11 @@ function VolunteerProfile() {
     }] : [])
   ];
 
+  // Get first name from full name
+  const firstName = userProfile?.name.split(' ')[0] || 'User';
+
   return (
     <>
-      {/* Header */}
       <header className="text-white" style={{ backgroundColor: PALETTE.teal }}>
         <nav className="flex justify-between items-center">
           <div className="flex items-center gap-4 pl-3">
@@ -232,11 +275,6 @@ function VolunteerProfile() {
             >
               Contact
             </Link>
-            <Link
-              to="/contact"
-              className="hover:opacity-80 transition-opacity"
-            >
-            </Link>
             <button 
               onClick={() => setIsEditProfileModalOpen(true)}
               className="hover:opacity-80 transition-opacity p-1"
@@ -248,109 +286,104 @@ function VolunteerProfile() {
       </header>
 
       {isEditProfileModalOpen && (
-  <div
-    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-    onClick={() => setIsEditProfileModalOpen(false)}
-  >
-    <div
-      className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-screen overflow-y-auto"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <div className="p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold" style={{ color: PALETTE.navy }}>
-            My Profile
-          </h2>
-          <button
-            onClick={() => setIsEditProfileModalOpen(false)}
-            className="text-2xl hover:opacity-80"
-            style={{ color: PALETTE.teal }}
-            aria-label="Close"
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
+          onClick={() => setIsEditProfileModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-screen overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
           >
-            ×
-          </button>
-        </div>
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold" style={{ color: PALETTE.navy }}>
+                  My Profile
+                </h2>
+                <button
+                  onClick={() => setIsEditProfileModalOpen(false)}
+                  className="text-2xl hover:opacity-80"
+                  style={{ color: PALETTE.teal }}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </div>
 
-        {/* Body */}
-        <div className="space-y-4 text-sm">
-          <div>
-            <div className="font-semibold" style={{ color: PALETTE.navy }}>Name</div>
-            <div style={{ color: "#475569" }}>{userProfile?.name ?? "-"}</div>
-          </div>
-          <div>
-            <div className="font-semibold" style={{ color: PALETTE.navy }}>Email</div>
-            <div style={{ color: "#475569" }}>{userProfile?.email ?? "-"}</div>
-          </div>
-          <div>
-            <div className="font-semibold" style={{ color: PALETTE.navy }}>Phone</div>
-            <div style={{ color: "#475569" }}>{userProfile?.phone ?? "-"}</div>
-          </div>
-          <div>
-            <div className="font-semibold" style={{ color: PALETTE.navy }}>Address</div>
-            <div style={{ color: "#475569" }}>{userProfile?.address ?? "-"}</div>
-          </div>
-          <div>
-            <div className="font-semibold" style={{ color: PALETTE.navy }}>Bio</div>
-            <div style={{ color: "#475569" }}>{userProfile?.bio ?? "-"}</div>
-          </div>
-          <div>
-            <div className="font-semibold" style={{ color: PALETTE.navy }}>Skills</div>
-            <div style={{ color: "#475569" }}>
-              {(userProfile?.skills && userProfile.skills.length > 0)
-                ? userProfile.skills.join(", ")
-                : "-"}
+              <div className="space-y-4 text-sm">
+                <div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Name</div>
+                  <div style={{ color: "#475569" }}>{userProfile?.name ?? "-"}</div>
+                </div>
+                <div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Email</div>
+                  <div style={{ color: "#475569" }}>{userProfile?.email ?? "-"}</div>
+                </div>
+                <div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Phone</div>
+                  <div style={{ color: "#475569" }}>{userProfile?.phone ?? "-"}</div>
+                </div>
+                <div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Address</div>
+                  <div style={{ color: "#475569" }}>{userProfile?.address ?? "-"}</div>
+                </div>
+                <div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Bio</div>
+                  <div style={{ color: "#475569" }}>{userProfile?.bio ?? "-"}</div>
+                </div>
+                <div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Skills</div>
+                  <div style={{ color: "#475569" }}>
+                    {(userProfile?.skills && userProfile.skills.length > 0)
+                      ? userProfile.skills.join(", ")
+                      : "-"}
+                  </div>
+                </div>
+                <div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Member Since</div>
+                  <div style={{ color: "#475569" }}>{userProfile?.joinDate ?? "-"}</div>
+                </div>
+                <div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Total Hours Volunteered</div>
+                  <div style={{ color: "#475569" }}>
+                    {userProfile?.totalHours != null ? `${userProfile.totalHours} hours` : "-"}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => setIsEditProfileModalOpen(false)}
+                  className="flex-1 font-semibold py-3 rounded-full border transition-transform hover:scale-105"
+                  style={{
+                    borderColor: PALETTE.teal,
+                    color: PALETTE.teal,
+                    backgroundColor: "white",
+                  }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setIsEditProfileModalOpen(false);
+                    navigate('/Profile'); 
+                  }}
+                  className="flex-1 font-semibold py-3 rounded-full transition-transform hover:scale-105"
+                  style={{ backgroundColor: PALETTE.teal, color: "white" }}
+                >
+                  Edit Profile
+                </button>
+              </div>
             </div>
           </div>
-          <div>
-            <div className="font-semibold" style={{ color: PALETTE.navy }}>Member Since</div>
-            <div style={{ color: "#475569" }}>{userProfile?.joinDate ?? "-"}</div>
-          </div>
-          <div>
-            <div className="font-semibold" style={{ color: PALETTE.navy }}>Total Hours Volunteered</div>
-            <div style={{ color: "#475569" }}>
-              {userProfile?.totalHours != null ? `${userProfile.totalHours} hours` : "-"}
-            </div>
-          </div>
         </div>
+      )}
 
-        {/* Actions */}
-        <div className="flex gap-3 mt-6">
-          <button
-            onClick={() => setIsEditProfileModalOpen(false)}
-            className="flex-1 font-semibold py-3 rounded-full border transition-transform hover:scale-105"
-            style={{
-              borderColor: PALETTE.teal,
-              color: PALETTE.teal,
-              backgroundColor: "white",
-            }}
-          >
-            Close
-          </button>
-          <button
-            onClick={() => {
-              setIsEditProfileModalOpen(false);
-              navigate('/Profile'); 
-            }}
-            className="flex-1 font-semibold py-3 rounded-full transition-transform hover:scale-105"
-            style={{ backgroundColor: PALETTE.teal, color: "white" }}
-          >
-            Edit Profile
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
-
-
-      {/* Main */}
       <main style={{ backgroundColor: PALETTE.sand, minHeight: "100%" }}>
         <section>
           <div className="p-8 text-2xl">
             <div className="flex justify-between">
               <div>
-                <div style={{ color: PALETTE.navy }}>Welcome back, Alex!</div>
+                <div style={{ color: PALETTE.navy }}>Welcome back, {firstName}!</div>
                 <div className="text-lg" style={{ color: "#64748B" }}>
                   {signedUpEvents.length === 0 
                     ? "Ready to make a difference today?" 
@@ -381,7 +414,6 @@ function VolunteerProfile() {
 
         <div className="ml-5 mr-5" style={{ borderTop: `1px solid ${PALETTE.mint}` }} />
 
-        {/* Stats */}
         <section>
           <div className="flex justify-around gap-8 p-4 flex-col items-center md:flex-row">
             <Card
@@ -391,7 +423,7 @@ function VolunteerProfile() {
             />
             <Card
               icon={<ClockSVG size={64} />}
-              title={(signedUpEvents.length * 3).toString()} // Estimate 3 hours per event
+              title={(signedUpEvents.length * 3).toString()}
               subtitle="Hours volunteered"
             />
             <Card
@@ -402,7 +434,6 @@ function VolunteerProfile() {
           </div>
         </section>
 
-        {/* Search + Upcoming */}
         <section className="">
           <div className="">
             <div className="grid grid-rows-2 md:grid-rows-1 md:grid-cols-3 gap-2 md:justify-items-between justify-center items-center max-w-6xl mx-auto">
@@ -444,7 +475,6 @@ function VolunteerProfile() {
             </div>
           </div>
 
-          {/* Event cards */}
           <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pt-5 pb-5 gap-4 md:gap-8 justify-items-center max-w-7xl mx-auto">
             {filteredEvents.length === 0 ? (
               <div className="col-span-3 text-center p-12 bg-white rounded-2xl shadow-md">
@@ -460,12 +490,12 @@ function VolunteerProfile() {
                 </p>
                 {signedUpEvents.length === 0 && (
                   <button
-                  onClick={() => navigate('/user-event-site')}
-                  className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
-                  style={{ backgroundColor: PALETTE.teal, color: "white" }}
-                > 
-                  Browse Events
-                </button>
+                    onClick={() => navigate('/user-event-site')}
+                    className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
+                    style={{ backgroundColor: PALETTE.teal, color: "white" }}
+                  > 
+                    Browse Events
+                  </button>
                 )}
               </div>
             ) : (
@@ -477,7 +507,6 @@ function VolunteerProfile() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer
         className="p-10 font-bold text-white flex justify-center items-center"
         style={{ backgroundColor: PALETTE.teal }}

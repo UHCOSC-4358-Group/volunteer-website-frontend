@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const PALETTE = {
@@ -26,13 +26,21 @@ function Profile() {
     availability: ""
   });
 
+  // Load existing profile data on mount
+  useEffect(() => {
+    const savedProfile = localStorage.getItem('volunteerProfile');
+    if (savedProfile) {
+      const profileData = JSON.parse(savedProfile);
+      setFormData(profileData);
+    }
+  }, []);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [id]: value
     }));
-    // Clear error for this field when user starts typing
     if (errors[id]) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -48,7 +56,6 @@ function Profile() {
       ...prev,
       skills: selectedSkills
     }));
-    // Clear error when skills are selected
     if (errors.skills) {
       setErrors(prev => {
         const newErrors = { ...prev };
@@ -66,13 +73,11 @@ function Profile() {
       const newSkill = skillInput.value.trim();
       const skillValue = newSkill.toLowerCase().replace(/\s+/g, '-');
       
-      // Add to form data
       setFormData(prev => ({
         ...prev,
         skills: [...prev.skills, skillValue]
       }));
 
-      // Add to select options
       const option = document.createElement('option');
       option.value = skillValue;
       option.textContent = newSkill;
@@ -81,7 +86,6 @@ function Profile() {
       
       skillInput.value = '';
       
-      // Clear skills error if it exists
       if (errors.skills) {
         setErrors(prev => {
           const newErrors = { ...prev };
@@ -95,7 +99,6 @@ function Profile() {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    // Full Name validation
     if (!formData.fullName.trim()) {
       newErrors.fullName = "Full name is required.";
     } else if (formData.fullName.length > 50) {
@@ -106,18 +109,16 @@ function Profile() {
       newErrors.fullName = "Full name can only contain letters, spaces, hyphens, and apostrophes.";
     }
 
-    // Date of Birth validation
     if (!formData.DOB) {
       newErrors.DOB = "Date of Birth is required.";
     } else {
       const dob = new Date(formData.DOB);
       const today = new Date();
-
       let age = today.getFullYear() - dob.getFullYear();
       const monthDiff = today.getMonth() - dob.getMonth();
 
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-        age--; // now valid since age is declared with let
+        age--;
       }
 
       if (isNaN(dob.getTime()) || age < 0) {
@@ -129,7 +130,6 @@ function Profile() {
       }
     }
 
-    // Address 1 validation
     if (!formData.address1.trim()) {
       newErrors.address1 = "Address 1 is required.";
     } else if (formData.address1.length > 100) {
@@ -138,12 +138,10 @@ function Profile() {
       newErrors.address1 = "Address 1 must be at least 10 characters.";
     }
 
-    // Address 2 validation (optional but has length limit)
     if (formData.address2.length > 100) {
       newErrors.address2 = "Address 2 cannot exceed 100 characters.";
     }
 
-    // City validation
     if (!formData.city.trim()) {
       newErrors.city = "City is required.";
     } else if (formData.city.length > 100) {
@@ -154,35 +152,29 @@ function Profile() {
       newErrors.city = "City can only contain letters, spaces, hyphens, and apostrophes.";
     }
 
-    // State validation
     if (!formData.state) {
       newErrors.state = "State is required.";
     }
 
-    // Zip code validation
     if (!formData.zip.trim()) {
       newErrors.zip = "Zip code is required.";
     } else if (!/^\d{5,9}$/.test(formData.zip)) {
       newErrors.zip = "Zip code must be between 5 and 9 digits.";
     }
 
-    // Skills validation
     if (formData.skills.length === 0) {
       newErrors.skills = "Please select at least one skill.";
     }
 
-    // Preferences validation (optional but recommended min length if provided)
     if (formData.preferences.trim() && formData.preferences.length < 10) {
       newErrors.preferences = "Preferences should be at least 10 characters if provided.";
     } else if (formData.preferences.length > 500) {
       newErrors.preferences = "Preferences cannot exceed 500 characters.";
     }
 
-    // Availability validation
     if (!formData.availability.trim()) {
       newErrors.availability = "Please select at least one available date.";
     } else {
-      // Validate that the date is not in the past
       const selectedDate = new Date(formData.availability);
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -207,12 +199,10 @@ function Profile() {
     setLoading(true);
 
     try {
-      // Save profile data
       await saveProfileData(formData);
       console.log("Profile completion successful:", formData);
       
-      // Redirect to volunteer profile page
-      navigate('/volunteer-profile', { state: { profileData: formData } });
+      navigate('/volunteer-profile');
     } catch (error) {
       console.error('Error saving profile:', error);
       alert('Failed to save profile. Please try again.');
@@ -221,13 +211,10 @@ function Profile() {
     }
   };
 
-  // Function to save profile data
   const saveProfileData = async (data: typeof formData) => {
-    // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     console.log('Profile saved:', data);
     
-    // Save to localStorage (replace with your backend API)
     localStorage.setItem('volunteerProfile', JSON.stringify(data));
   };
 
@@ -248,9 +235,7 @@ function Profile() {
           * required field
         </p>
 
-        {/* GRID LAYOUT */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Full Name */}
           <div className="col-span-1">
             <label htmlFor="fullName" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Full Name *
@@ -273,7 +258,7 @@ function Profile() {
               </p>
             )}
           </div>
-          {/* Date of Birth */}
+
           <div className="col-span-1">
             <label htmlFor="DOB" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Date of Birth *
@@ -296,7 +281,6 @@ function Profile() {
             )}
           </div>
 
-          {/* Address 1 */}
           <div className="col-span-1">
             <label htmlFor="address1" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Address 1 *
@@ -320,7 +304,6 @@ function Profile() {
             )}
           </div>
 
-          {/* Address 2 */}
           <div className="col-span-1">
             <label htmlFor="address2" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Address 2
@@ -344,7 +327,6 @@ function Profile() {
             )}
           </div>
 
-          {/* City */}
           <div className="col-span-1">
             <label htmlFor="city" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               City *
@@ -368,7 +350,6 @@ function Profile() {
             )}
           </div>
 
-          {/* State */}
           <div className="col-span-1">
             <label htmlFor="state" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               State *
@@ -443,7 +424,6 @@ function Profile() {
             )}
           </div>
 
-          {/* Zip Code */}
           <div className="col-span-1">
             <label htmlFor="zip" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Zip Code *
@@ -467,7 +447,6 @@ function Profile() {
             )}
           </div>
 
-          {/* Skills (full width) */}
           <div className="md:col-span-2">
             <label htmlFor="skills" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Skills *
@@ -498,7 +477,6 @@ function Profile() {
             )}
           </div>
 
-          {/* Add Skills (full width) */}
           <div className="md:col-span-2">
             <label htmlFor="newSkill" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Add New Skill
@@ -521,7 +499,6 @@ function Profile() {
             </button>
           </div>
 
-          {/* Preferences (full width) */}
           <div className="md:col-span-2">
             <label htmlFor="preferences" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Preferences
@@ -549,7 +526,6 @@ function Profile() {
             )}
           </div>
 
-          {/* Availability */}
           <div className="col-span-1">
             <label htmlFor="availability" className="block font-semibold mb-1" style={{ color: PALETTE.navy }}>
               Availability *
@@ -574,7 +550,6 @@ function Profile() {
           </div>
         </div>
 
-        {/* Actions */}
         <div className="flex justify-center mt-8">
           <button
             type="submit"
