@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import {
@@ -250,42 +249,10 @@ function VolunteerProfile() {
 
   return (
     <>
-      <header className="text-white" style={{ backgroundColor: PALETTE.teal }}>
-        <nav className="flex justify-between items-center">
-          <div className="flex items-center gap-4 pl-3">
-            <div>
-              <VolunteerSVG size={64} />
-            </div>
-            <div className="text-4xl font-thin">Volunteer</div>
-          </div>
-          <div className="hidden sm:flex gap-4 items-center">
-            <Link
-              to="/"
-              className="hover:opacity-80 transition-opacity"
-            >
-              Logout
-            </Link>
-            <Link
-              to="/about"
-              className="hover:opacity-80 transition-opacity"
-            >
-              About
-            </Link>
-            <Link
-              to="/contact"
-              className="hover:opacity-80 transition-opacity"
-            >
-              Contact
-            </Link>
-            <button 
-              onClick={() => setIsEditProfileModalOpen(true)}
-              className="hover:opacity-80 transition-opacity p-1"
-            >
-              <ProfileSVG size={45} />
-            </button>
-          </div>
-        </nav>
-      </header>
+      <nav className="flex justify-between items-center">
+        <div className="hidden sm:flex gap-4 items-center">
+        </div>
+      </nav>  
 
       {isEditProfileModalOpen && (
         <div
@@ -408,6 +375,12 @@ function VolunteerProfile() {
                       {notifications.length}
                     </span>
                   )}
+                </button>
+                <button 
+                  onClick={() => setIsEditProfileModalOpen(true)}
+                  className="hover:opacity-80 transition-opacity p-1"
+                >
+                  <ProfileSVG size={45} />
                 </button>
               </div>
             </div>
