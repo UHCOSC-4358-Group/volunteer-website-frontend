@@ -5,9 +5,9 @@ import { useState, useEffect } from "react";
 import {
   NotificationModal,
   type Notification,
-} from "../components/NotificationModal";
+} 
+from "../components/NotificationModal";
 import {
-  HamburgerMenuSVG,
   SearchSVG,
   ProfileSVG,
   CalendarSVG,
@@ -253,9 +253,6 @@ function VolunteerProfile() {
       <header className="text-white" style={{ backgroundColor: PALETTE.teal }}>
         <nav className="flex justify-between items-center">
           <div className="flex items-center gap-4 pl-3">
-            <div className="sm:hidden">
-              <HamburgerMenuSVG size={54} />
-            </div>
             <div>
               <VolunteerSVG size={64} />
             </div>
