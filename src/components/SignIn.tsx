@@ -106,8 +106,8 @@ const SignIn: React.FC = () => {
         await loginUser(formData);
         console.log("Login successful:", formData);
         
-        // Redirect to dashboard or home page after successful login
-        navigate('/OrgDashboard'); // 
+        // Redirect to home page after successful login
+        navigate('/volunteer-profile'); // 
       }
     } catch (err) {
       // Handle errors from API or validation

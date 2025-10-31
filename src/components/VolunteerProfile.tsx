@@ -261,8 +261,13 @@ function VolunteerProfile() {
             </div>
             <div className="text-4xl font-thin">Volunteer</div>
           </div>
-
           <div className="hidden sm:flex gap-4 items-center">
+            <Link
+              to="/"
+              className="hover:opacity-80 transition-opacity"
+            >
+              Logout
+            </Link>
             <Link
               to="/about"
               className="hover:opacity-80 transition-opacity"
