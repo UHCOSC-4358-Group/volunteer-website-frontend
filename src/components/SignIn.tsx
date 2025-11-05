@@ -29,7 +29,7 @@ interface FormData {
 const SignIn: React.FC = () => {
   // State to track whether user is on Register page or Login page
   const [isRegister, setIsRegister] = useState<boolean>(false);
-  const [role, setRole] = useState<"volunteer" | "organizer" | "">("");
+  const [role, setRole] = useState<"volunteer" | "organizer">("volunteer");
 
   // State to store form input values (email, password, confirmPassword)
   const [formData, setFormData] = useState<FormData>({
