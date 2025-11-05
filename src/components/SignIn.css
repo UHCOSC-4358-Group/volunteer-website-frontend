@@ -5,7 +5,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #F0EADF; /* Sand tone */
+  background-color: #f0eadf; /* Sand tone */
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -28,7 +28,7 @@
   left: 0;
   height: 80px;
   width: 80px;
-  background-color: #38A3A5; /* teal */
+  background-color: #38a3a5; /* teal */
   border-bottom-right-radius: 60px;
 }
 
@@ -37,7 +37,7 @@
   font-size: 26px;
   font-weight: bold;
   margin-bottom: 8px;
-  color: #22577A;
+  color: #22577a;
   margin-top: 20px;
   text-align: center;
 }
@@ -45,7 +45,7 @@
 /* Subtitle */
 .auth-subtitle {
   font-size: 14px;
-  color: #38A3A5;
+  color: #38a3a5;
   margin-bottom: 24px;
   text-align: center;
 }
@@ -54,28 +54,47 @@
 .auth-form {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.5rem;
+  padding: 1rem 0rem;
+}
+
+.role-selection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.role-options {
+  display: flex;
+  gap: 0.5rem;
 }
 
 /* Roles */
 .role-button {
   padding: 0.6rem 1.2rem;
   border-radius: 9999px;
-  border: 2px solid #80ED99;
-  background-color: #E0F7F9;
-  color: #22577A;
+  border: 2px solid #80ed99;
+  background-color: #e0f7f9;
+  color: #22577a;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-.role-button.hover {
-  background-color: #38A3A5;
+.role-button:hover {
+  background-color: #38a3a5;
   color: white;
 }
 
 .role-button.active {
-  background-color: #26A96C;
+  background-color: #26a96c;
   color: white;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 
 /* Input */
@@ -83,15 +102,15 @@
   width: 100%;
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #80ED99;
+  border: 1px solid #80ed99;
   outline: none;
   background: #fff;
-  color: #22577A;
+  color: #22577a;
   transition: border-color 0.2s ease;
 }
 
 .input-group input:focus {
-  border-color: #38A3A5;
+  border-color: #38a3a5;
   box-shadow: 0 0 0 3px rgba(56, 163, 165, 0.2);
 }
 
@@ -101,7 +120,7 @@
   padding: 12px;
   border-radius: 8px;
   border: none;
-  background-color: #26A96C;
+  background-color: #26a96c;
   color: white;
   font-size: 16px;
   font-weight: bold;
@@ -110,7 +129,7 @@
 }
 
 .auth-button:hover {
-  background-color: #38A3A5;
+  background-color: #38a3a5;
   transform: translateY(-2px);
 }
 
@@ -118,17 +137,17 @@
 .auth-footer {
   margin-top: 20px;
   text-align: center;
-  color: #22577A;
+  color: #22577a;
 }
 
 .auth-footer span {
-  color: #38A3A5;
+  color: #38a3a5;
   font-weight: bold;
   cursor: pointer;
 }
 
 .auth-footer span:hover {
-  color: #26A96C;
+  color: #26a96c;
 }
 
 /* Error message */

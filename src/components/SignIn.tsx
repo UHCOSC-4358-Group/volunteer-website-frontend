@@ -56,11 +56,11 @@ const SignIn: React.FC = () => {
   // Mock registration function - replace with your actual API call
   const registerUser = async (userData: FormData): Promise<void> => {
     // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     // Add your actual registration logic here
     console.log("Registering user:", userData);
-    
+
     // For demo purposes, always succeed. In real app, check response
     return Promise.resolve();
   };
@@ -68,11 +68,11 @@ const SignIn: React.FC = () => {
   // Mock login function - replace with your actual API call
   const loginUser = async (userData: FormData): Promise<void> => {
     // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     // Add your actual login logic here
     console.log("Logging in user:", userData);
-    
+
     // For demo purposes, always succeed. In real app, check response
     return Promise.resolve();
   };
@@ -80,12 +80,12 @@ const SignIn: React.FC = () => {
   // Handle form submission
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault(); // stops default page reload on form submit
-    
+
     setLoading(true);
     setError("");
 
     try {
-      if(formData.password.length < 6) {
+      if (formData.password.length < 6) {
         throw new Error("Password must be at least 6 characters long");
       }
 
@@ -94,24 +94,24 @@ const SignIn: React.FC = () => {
         if (formData.password !== formData.confirmPassword) {
           throw new Error("Passwords do not match");
         }
-        
+
         await registerUser(formData);
         console.log("Registration successful:", formData);
-        
+
         // Redirect to volunteer profile after successful registration
-        navigate('/Profile'); 
-        
+        navigate("/Profile");
       } else {
         // Login logic
         await loginUser(formData);
         console.log("Login successful:", formData);
-        
+
         // Redirect to home page after successful login
-        navigate('/volunteer-profile'); // 
+        navigate("/volunteer-profile"); //
       }
     } catch (err) {
       // Handle errors from API or validation
-      const errorMessage = err instanceof Error ? err.message : "An error occurred";
+      const errorMessage =
+        err instanceof Error ? err.message : "An error occurred";
       setError(errorMessage);
       console.error("Auth error:", err);
     } finally {
@@ -135,20 +135,18 @@ const SignIn: React.FC = () => {
         </p>
 
         {/* Error message display */}
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+        {error && <div className="error-message">{error}</div>}
 
         {/* Role Selection */}
         {isRegister && (
           <div className="role-selection">
-            <p className="register-text">Registering as: </p>
+            <p className="register-text">Registering as:</p>
             <div className="role-options">
               <button
                 type="button"
-                className={`role-button ${role === "volunteer" ? "active" : ""}`}
+                className={`role-button ${
+                  role === "volunteer" ? "active" : ""
+                }`}
                 onClick={() => setRole("volunteer")}
                 disabled={loading}
               >
@@ -156,7 +154,9 @@ const SignIn: React.FC = () => {
               </button>
               <button
                 type="button"
-                className={`role-button ${role === "organizer" ? "active" : ""}`}
+                className={`role-button ${
+                  role === "organizer" ? "active" : ""
+                }`}
                 onClick={() => setRole("organizer")}
                 disabled={loading}
               >
@@ -213,12 +213,8 @@ const SignIn: React.FC = () => {
           )}
 
           {/* Submit button */}
-          <button 
-            type="submit" 
-            className="auth-button"
-            disabled={loading}
-          >
-            {loading ? "Processing..." : (isRegister ? "Register" : "Sign In")}
+          <button type="submit" className="auth-button" disabled={loading}>
+            {loading ? "Processing..." : isRegister ? "Register" : "Sign In"}
           </button>
         </form>
 
@@ -227,12 +223,16 @@ const SignIn: React.FC = () => {
           {isRegister ? (
             <p>
               Already have an account?{" "}
-              <span onClick={() => !loading && setIsRegister(false)}>Sign In</span>
+              <span onClick={() => !loading && setIsRegister(false)}>
+                Sign In
+              </span>
             </p>
           ) : (
             <p>
               Don't have an account?{" "}
-              <span onClick={() => !loading && setIsRegister(true)}>Sign Up</span>
+              <span onClick={() => !loading && setIsRegister(true)}>
+                Sign Up
+              </span>
             </p>
           )}
         </div>
