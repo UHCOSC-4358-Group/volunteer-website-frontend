@@ -7,7 +7,7 @@ import VolunteerHistory from "./components/volunteerHistory";
 import Profile from "./components/Profile";
 // @ts-ignore
 import CreateEvent from "./components/CreateEvent";
-import EventsPage from './components/EventPage';
+import EventsPage from "./components/EventPage";
 // @ts-ignore
 import Matching from "./components/Matching";
 import { Routes, Route, Navigate } from "react-router-dom";
@@ -18,27 +18,32 @@ import UserEventSite from "./components/userEventSite";
 import about, { AboutPage } from "./components/aboutPage";
 // @ts-ignore
 import contact, { ContactPage } from "./components/contactPage";
+import AdminCreate from "./components/AdminCreate";
 // App functionality with routing
 function App() {
   return (
     <div>
-    <Routes>
-      <Route path="/" element={<SignIn />} />
-      <Route path="/Profile" element={<Profile />} />
-      <Route element={<Layout />}>
-        <Route path="/volunteer-profile" element={<VolunteerProfile />} />
-        <Route path="/volunteer-history" element={<VolunteerHistory />} />
-        <Route path="/OrgDashboard" element={<OrgDashboard />} />
-        <Route path="/create-event" element={<CreateEvent />} />
-        <Route path="/event-page" element={<EventsPage />} />
-        <Route path="/matching" element={<Matching />} />
-        <Route path="/user-event-site" element={<UserEventSite />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-      </Route>
-      {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/volunteer-profile" replace />} />
-    </Routes>
+      <Routes>
+        <Route path="/" element={<SignIn />} />
+        <Route path="/signup/volunteer" element={<Profile />} />
+        <Route path="/signup/admin" element={<AdminCreate />} />
+        <Route element={<Layout />}>
+          <Route path="/volunteer-profile" element={<VolunteerProfile />} />
+          <Route path="/volunteer-history" element={<VolunteerHistory />} />
+          <Route path="/OrgDashboard" element={<OrgDashboard />} />
+          <Route path="/create-event" element={<CreateEvent />} />
+          <Route path="/event-page" element={<EventsPage />} />
+          <Route path="/matching" element={<Matching />} />
+          <Route path="/user-event-site" element={<UserEventSite />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+        </Route>
+        {/* Catch-all */}
+        <Route
+          path="*"
+          element={<Navigate to="/volunteer-profile" replace />}
+        />
+      </Routes>
     </div>
   );
 }
