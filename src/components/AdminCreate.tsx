@@ -1,4 +1,5 @@
-import React, { useReducer } from "react";
+import React from "react";
+import { useFormReducer, FormReducerActionTypes } from "../hooks/form-reducer";
 import SelectStateOptions from "./SelectStateOptions";
 
 const PALETTE = {
@@ -24,22 +25,20 @@ interface AdminCreateForm {
   skills: string[];
 }
 
-function adminCreateFormReducer(
-  state: AdminCreateForm,
-  action: { type: string; field: string; payload: string | boolean }
-) {
-  switch (action.type) {
-    case "CHANGE_TEXT":
-      return {
-        ...state,
-        [action.field]: action.payload,
-      };
-    case "CLEAR_FORM":
-      return { ...initialAdminCreateFormState };
-    default:
-      return state;
-  }
-}
+const initialAdminCreateFormState: AdminCreateForm = {
+  email: "",
+  password: "",
+  firstName: "",
+  lastName: "",
+  description: "",
+  dateOfBirth: "",
+  city: "",
+  state: "",
+  country: "United States",
+  address: "",
+  zipCode: "",
+  skills: [],
+};
 
 function FormInput({
   type,
@@ -128,26 +127,8 @@ function FormInput({
   );
 }
 
-const initialAdminCreateFormState: AdminCreateForm = {
-  email: "",
-  password: "",
-  firstName: "",
-  lastName: "",
-  description: "",
-  dateOfBirth: "",
-  city: "",
-  state: "",
-  country: "United States",
-  address: "",
-  zipCode: "",
-  skills: [],
-};
-
 function AdminCreate() {
-  const [formData, dispatch] = useReducer(
-    adminCreateFormReducer,
-    initialAdminCreateFormState
-  );
+  const { formData, dispatch } = useFormReducer(initialAdminCreateFormState);
 
   const handleTextChange = (
     e:
@@ -157,7 +138,7 @@ function AdminCreate() {
     console.log([e.target.name, e.target.value]);
 
     dispatch({
-      type: "CHANGE_TEXT",
+      type: FormReducerActionTypes.CHANGE_TEXT,
       field: e.target.name,
       payload: e.target.value,
     });
@@ -165,7 +146,7 @@ function AdminCreate() {
 
   const handleClear = () => {
     dispatch({
-      type: "CLEAR_FORM",
+      type: FormReducerActionTypes.CLEAR_FORM,
       field: "",
       payload: "",
     });
@@ -279,7 +260,7 @@ function AdminCreate() {
             style={{ backgroundColor: PALETTE.sand, color: "black" }}
             onClick={() => handleClear()}
           >
-            Clear Profile
+            Clear Form
           </button>
           <button
             type="submit"
@@ -287,6 +268,7 @@ function AdminCreate() {
             className="font-semibold py-2 px-8 rounded-full shadow-md transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: PALETTE.teal, color: "white" }}
           >
+            Save Profile
             {/* {loading ? "Saving..." : "Save Profile"} */}
           </button>
         </div>
