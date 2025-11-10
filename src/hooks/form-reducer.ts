@@ -15,6 +15,8 @@ function isUserCreateForm(form: unknown): form is UserCreateForm {
   return (form as UserCreateForm).role !== undefined;
 }
 
+// Tried using generics to make it modular, but it ultimately has logic tightly coupled to the auth routes
+// Might change in the future to drop the generics and just make it specific to the auth logic
 function formReducerClosure<T>(initialFormState: T) {
   return function formReducerFunction<T>(
     state: T,
@@ -72,7 +74,6 @@ function formReducerClosure<T>(initialFormState: T) {
             endTime: null,
           },
         ];
-        console.log(new_appended_array);
 
         return { ...state, [add_field]: new_appended_array };
       case FormReducerActionTypes.EDIT_ARRAY_OBJ:
@@ -88,8 +89,15 @@ function formReducerClosure<T>(initialFormState: T) {
         }
         const arrayIndex = parseInt(index);
         const edit_obj = edit_current_field[arrayIndex];
-        edit_obj[property] = value;
-        edit_current_field[arrayIndex] = edit_obj;
+        //Editing time
+        if (property === "dayOfWeek" && !isNaN(parseInt(value))) {
+          const dayOfWeekValue = parseInt(value);
+          edit_obj[property] = dayOfWeekValue;
+          edit_current_field[arrayIndex] = edit_obj;
+        } else {
+          edit_obj[property] = value;
+          edit_current_field[arrayIndex] = edit_obj;
+        }
 
         return { ...state, [edit_field]: edit_current_field } as T;
 

@@ -49,6 +49,7 @@ function TimeField({
           onChange={(e) => handleDayChange(e, index)}
           className="w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint"
         >
+          <option value={-1}>Select a day</option>
           <option value={DayofWeek.MONDAY}>Monday</option>
           <option value={DayofWeek.TUESDAY}>Tuesday</option>
           <option value={DayofWeek.WEDNESDAY}>Wednesday</option>
@@ -86,11 +87,11 @@ function TimeField({
 
 function VolunteerSignupForm({
   loading,
-  handleTextChange,
   handleSubmit,
+  handleTextChange,
   handleSkillsAddition,
   handleSkillsDeletion,
-  handleNewAvailabiltyAddition,
+  handleNewAvailabilityAddition,
   handleDayChange,
   handleStartTimeChange,
   handleEndTimeChange,
@@ -98,15 +99,16 @@ function VolunteerSignupForm({
   setFormStep,
 }: {
   loading: boolean;
+  handleSubmit: (e: FormEvent) => Promise<void>;
   handleTextChange: (
     e:
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLSelectElement>
+      | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
-  handleSubmit: (e: FormEvent) => Promise<void>;
   handleSkillsAddition: (newSkill: string) => void;
   handleSkillsDeletion: (newSkill: string) => void;
-  handleNewAvailabiltyAddition: () => void;
+  handleNewAvailabilityAddition: () => void;
   handleDayChange: (
     e: React.ChangeEvent<HTMLSelectElement>,
     index: number
@@ -128,7 +130,7 @@ function VolunteerSignupForm({
     <div className="bg-sand min-h-screen flex justify-center items-center p-6">
       <div className="w-full max-w-4xl p-8 rounded-2xl shadow-md bg-[#fff] border-t-6 border-t-teal">
         <h2 className="text-2xl font-bold mb-1 text-center text-navy">
-          User Profile Information
+          Volunteer Profile Information
         </h2>
         <p className="text-sm text-center mb-8 text-teal">* required field</p>
 
@@ -203,7 +205,15 @@ function VolunteerSignupForm({
             required
             handler={handleTextChange}
           />
-
+          <FormInput
+            type="textarea"
+            name="description"
+            currentValue={formData.description}
+            labelText="Add a profile description:"
+            colspan={2}
+            required
+            handler={handleTextChange}
+          />
           <div className="md:col-span-2">
             <label
               htmlFor="skills"
@@ -272,7 +282,7 @@ function VolunteerSignupForm({
           <div className="md:col-span-2">
             <fieldset className="text-navy font-semibold">
               <legend className="p-4">Indicate your availability:</legend>
-              {formData.availabilty.map((timeAvailable, idx) => {
+              {formData.availability.map((timeAvailable, idx) => {
                 return (
                   <TimeField
                     selectedDayValue={timeAvailable.dayOfWeek}
@@ -290,7 +300,7 @@ function VolunteerSignupForm({
             <button
               type="button"
               className="bg-teal text-white mt-2 font-semibold py-2 px-4 rounded-full shadow-md transition-transform hover:scale-105"
-              onClick={handleNewAvailabiltyAddition}
+              onClick={handleNewAvailabilityAddition}
             >
               Add Time
             </button>
@@ -311,7 +321,7 @@ function VolunteerSignupForm({
             disabled={loading}
             className="bg-teal text-white font-semibold py-2 px-8 rounded-full shadow-md transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Saving..." : "Save Profile"}
+            Save Profile
           </button>
         </div>
       </div>

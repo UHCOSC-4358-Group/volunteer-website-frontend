@@ -27,6 +27,7 @@ export function FormInput({
     e:
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLSelectElement>
+      | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
 }) {
   let inputComponent: React.ReactNode;
@@ -50,6 +51,20 @@ export function FormInput({
       >
         <SelectStateOptions />
       </select>
+    );
+  } else if (type === "textarea") {
+    inputComponent = (
+      <textarea
+        id={name}
+        name={name}
+        required={required}
+        disabled={disabled}
+        onChange={handler}
+        value={currentValue}
+        className={`w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint ${
+          disabled && "bg-gray-200"
+        }`}
+      ></textarea>
     );
   } else {
     inputComponent = (
@@ -91,7 +106,7 @@ const SignupSecondForm = ({
   handleTextChange,
   handleSkillsAddition,
   handleSkillsDeletion,
-  handleNewAvailabiltyAddition,
+  handleNewAvailabilityAddition,
   handleDayChange,
   handleStartTimeChange,
   handleEndTimeChange,
@@ -104,10 +119,11 @@ const SignupSecondForm = ({
     e:
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLSelectElement>
+      | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
   handleSkillsAddition: (newSkill: string) => void;
   handleSkillsDeletion: (skillToDelete: string) => void;
-  handleNewAvailabiltyAddition: () => void;
+  handleNewAvailabilityAddition: () => void;
   handleDayChange: (
     e: React.ChangeEvent<HTMLSelectElement>,
     index: number
@@ -131,7 +147,7 @@ const SignupSecondForm = ({
         handleSkillsAddition={handleSkillsAddition}
         handleSkillsDeletion={handleSkillsDeletion}
         handleTextChange={handleTextChange}
-        handleNewAvailabiltyAddition={handleNewAvailabiltyAddition}
+        handleNewAvailabilityAddition={handleNewAvailabilityAddition}
         handleDayChange={handleDayChange}
         handleStartTimeChange={handleStartTimeChange}
         handleEndTimeChange={handleEndTimeChange}

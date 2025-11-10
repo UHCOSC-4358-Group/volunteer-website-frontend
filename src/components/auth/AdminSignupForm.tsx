@@ -3,7 +3,6 @@ import { FormInput } from "./SignupSecondForm";
 import type { UserCreateForm } from "./Signup";
 
 function AdminSignupForm({
-  loading,
   handleSubmit,
   handleTextChange,
   formData,
@@ -15,6 +14,7 @@ function AdminSignupForm({
     e:
       | React.ChangeEvent<HTMLInputElement>
       | React.ChangeEvent<HTMLSelectElement>
+      | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
   formData: UserCreateForm;
   setFormStep: React.Dispatch<React.SetStateAction<number>>;
@@ -102,6 +102,15 @@ function AdminSignupForm({
             required
             handler={handleTextChange}
           />
+          <FormInput
+            type="textarea"
+            name="description"
+            currentValue={formData.description}
+            labelText="Add a profile description:"
+            colspan={2}
+            required
+            handler={handleTextChange}
+          />
         </div>
 
         <div className="flex justify-around items-center mt-12">
@@ -115,11 +124,9 @@ function AdminSignupForm({
           <button
             type="submit"
             onSubmit={handleSubmit}
-            // disabled={loading}
-            className="bg-teal text-white font-semibold py-2 px-8 rounded-full shadow-md transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-teal text-white font-semibold py-2 px-8 rounded-full shadow-md transition-transform hover:scale-105"
           >
             Save Profile
-            {/* {loading ? "Saving..." : "Save Profile"} */}
           </button>
         </div>
       </div>

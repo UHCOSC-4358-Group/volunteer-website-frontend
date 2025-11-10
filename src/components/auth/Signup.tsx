@@ -42,7 +42,7 @@ export interface UserCreateForm {
   address: string;
   zipCode: string;
   skills: string[];
-  availabilty: TimeAvailable[];
+  availability: TimeAvailable[];
 }
 
 const initialUserCreateForm: UserCreateForm = {
@@ -60,9 +60,10 @@ const initialUserCreateForm: UserCreateForm = {
   address: "",
   zipCode: "",
   skills: [],
-  availabilty: [],
+  availability: [],
 };
 
+// These apply to both admins and volunteers
 const UserCreateTemplate = {
   email: zod.email("Email format is not valid."),
   password: zod.string().min(8, "Password must be 8 characters or longer"),
@@ -70,8 +71,8 @@ const UserCreateTemplate = {
   lastName: zod.string().min(1, "Last name cannot be empty.").toUpperCase(),
   description: zod
     .string()
-    .min(15, "Description must be 15 characters or longer."),
-  dateOfBirth: zod.date("Date must be filled in."),
+    .min(5, "Description must be 5 characters or longer."),
+  dateOfBirth: zod.coerce.date("Date cannot be empty."),
   country: zod.string().min(1, "Country cannot be empty."),
   state: zod.string().min(1, "State cannot be empty."),
   city: zod.string().min(1, "City cannot be empty."),
@@ -88,8 +89,17 @@ const AdminCreateZodForm = zod.object({
   ...UserCreateTemplate,
 });
 
+// Here we add some additional fields for skills and availability
 const VolunteerCreateZodForm = zod.object({
   ...UserCreateTemplate,
+  skills: zod.array(zod.string()),
+  availability: zod.array(
+    zod.object({
+      dayOfWeek: zod.number().gt(0, "You must select a day"),
+      startTime: zod.string(),
+      endTime: zod.string(),
+    })
+  ),
 });
 
 export const Signup: React.FC = () => {
@@ -99,7 +109,10 @@ export const Signup: React.FC = () => {
   const [errors, setErrors] = useState<string[]>([]);
 
   const handleTextChange = (
-    e: ChangeEvent<HTMLInputElement> | ChangeEvent<HTMLSelectElement>
+    e:
+      | ChangeEvent<HTMLInputElement>
+      | ChangeEvent<HTMLSelectElement>
+      | ChangeEvent<HTMLTextAreaElement>
   ) => {
     dispatch({
       type: FormReducerActionTypes.CHANGE_TEXT,
@@ -132,10 +145,10 @@ export const Signup: React.FC = () => {
     });
   };
 
-  const handleNewAvailabiltyAddition = () => {
+  const handleNewAvailabilityAddition = () => {
     dispatch({
       type: FormReducerActionTypes.ADD_TIME_TO_ARRAY,
-      field: "availabilty",
+      field: "availability",
       payload: "",
     });
   };
@@ -146,7 +159,7 @@ export const Signup: React.FC = () => {
   ) => {
     dispatch({
       type: FormReducerActionTypes.EDIT_ARRAY_OBJ,
-      field: "availabilty",
+      field: "availability",
       payload: `${index} ${e.target.name} ${e.target.value}`,
     });
   };
@@ -157,7 +170,7 @@ export const Signup: React.FC = () => {
   ) => {
     dispatch({
       type: FormReducerActionTypes.EDIT_ARRAY_OBJ,
-      field: "availabilty",
+      field: "availability",
       payload: `${index} ${e.target.name} ${e.target.value}`,
     });
   };
@@ -168,15 +181,42 @@ export const Signup: React.FC = () => {
   ) => {
     dispatch({
       type: FormReducerActionTypes.EDIT_ARRAY_OBJ,
-      field: "availabilty",
+      field: "availability",
       payload: `${index} ${e.target.name} ${e.target.value}`,
     });
   };
 
-  const registerUser = async (userData: UserCreateForm): Promise<void> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
+  const registerVolunteer = async (userData: UserCreateForm) => {
     console.log("Registering user:", userData);
+
+    const parsedValue = zod.safeParse(VolunteerCreateZodForm, userData);
+
+    if (parsedValue.success) {
+      console.log("SUCCESS");
+    } else {
+      console.log("FAILURE");
+      const errors = parsedValue.error;
+      console.log(errors);
+    }
+
+    return Promise.resolve();
+  };
+
+  const registerAdmin = async (userData: UserCreateForm) => {
+    console.log("Registering user:", userData);
+
+    // Removes skills and availability from userData, creating the admin object
+    const { skills, availability, ...adminData } = userData;
+
+    const parsedValue = zod.safeParse(AdminCreateZodForm, adminData);
+
+    if (parsedValue.success) {
+      console.log("SUCCESS");
+    } else {
+      console.log("FAILURE");
+      const errors = parsedValue.error;
+      console.log(errors);
+    }
 
     return Promise.resolve();
   };
@@ -186,6 +226,17 @@ export const Signup: React.FC = () => {
     e.preventDefault();
 
     setLoading(true);
+    try {
+      if (formData.role == "volunteer") {
+        await registerVolunteer(formData);
+      } else {
+        await registerAdmin(formData);
+      }
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const multiStepFormList = [
@@ -202,7 +253,7 @@ export const Signup: React.FC = () => {
       handleTextChange={handleTextChange}
       handleSkillsAddition={handleSkillAddition}
       handleSkillsDeletion={handleSkillsDeletion}
-      handleNewAvailabiltyAddition={handleNewAvailabiltyAddition}
+      handleNewAvailabilityAddition={handleNewAvailabilityAddition}
       handleDayChange={handleDayChange}
       handleStartTimeChange={handleStartTimeChange}
       handleEndTimeChange={handleEndTimeChange}
