@@ -1,10 +1,9 @@
 import VolunteerProfile from "./components/VolunteerProfile";
-import SignIn from "./components/SignIn";
+import SignIn from "./components/auth/SignIn";
 // @ts-ignore
 import OrgDashboard from "./components/dashboard";
 // @ts-ignore
 import VolunteerHistory from "./components/volunteerHistory";
-import Profile from "./components/Profile";
 // @ts-ignore
 import CreateEvent from "./components/CreateEvent";
 import EventsPage from "./components/EventPage";
@@ -18,14 +17,15 @@ import UserEventSite from "./components/userEventSite";
 import about, { AboutPage } from "./components/aboutPage";
 // @ts-ignore
 import contact, { ContactPage } from "./components/contactPage";
-import AdminCreate from "./components/AdminCreate";
+import AdminCreate from "./components/auth/AdminSignupForm";
+import { Signup } from "./components/auth/Signup";
 // App functionality with routing
 function App() {
   return (
     <div>
       <Routes>
-        <Route path="/" element={<SignIn />} />
-        <Route path="/signup/volunteer" element={<Profile />} />
+        <Route path="/" element={<Signup />} />
+        <Route path="/signup" element={<SignIn />} />
         <Route path="/signup/admin" element={<AdminCreate />} />
         <Route element={<Layout />}>
           <Route path="/volunteer-profile" element={<VolunteerProfile />} />
@@ -38,7 +38,6 @@ function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
         </Route>
-        {/* Catch-all */}
         <Route
           path="*"
           element={<Navigate to="/volunteer-profile" replace />}

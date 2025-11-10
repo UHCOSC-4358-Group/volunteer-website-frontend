@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
-@tailwind base;
+/*
+Gonna check if these make any changes
+ @tailwind base;
 @tailwind components;
-@tailwind utilities;
+@tailwind utilities; */
+
+@theme {
+  --color-navy: #22577a;
+  --color-teal: #38a3a5;
+  --color-green: #26a96c;
+  --color-mint: #80ed99;
+  --color-sand: #f0eadf;
+}
 
 :root {
   --color-jade: #26a96c;
