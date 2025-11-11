@@ -68,9 +68,9 @@ function formReducerClosure<T>(initialFormState: T) {
         const new_appended_array = [
           ...add_current_field,
           {
-            dayOfWeek: null,
-            startTime: null,
-            endTime: null,
+            dayOfWeek: 0,
+            startTime: "",
+            endTime: "",
           },
         ];
 

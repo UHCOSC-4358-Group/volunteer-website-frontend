@@ -12,6 +12,7 @@ import "./SignIn.css";
 
 // Have to re-declare in VolunteerSignup for hot-module-replacement compat
 enum DayofWeek {
+  NULL = 0,
   MONDAY = 1,
   TUESDAY = 2,
   WEDNESDAY = 3,
@@ -22,9 +23,9 @@ enum DayofWeek {
 }
 
 export interface TimeAvailable {
-  dayOfWeek: DayofWeek | null;
-  startTime: string | null;
-  endTime: string | null;
+  dayOfWeek: DayofWeek;
+  startTime: string;
+  endTime: string;
 }
 
 export interface UserCreateForm {

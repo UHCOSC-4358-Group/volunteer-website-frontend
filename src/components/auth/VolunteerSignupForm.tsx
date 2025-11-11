@@ -3,6 +3,7 @@ import { FormInput } from "./SignupSecondForm";
 import type { UserCreateForm } from "./Signup";
 
 enum DayofWeek {
+  NULL = 0,
   MONDAY = 1,
   TUESDAY = 2,
   WEDNESDAY = 3,
@@ -13,17 +14,17 @@ enum DayofWeek {
 }
 
 function TimeField({
-  selectedDayValue = null,
-  selectedStartTime = null,
-  selectedEndTime = null,
+  selectedDayValue,
+  selectedStartTime,
+  selectedEndTime,
   handleDayChange,
   handleStartTimeChange,
   handleEndTimeChange,
   index,
 }: {
-  selectedDayValue: DayofWeek | null;
-  selectedStartTime: string | null;
-  selectedEndTime: string | null;
+  selectedDayValue: DayofWeek;
+  selectedStartTime: string;
+  selectedEndTime: string;
   handleDayChange: (
     e: React.ChangeEvent<HTMLSelectElement>,
     index: number
@@ -45,11 +46,11 @@ function TimeField({
         <select
           id="dayOfWeek"
           name="dayOfWeek"
-          value={selectedDayValue ? selectedDayValue : undefined}
+          value={selectedDayValue}
           onChange={(e) => handleDayChange(e, index)}
           className="w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint"
         >
-          <option value={-1}>Select a day</option>
+          <option value={DayofWeek.NULL}>Select a day</option>
           <option value={DayofWeek.MONDAY}>Monday</option>
           <option value={DayofWeek.TUESDAY}>Tuesday</option>
           <option value={DayofWeek.WEDNESDAY}>Wednesday</option>
@@ -65,7 +66,7 @@ function TimeField({
           id="startTime"
           name="startTime"
           type="time"
-          value={selectedStartTime || undefined}
+          value={selectedStartTime}
           onChange={(e) => handleStartTimeChange(e, index)}
           className="w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint"
         ></input>
@@ -76,7 +77,7 @@ function TimeField({
           id="endTime"
           name="endTime"
           type="time"
-          value={selectedEndTime || undefined}
+          value={selectedEndTime}
           onChange={(e) => handleEndTimeChange(e, index)}
           className="w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint"
         ></input>
