@@ -18,14 +18,16 @@ import about, { AboutPage } from "./components/aboutPage";
 // @ts-ignore
 import contact, { ContactPage } from "./components/contactPage";
 import AdminCreate from "./components/auth/AdminSignupForm";
-import { Signup } from "./components/auth/Signup";
+// @ts-ignore
+import SignupFirstForm from "./components/auth/SignupFirstForm";
+import SignupFlow from "./components/auth/SignupFlow"; 
 // App functionality with routing
 function App() {
   return (
     <div>
       <Routes>
-        <Route path="/" element={<Signup />} />
-        <Route path="/signup" element={<SignIn />} />
+        <Route path="/" element={<SignIn/>} />
+        <Route path="/signup-first-form" element={<SignupFlow />} />
         <Route path="/signup/admin" element={<AdminCreate />} />
         <Route element={<Layout />}>
           <Route path="/volunteer-profile" element={<VolunteerProfile />} />
