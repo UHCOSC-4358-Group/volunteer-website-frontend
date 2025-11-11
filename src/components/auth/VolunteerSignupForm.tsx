@@ -132,9 +132,9 @@ function VolunteerSignupForm({
         <h2 className="text-2xl font-bold mb-1 text-center text-navy">
           Volunteer Profile Information
         </h2>
-        <p className="text-sm text-center mb-8 text-teal">* required field</p>
+        <p className="text-sm text-center mb-8 text-teal">required: </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <FormInput
             type="text"
             name="firstName"

@@ -89,7 +89,8 @@ export function FormInput({
   }
 
   return (
-    <div className={`col-span-${colspan}`}>
+    // Span two on bigger screens
+    <div className={`md:col-span-${colspan}`}>
       <label htmlFor={name} className="block font-semibold mb-1 text-navy">
         {labelText}
         <span className="text-[#ef4444]">{required && " *"}</span>
