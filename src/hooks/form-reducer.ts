@@ -6,8 +6,8 @@ enum FormReducerActionTypes {
   CHANGE_ROLE = "CHANGE_ROLE",
   APPEND_ARRAY = "APPEND_ARRAY",
   DEDUCT_ARRAY = "DEDUCT_ARRAY",
-  ADD_TIME_TO_ARRAY = "ADD_OBJ_TO_ARRAY",
-  EDIT_ARRAY_OBJ = "EDIT_ARRAY",
+  ADD_TIME_TO_ARRAY = "ADD_TIME_TO_ARRAY",
+  EDIT_ARRAY_OBJ = "EDIT_ARRAY_OBJ",
   CLEAR_FORM = "CLEAR_FORM",
 }
 
@@ -57,7 +57,6 @@ function formReducerClosure<T>(initialFormState: T) {
         );
 
         return { ...state, [deduct_field]: deducted_array } as T;
-      // Expects payload in the string form: index property value
       case FormReducerActionTypes.ADD_TIME_TO_ARRAY:
         const add_field = action.field as keyof typeof state;
         const add_current_field = state[add_field];
@@ -75,7 +74,8 @@ function formReducerClosure<T>(initialFormState: T) {
           },
         ];
 
-        return { ...state, [add_field]: new_appended_array };
+        return { ...state, [add_field]: new_appended_array } as T;
+      // Expects payload in the string form: index property value
       case FormReducerActionTypes.EDIT_ARRAY_OBJ:
         const edit_field = action.field as keyof typeof state;
         const edit_current_field = state[edit_field];
