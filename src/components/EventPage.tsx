@@ -1,4 +1,3 @@
-// src/components/EventsPage.tsx
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import EventCard from "./EventCard";
