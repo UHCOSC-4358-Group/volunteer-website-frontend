@@ -19,7 +19,7 @@ const SignupFlow = () => {
     dateOfBirth: "",
     city: "",
     state: "",
-    country: "",
+    country: "United States",
     address: "",
     zipCode: "",
     skills: [],
@@ -62,7 +62,7 @@ const SignupFlow = () => {
 
     const handleNewAvailabilityAddition = () => {
         const newTimeSlot: TimeAvailable = {
-        dayOfWeek: "",
+        dayOfWeek: 0,
         startTime: "", 
         endTime: ""
         };
@@ -75,9 +75,12 @@ const SignupFlow = () => {
 
   const handleDayChange = (e: React.ChangeEvent<HTMLSelectElement>, index: number) => {
     const newAvailability = [...formData.availability];
-    newAvailability[index] = { ...newAvailability[index], day: e.target.value };
-    setFormData(prev => ({ ...prev, availability: newAvailability }));
-  };
+        newAvailability[index] = { 
+            ...newAvailability[index], 
+            dayOfWeek: Number(e.target.value) // Convert string to number since DayofWeek is an enum
+        };
+        setFormData(prev => ({ ...prev, availability: newAvailability }));
+    };
 
   const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const newAvailability = [...formData.availability];
