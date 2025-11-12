@@ -31,12 +31,57 @@ function EventsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
 
-  // Load events from localStorage
+  // Function to check if an event date has passed
+  const isEventExpired = (eventDate: string, eventTime: string): boolean => {
+    const now = new Date();
+    const eventDateTime = new Date(`${eventDate}T${eventTime}`);
+    return eventDateTime < now;
+  };
+
+  // Function to clean up expired events
+  const cleanupExpiredEvents = (eventsList: Event[]): Event[] => {
+    const activeEvents = eventsList.filter(event => !isEventExpired(event.date, event.time));
+    
+    // If any events were removed, update localStorage
+    if (activeEvents.length !== eventsList.length) {
+      const expiredCount = eventsList.length - activeEvents.length;
+      console.log(`Removed ${expiredCount} expired event(s)`);
+      
+      // Also clean up from signed-up events
+      const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
+      const activeSignedUpEvents = signedUpEvents.filter(
+        (event: Event) => !isEventExpired(event.date, event.time)
+      );
+      localStorage.setItem('signedUpEvents', JSON.stringify(activeSignedUpEvents));
+    }
+    
+    return activeEvents;
+  };
+
+  // Load events from localStorage and clean up expired ones
   useEffect(() => {
     const savedEvents = localStorage.getItem('events');
     if (savedEvents) {
-      setEvents(JSON.parse(savedEvents));
+      const parsedEvents = JSON.parse(savedEvents);
+      const activeEvents = cleanupExpiredEvents(parsedEvents);
+      setEvents(activeEvents);
+      localStorage.setItem('events', JSON.stringify(activeEvents));
     }
+  }, []);
+
+  // Periodic cleanup - check every minute for expired events
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setEvents(currentEvents => {
+        const activeEvents = cleanupExpiredEvents(currentEvents);
+        if (activeEvents.length !== currentEvents.length) {
+          localStorage.setItem('events', JSON.stringify(activeEvents));
+        }
+        return activeEvents;
+      });
+    }, 60000); // Check every 60 seconds
+
+    return () => clearInterval(intervalId);
   }, []);
 
   // Filter events based on search and type
@@ -53,6 +98,16 @@ function EventsPage() {
     
     if (!eventToSignUp) {
       alert("Event not found!");
+      return;
+    }
+
+    // Check if event has expired
+    if (isEventExpired(eventToSignUp.date, eventToSignUp.time)) {
+      alert("This event has already passed and is no longer available.");
+      // Clean up the expired event
+      const activeEvents = events.filter(e => e.id !== eventId);
+      setEvents(activeEvents);
+      localStorage.setItem('events', JSON.stringify(activeEvents));
       return;
     }
 
@@ -90,12 +145,26 @@ function EventsPage() {
       ...signedUpEvents, 
       { 
         ...eventToSignUp, 
-        volunteersSignedUp: eventToSignUp.volunteersSignedUp + 1  // Use the updated count
+        volunteersSignedUp: eventToSignUp.volunteersSignedUp + 1
       }
     ];
     localStorage.setItem('signedUpEvents', JSON.stringify(updatedSignedUpEvents));
     
     alert(`Successfully signed up for ${eventToSignUp.name}!`);
+  };
+
+  const handleRemoveEvent = (eventId: number) => {
+    // Remove event from main events list
+    const updatedEvents = events.filter(event => event.id !== eventId);
+    setEvents(updatedEvents);
+    localStorage.setItem('events', JSON.stringify(updatedEvents));
+
+    // Also remove from signed-up events
+    const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
+    const updatedSignedUpEvents = signedUpEvents.filter((event: Event) => event.id !== eventId);
+    localStorage.setItem('signedUpEvents', JSON.stringify(updatedSignedUpEvents));
+
+    alert("Event removed successfully!");
   };
 
   return (
@@ -189,6 +258,9 @@ function EventsPage() {
                 key={event.id} 
                 event={event}
                 onSignUp={() => handleSignUp(event.id)}
+                showEditButton={true} // Set based on user role (organizer/admin)
+                showRemoveButton={true} // Set based on user role (organizer/admin)
+                onRemove={handleRemoveEvent}
               />
             ))}
           </div>
@@ -201,7 +273,7 @@ function EventsPage() {
               <div className="text-2xl font-bold" style={{ color: PALETTE.navy }}>
                 {events.length}
               </div>
-              <div style={{ color: PALETTE.teal }}>Total Events</div>
+              <div style={{ color: PALETTE.teal }}>Active Events</div>
             </div>
             <div>
               <div className="text-2xl font-bold" style={{ color: PALETTE.navy }}>

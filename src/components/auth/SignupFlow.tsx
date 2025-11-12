@@ -1,4 +1,5 @@
 import { useState, FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import SignupFirstForm from "./SignupFirstForm";
 import SignupSecondForm from "./SignupSecondForm";
 import { UserCreateForm, TimeAvailable} from "./Signup";
@@ -6,6 +7,7 @@ import { UserCreateForm, TimeAvailable} from "./Signup";
 // Import TimeAvailable from Signup instead of redefining it
 
 const SignupFlow = () => {
+  const navigate = useNavigate(); 
   const [formStep, setFormStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<UserCreateForm>({
@@ -101,8 +103,18 @@ const SignupFlow = () => {
     try {
       // Add your form submission logic here
       console.log('Submitting form data:', formData);
-      // Make API call to submit the form
       
+      // Make API call to submit the form
+      // const response = await fetch('/api/signup', {
+      //   method: 'POST',
+      //   body: JSON.stringify(formData)
+      // });
+      
+      if (formData.role === "volunteer") {
+        navigate("/volunteer-profile"); // Redirect volunteers to their profile
+      } else {
+        navigate("/OrgDashboard"); // Redirect organizers to their dashboard
+      }
       // If successful, you might want to redirect
       // navigate('/success-page');
     } catch (error) {
