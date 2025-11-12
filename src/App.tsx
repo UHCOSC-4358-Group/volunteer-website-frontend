@@ -17,18 +17,14 @@ import UserEventSite from "./components/userEventSite";
 import about, { AboutPage } from "./components/aboutPage";
 // @ts-ignore
 import contact, { ContactPage } from "./components/contactPage";
-import AdminCreate from "./components/auth/AdminSignupForm";
-// @ts-ignore
-import SignupFirstForm from "./components/auth/SignupFirstForm";
-import SignupFlow from "./components/auth/SignupFlow"; 
+import { Signup } from "./components/auth/Signup";
 // App functionality with routing
 function App() {
   return (
     <div>
       <Routes>
-        <Route path="/" element={<SignIn/>} />
-        <Route path="/signup-first-form" element={<SignupFlow />} />
-        <Route path="/signup/admin" element={<AdminCreate />} />
+        <Route path="/" element={<SignIn />} />
+        <Route path="/signup" element={<Signup />} />
         <Route element={<Layout />}>
           <Route path="/volunteer-profile" element={<VolunteerProfile />} />
           <Route path="/volunteer-history" element={<VolunteerHistory />} />

@@ -150,7 +150,7 @@ const SignIn: React.FC = () => {
                 onClick={() => setRole("volunteer")}
                 disabled={loading}
               >
-                Volunter
+                Volunteer
               </button>
               <button
                 type="button"
@@ -233,8 +233,8 @@ const SignIn: React.FC = () => {
               <span
                 className="font-bold cursor-pointer"
                 onClick={() => {
-                  console.log('Navigate to signup clicked');
-                  navigate("/signup-first-form");
+                  console.log("Navigate to signup clicked");
+                  navigate("/signup");
                 }}
               >
                 Sign up
@@ -249,4 +249,3 @@ const SignIn: React.FC = () => {
 
 // Export this component so it can be used in App.tsx or elsewhere
 export default SignIn;
-
