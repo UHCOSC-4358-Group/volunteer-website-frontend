@@ -64,10 +64,36 @@ const initialUserCreateForm: UserCreateForm = {
   availability: [],
 };
 
+interface UserCreateErrorsSecondForm {
+  firstName: string;
+  lastName: string;
+  description: string;
+  dateOfBirth: string;
+  city: string;
+  state: string;
+  country: string;
+  address: string;
+  zipCode: string;
+  skills: string;
+  availability: string;
+}
+
+const initialUserCreateErrorsSecondForm: UserCreateErrorsSecondForm = {
+  firstName: "",
+  lastName: "",
+  description: "",
+  dateOfBirth: "",
+  city: "",
+  state: "",
+  country: "",
+  address: "",
+  zipCode: "",
+  skills: "",
+  availability: "",
+};
+
 // These apply to both admins and volunteers
-const UserCreateTemplate = {
-  email: zod.email("Email format is not valid."),
-  password: zod.string().min(8, "Password must be 8 characters or longer"),
+const UserCreateSecondFormTemplate = {
   firstName: zod.string().min(1, "First name cannot be empty.").toUpperCase(),
   lastName: zod.string().min(1, "Last name cannot be empty.").toUpperCase(),
   description: zod
@@ -87,12 +113,12 @@ const UserCreateTemplate = {
 };
 
 const AdminCreateZodForm = zod.object({
-  ...UserCreateTemplate,
+  ...UserCreateSecondFormTemplate,
 });
 
 // Here we add some additional fields for skills and availability
 const VolunteerCreateZodForm = zod.object({
-  ...UserCreateTemplate,
+  ...UserCreateSecondFormTemplate,
   skills: zod.array(zod.string()),
   availability: zod.array(
     zod.object({
@@ -107,8 +133,6 @@ export const Signup: React.FC = () => {
   const [formStep, setFormStep] = useState(0);
   const { formData, dispatch } = useFormReducer(initialUserCreateForm);
   const [loading, setLoading] = useState<boolean>(false);
-  const [errors, setErrors] = useState<string[]>([]);
-
   const handleTextChange = (
     e:
       | ChangeEvent<HTMLInputElement>
@@ -211,9 +235,7 @@ export const Signup: React.FC = () => {
 
     const parsedValue = zod.safeParse(AdminCreateZodForm, adminData);
 
-    if (parsedValue.success) {
-      console.log("SUCCESS");
-    } else {
+    if (!parsedValue.success) {
       console.log("FAILURE");
       const errors = parsedValue.error;
       console.log(errors);
@@ -242,7 +264,6 @@ export const Signup: React.FC = () => {
 
   const multiStepFormList = [
     <SignupFirstForm
-      errors={errors}
       handleTextChange={handleTextChange}
       formData={formData}
       setFormStep={setFormStep}
