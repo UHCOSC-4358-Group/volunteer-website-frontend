@@ -10,13 +10,18 @@ const initialUserCreateErrorsFirstForm = {
   confirmPassword: "",
 };
 
-const UserCreateFirstFormTemplate = zod.object({
-  email: zod
-    .email("Email format is not valid. (example@example.com)")
-    .nonempty("Email cannot be empty."),
-  password: zod.string().min(8, "Password must be 8 characters or longer."),
-  confirmPassword: zod.string(),
-});
+const UserCreateFirstFormTemplate = zod
+  .object({
+    email: zod
+      .email("Email format is not valid. (example@example.com)")
+      .nonempty("Email cannot be empty."),
+    password: zod.string().min(8, "Password must be 8 characters or longer."),
+    confirmPassword: zod.string(),
+  })
+  .refine((formData) => formData.password === formData.confirmPassword, {
+    error: "Second password is not the same as first.",
+    path: ["confirmPassword"],
+  });
 
 const SignupFirstForm = ({
   handleTextChange,
@@ -33,24 +38,17 @@ const SignupFirstForm = ({
   const [errors, setErrors] = useState(initialUserCreateErrorsFirstForm);
 
   const handleContinue = () => {
-    const parsedValue = zod.safeParse(UserCreateFirstFormTemplate, formData);
+    const parsedValue = UserCreateFirstFormTemplate.safeParse(formData);
 
     if (!parsedValue.success) {
+      console.log(parsedValue.error);
+
       const errorObj = { email: "", password: "", confirmPassword: "" };
       for (const issue of parsedValue.error.issues) {
         errorObj[issue.path[0] as keyof typeof errorObj] = issue.message;
       }
       setErrors({
         ...errorObj,
-      });
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setErrors({
-        // Since we passed the rest of the validation, we can clear the rest of the errors
-        ...initialUserCreateErrorsFirstForm,
-        confirmPassword: "Password is not the same.",
       });
       return;
     }

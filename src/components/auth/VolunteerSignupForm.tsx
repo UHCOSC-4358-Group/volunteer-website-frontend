@@ -14,21 +14,7 @@ enum DayofWeek {
   SUNDAY = 7,
 }
 
-interface VolunteerErrorsSecondForm {
-  firstName: string;
-  lastName: string;
-  description: string;
-  dateOfBirth: string;
-  city: string;
-  state: string;
-  country: string;
-  address: string;
-  zipCode: string;
-  skills: string;
-  availability: string;
-}
-
-const initialVolunteerCreateErrorsSecondForm: VolunteerErrorsSecondForm = {
+const initialVolunteerCreateErrorsSecondForm = {
   firstName: "",
   lastName: "",
   description: "",
@@ -53,6 +39,16 @@ const getAge = (date: Date) => {
   return age;
 };
 
+const getTime = (timeString: string) => {
+  const [startHours, startMinutes] = timeString
+    .split(":")
+    .map((v) => Number(v));
+  const time = new Date();
+  time.setHours(startHours, startMinutes);
+
+  return time;
+};
+
 // These apply to both admins and volunteers
 const VolunteerCreateSecondFormTemplate = zod.object({
   firstName: zod.string().min(1, "First name cannot be empty.").toUpperCase(),
@@ -62,10 +58,7 @@ const VolunteerCreateSecondFormTemplate = zod.object({
     .min(5, "Description must be 5 characters or longer."),
   dateOfBirth: zod.coerce
     .date("Date cannot be empty.")
-    .refine((date) => getAge(date) >= 18, {
-      error: "User must be 18 years or older.",
-      path: ["dateOfBirth"],
-    }),
+    .refine((date) => getAge(date) >= 18, "User must be 18 years or older"),
   country: zod.string().min(1, "Country cannot be empty."),
   state: zod.string().min(1, "State cannot be empty."),
   city: zod.string().min(1, "City cannot be empty."),
@@ -78,11 +71,16 @@ const VolunteerCreateSecondFormTemplate = zod.object({
     ),
   skills: zod.array(zod.string()),
   availability: zod.array(
-    zod.object({
-      dayOfWeek: zod.number().gt(0, "You must select a day"),
-      startTime: zod.string().nonempty("You must select a start time"),
-      endTime: zod.string().nonempty("You must select an end time"),
-    })
+    zod
+      .object({
+        dayOfWeek: zod.number().gt(0, "You must select a day"),
+        startTime: zod.string().nonempty("You must select a start time"),
+        endTime: zod.string().nonempty("You must select an end time"),
+      })
+      .refine((avail) => getTime(avail.startTime) < getTime(avail.endTime), {
+        error: "Start time cannot be before or on end time.",
+        path: ["availability"],
+      })
   ),
 });
 
@@ -218,28 +216,6 @@ function VolunteerSignupForm({
       }
       setErrors({ ...issuesObj });
       return;
-    }
-
-    for (const slot of formData.availability) {
-      const [startHours, startMinutes] = slot.startTime
-        .split(":")
-        .map((v) => Number(v));
-      const startTimeDate = new Date();
-      startTimeDate.setHours(startHours, startMinutes);
-
-      const [endHours, endMinutes] = slot.endTime
-        .split(":")
-        .map((v) => Number(v));
-      const endTimeDate = new Date();
-      endTimeDate.setHours(endHours, endMinutes);
-
-      if (startTimeDate >= endTimeDate) {
-        setErrors({
-          ...initialVolunteerCreateErrorsSecondForm,
-          availability: "Start time cannot be before or on end time.",
-        });
-        return;
-      }
     }
 
     handleSubmit(e);
