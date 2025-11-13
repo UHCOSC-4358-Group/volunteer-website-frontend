@@ -8,6 +8,7 @@ export function FormInput({
   type,
   name,
   labelText,
+  error,
   colspan = 1,
   currentValue,
   placeholder = "",
@@ -18,6 +19,7 @@ export function FormInput({
   type: string;
   name: string;
   labelText: string;
+  error: string;
   colspan?: number;
   currentValue: string;
   placeholder?: string;
@@ -41,13 +43,9 @@ export function FormInput({
         disabled={disabled}
         onChange={handler}
         value={currentValue}
-        className={`w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint ${
+        className={`w-full p-2 rounded border focus:outline-none focus:ring-2 ${
           disabled && "bg-gray-200"
-        }`}
-        // style={{
-        //   borderColor: errors.state ? "#ef4444" : PALETTE.mint,
-        //   borderWidth: errors.state ? "2px" : "1px",
-        // }}
+        } ${error ? "border-red-600 border-2" : "border-mint border-1"}`}
       >
         <SelectStateOptions />
       </select>
@@ -61,9 +59,9 @@ export function FormInput({
         disabled={disabled}
         onChange={handler}
         value={currentValue}
-        className={`w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint ${
+        className={`w-full p-2 rounded border focus:outline-none focus:ring-2 ${
           disabled && "bg-gray-200"
-        }`}
+        } ${error ? "border-red-600 border-2" : "border-mint border-1"}`}
       ></textarea>
     );
   } else {
@@ -77,13 +75,9 @@ export function FormInput({
         onChange={handler}
         value={currentValue}
         placeholder={placeholder}
-        className={`w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint ${
+        className={`w-full p-2 rounded border focus:outline-none focus:ring-2 ${
           disabled && "bg-gray-200"
-        }`}
-        // style={{
-        //   borderColor: error ? "#ef4444" : PALETTE.mint,
-        //   borderWidth: error ? "2px" : "1px",
-        // }}
+        } ${error ? "border-red-600 border-2" : "border-mint border-1"}`}
       />
     );
   }
@@ -96,7 +90,7 @@ export function FormInput({
         <span className="text-[#ef4444]">{required && " *"}</span>
       </label>
       {inputComponent}
-      {/* <p className="text-sm mt-1 text-[#ef4444]">{"hello"}</p> */}
+      {error && <p className="text-sm mt-1 text-red-600">{error}</p>}
     </div>
   );
 }

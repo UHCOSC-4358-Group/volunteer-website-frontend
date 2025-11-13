@@ -1,4 +1,5 @@
 import React, { FormEvent, useState } from "react";
+import * as zod from "zod";
 import { FormInput } from "./SignupSecondForm";
 import type { UserCreateForm } from "./Signup";
 
@@ -13,6 +14,62 @@ enum DayofWeek {
   SUNDAY = 7,
 }
 
+interface VolunteerErrorsSecondForm {
+  firstName: string;
+  lastName: string;
+  description: string;
+  dateOfBirth: string;
+  city: string;
+  state: string;
+  country: string;
+  address: string;
+  zipCode: string;
+  skills: string;
+  availability: string;
+}
+
+const initialVolunteerCreateErrorsSecondForm: VolunteerErrorsSecondForm = {
+  firstName: "",
+  lastName: "",
+  description: "",
+  dateOfBirth: "",
+  city: "",
+  state: "",
+  country: "",
+  address: "",
+  zipCode: "",
+  skills: "",
+  availability: "",
+};
+
+// These apply to both admins and volunteers
+const VolunteerCreateSecondFormTemplate = zod.object({
+  firstName: zod.string().min(1, "First name cannot be empty.").toUpperCase(),
+  lastName: zod.string().min(1, "Last name cannot be empty.").toUpperCase(),
+  description: zod
+    .string()
+    .min(5, "Description must be 5 characters or longer."),
+  dateOfBirth: zod.coerce.date("Date cannot be empty."),
+  country: zod.string().min(1, "Country cannot be empty."),
+  state: zod.string().min(1, "State cannot be empty."),
+  city: zod.string().min(1, "City cannot be empty."),
+  address: zod.string().min(1, "Address cannot be empty"),
+  zipCode: zod
+    .string()
+    .regex(
+      /^\d{5}(?:[-\s]\d{4})?$/,
+      "Zip code is not correct format. (12345[-6789])"
+    ),
+  skills: zod.array(zod.string()),
+  availability: zod.array(
+    zod.object({
+      dayOfWeek: zod.number().gt(0, "You must select a day"),
+      startTime: zod.string().nonempty("You must select a start time"),
+      endTime: zod.string().nonempty("You must select an end time"),
+    })
+  ),
+});
+
 function TimeField({
   selectedDayValue,
   selectedStartTime,
@@ -20,6 +77,7 @@ function TimeField({
   handleDayChange,
   handleStartTimeChange,
   handleEndTimeChange,
+  error,
   index,
 }: {
   selectedDayValue: DayofWeek;
@@ -37,6 +95,7 @@ function TimeField({
     e: React.ChangeEvent<HTMLInputElement>,
     index: number
   ) => void;
+  error: string;
   index: number;
 }) {
   return (
@@ -48,7 +107,9 @@ function TimeField({
           name="dayOfWeek"
           value={selectedDayValue}
           onChange={(e) => handleDayChange(e, index)}
-          className="w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint"
+          className={`w-full p-2 rounded border focus:outline-none focus:ring-2 ${
+            error ? "border-red-600 border-2" : "border-mint border-1"
+          }`}
         >
           <option value={DayofWeek.NULL}>Select a day</option>
           <option value={DayofWeek.MONDAY}>Monday</option>
@@ -68,7 +129,9 @@ function TimeField({
           type="time"
           value={selectedStartTime}
           onChange={(e) => handleStartTimeChange(e, index)}
-          className="w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint"
+          className={`w-full p-2 rounded border focus:outline-none focus:ring-2 ${
+            error ? "border-red-600 border-2" : "border-mint border-1"
+          }`}
         ></input>
       </div>
       <div>
@@ -79,7 +142,9 @@ function TimeField({
           type="time"
           value={selectedEndTime}
           onChange={(e) => handleEndTimeChange(e, index)}
-          className="w-full p-2 rounded border focus:outline-none focus:ring-2 border-mint"
+          className={`w-full p-2 rounded border focus:outline-none focus:ring-2 ${
+            error ? "border-red-600 border-2" : "border-mint border-1"
+          }`}
         ></input>
       </div>
     </div>
@@ -125,7 +190,47 @@ function VolunteerSignupForm({
   formData: UserCreateForm;
   setFormStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
+  const handleValidation = (e: FormEvent) => {
+    e.preventDefault();
+
+    const parsedValue = VolunteerCreateSecondFormTemplate.safeParse(formData);
+
+    if (!parsedValue.success) {
+      const issuesObj = structuredClone(initialVolunteerCreateErrorsSecondForm);
+      for (const issue of parsedValue.error.issues) {
+        issuesObj[issue.path[0] as keyof typeof issuesObj] = issue.message;
+      }
+      setErrors({ ...issuesObj });
+      return;
+    }
+
+    for (const slot of formData.availability) {
+      const [startHours, startMinutes] = slot.startTime
+        .split(":")
+        .map((v) => Number(v));
+      const startTimeDate = new Date();
+      startTimeDate.setHours(startHours, startMinutes);
+
+      const [endHours, endMinutes] = slot.endTime
+        .split(":")
+        .map((v) => Number(v));
+      const endTimeDate = new Date();
+      endTimeDate.setHours(endHours, endMinutes);
+
+      if (startTimeDate >= endTimeDate) {
+        setErrors({
+          ...initialVolunteerCreateErrorsSecondForm,
+          availability: "Start time cannot be before or on end time.",
+        });
+        return;
+      }
+    }
+
+    handleSubmit(e);
+  };
+
   const [newSkill, setNewSkill] = useState("");
+  const [errors, setErrors] = useState(initialVolunteerCreateErrorsSecondForm);
 
   return (
     <div className="bg-sand min-h-screen flex justify-center items-center p-6">
@@ -141,6 +246,7 @@ function VolunteerSignupForm({
             name="firstName"
             currentValue={formData.firstName}
             labelText="First Name:"
+            error={errors.firstName}
             required
             handler={handleTextChange}
           />
@@ -149,6 +255,7 @@ function VolunteerSignupForm({
             name="lastName"
             currentValue={formData.lastName}
             labelText="Last Name:"
+            error={errors.lastName}
             required
             handler={handleTextChange}
           />
@@ -157,6 +264,7 @@ function VolunteerSignupForm({
             name="dateOfBirth"
             currentValue={formData.dateOfBirth}
             labelText="Date of Birth:"
+            error={errors.dateOfBirth}
             required
             handler={handleTextChange}
           />
@@ -166,6 +274,7 @@ function VolunteerSignupForm({
             name="address"
             currentValue={formData.address}
             labelText="Address:"
+            error={errors.address}
             required
             handler={handleTextChange}
           />
@@ -175,6 +284,7 @@ function VolunteerSignupForm({
             name="country"
             currentValue={formData.country}
             labelText="Country:"
+            error={errors.country}
             required
             disabled
             handler={handleTextChange}
@@ -185,6 +295,7 @@ function VolunteerSignupForm({
             name="state"
             currentValue={formData.state}
             labelText="State:"
+            error={errors.state}
             required
             handler={handleTextChange}
           />
@@ -194,6 +305,7 @@ function VolunteerSignupForm({
             name="city"
             currentValue={formData.city}
             labelText="City:"
+            error={errors.city}
             required
             handler={handleTextChange}
           />
@@ -203,6 +315,7 @@ function VolunteerSignupForm({
             name="zipCode"
             currentValue={formData.zipCode}
             labelText="Zip Code:"
+            error={errors.zipCode}
             required
             handler={handleTextChange}
           />
@@ -211,6 +324,7 @@ function VolunteerSignupForm({
             name="description"
             currentValue={formData.description}
             labelText="Add a profile description:"
+            error={errors.description}
             colspan={2}
             required
             handler={handleTextChange}
@@ -225,12 +339,11 @@ function VolunteerSignupForm({
             <select
               id="skills"
               multiple
-              // onChange={(e) => }
-              className="w-full p-2 rounded border h-28 focus:outline-none focus:ring-2 border-mint"
-              // style={{
-              //   borderColor: errors.skills ? "#ef4444" : PALETTE.mint,
-              //   borderWidth: errors.skills ? "2px" : "1px",
-              // }}
+              className={`w-full p-2 rounded border focus:outline-none focus:ring-2 ${
+                errors.skills
+                  ? "border-red-600 border-2"
+                  : "border-mint border-1"
+              }`}
             >
               {formData.skills.map((skill, idx) => {
                 return (
@@ -249,11 +362,9 @@ function VolunteerSignupForm({
             <p className="text-xs mt-1 text-teal">
               Hold Shift and left click a skill to delete it.
             </p>
-            {/* {errors.skills && (
-              <p className="text-xs mt-1" style={{ color: "#ef4444" }}>
-                {errors.skills}
-              </p>
-            )} */}
+            {errors.skills && (
+              <p className="text-sm mt-1 text-red-600">{errors.skills}</p>
+            )}
           </div>
 
           <div className="md:col-span-2">
@@ -281,7 +392,7 @@ function VolunteerSignupForm({
           </div>
 
           <div className="md:col-span-2">
-            <fieldset className="text-navy font-semibold">
+            <fieldset className="text-navy font-semibold flex flex-col gap-2">
               <legend className="p-4">Indicate your availability:</legend>
               {formData.availability.map((timeAvailable, idx) => {
                 return (
@@ -292,12 +403,16 @@ function VolunteerSignupForm({
                     handleDayChange={handleDayChange}
                     handleStartTimeChange={handleStartTimeChange}
                     handleEndTimeChange={handleEndTimeChange}
+                    error={errors.availability}
                     index={idx}
                     key={idx}
                   />
                 );
               })}
             </fieldset>
+            {errors.availability && (
+              <p className="text-sm mt-1 text-red-600">{errors.availability}</p>
+            )}
             <button
               type="button"
               className="bg-teal text-white mt-2 font-semibold py-2 px-4 rounded-full shadow-md transition-transform hover:scale-105"
@@ -317,8 +432,8 @@ function VolunteerSignupForm({
             Go Back
           </button>
           <button
-            type="submit"
-            onSubmit={handleSubmit}
+            type="button"
+            onClick={handleValidation}
             disabled={loading}
             className="bg-teal text-white font-semibold py-2 px-8 rounded-full shadow-md transition-transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
           >

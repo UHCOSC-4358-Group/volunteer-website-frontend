@@ -214,32 +214,11 @@ export const Signup: React.FC = () => {
   const registerVolunteer = async (userData: UserCreateForm) => {
     console.log("Registering user:", userData);
 
-    const parsedValue = zod.safeParse(VolunteerCreateZodForm, userData);
-
-    if (parsedValue.success) {
-      console.log("SUCCESS");
-    } else {
-      console.log("FAILURE");
-      const errors = parsedValue.error;
-      console.log(errors);
-    }
-
     return Promise.resolve();
   };
 
   const registerAdmin = async (userData: UserCreateForm) => {
     console.log("Registering user:", userData);
-
-    // Removes skills and availability from userData, creating the admin object
-    const { skills, availability, ...adminData } = userData;
-
-    const parsedValue = zod.safeParse(AdminCreateZodForm, adminData);
-
-    if (!parsedValue.success) {
-      console.log("FAILURE");
-      const errors = parsedValue.error;
-      console.log(errors);
-    }
 
     return Promise.resolve();
   };
@@ -284,5 +263,5 @@ export const Signup: React.FC = () => {
     />,
   ];
 
-  return <form onSubmit={handleSubmit}>{multiStepFormList[formStep]}</form>;
+  return <form>{multiStepFormList[formStep]}</form>;
 };

@@ -33,15 +33,7 @@ const SignupFirstForm = ({
   const [errors, setErrors] = useState(initialUserCreateErrorsFirstForm);
 
   const handleContinue = () => {
-    // Clear errors to start off with
-    //@ts-ignore
-    const { email, password, confirmPassword, ..._ } = formData;
-
-    const parsedValue = zod.safeParse(UserCreateFirstFormTemplate, {
-      email,
-      password,
-      confirmPassword,
-    });
+    const parsedValue = zod.safeParse(UserCreateFirstFormTemplate, formData);
 
     if (!parsedValue.success) {
       const errorObj = { email: "", password: "", confirmPassword: "" };
@@ -105,6 +97,7 @@ const SignupFirstForm = ({
                 placeholder="Email Address"
                 value={formData.email}
                 onChange={handleTextChange}
+                autoComplete="email"
                 required
               />
             </div>
@@ -119,6 +112,7 @@ const SignupFirstForm = ({
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleTextChange}
+                autoComplete="new-password"
                 required
               />
             </div>
@@ -135,6 +129,7 @@ const SignupFirstForm = ({
                 placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleTextChange}
+                autoComplete="new-password"
                 required
               />
             </div>
