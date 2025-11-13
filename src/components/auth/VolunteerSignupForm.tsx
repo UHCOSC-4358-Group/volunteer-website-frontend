@@ -42,6 +42,17 @@ const initialVolunteerCreateErrorsSecondForm: VolunteerErrorsSecondForm = {
   availability: "",
 };
 
+const getAge = (date: Date) => {
+  const today = new Date();
+  let age = today.getFullYear() - date.getFullYear();
+  const month = today.getMonth() - date.getMonth();
+  if (month < 0 || (month === 0 && today.getDate() < date.getDate())) {
+    age--;
+  }
+
+  return age;
+};
+
 // These apply to both admins and volunteers
 const VolunteerCreateSecondFormTemplate = zod.object({
   firstName: zod.string().min(1, "First name cannot be empty.").toUpperCase(),
@@ -49,7 +60,12 @@ const VolunteerCreateSecondFormTemplate = zod.object({
   description: zod
     .string()
     .min(5, "Description must be 5 characters or longer."),
-  dateOfBirth: zod.coerce.date("Date cannot be empty."),
+  dateOfBirth: zod.coerce
+    .date("Date cannot be empty.")
+    .refine((date) => getAge(date) >= 18, {
+      error: "User must be 18 years or older.",
+      path: ["dateOfBirth"],
+    }),
   country: zod.string().min(1, "Country cannot be empty."),
   state: zod.string().min(1, "State cannot be empty."),
   city: zod.string().min(1, "City cannot be empty."),
