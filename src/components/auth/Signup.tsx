@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import SignupFirstForm from "./SignupFirstForm";
 import SignupSecondForm from "./SignupSecondForm";
-import * as zod from "zod";
 
 import {
   useFormReducer,
@@ -63,71 +62,6 @@ const initialUserCreateForm: UserCreateForm = {
   skills: [],
   availability: [],
 };
-
-interface UserCreateErrorsSecondForm {
-  firstName: string;
-  lastName: string;
-  description: string;
-  dateOfBirth: string;
-  city: string;
-  state: string;
-  country: string;
-  address: string;
-  zipCode: string;
-  skills: string;
-  availability: string;
-}
-
-const initialUserCreateErrorsSecondForm: UserCreateErrorsSecondForm = {
-  firstName: "",
-  lastName: "",
-  description: "",
-  dateOfBirth: "",
-  city: "",
-  state: "",
-  country: "",
-  address: "",
-  zipCode: "",
-  skills: "",
-  availability: "",
-};
-
-// These apply to both admins and volunteers
-const UserCreateSecondFormTemplate = {
-  firstName: zod.string().min(1, "First name cannot be empty.").toUpperCase(),
-  lastName: zod.string().min(1, "Last name cannot be empty.").toUpperCase(),
-  description: zod
-    .string()
-    .min(5, "Description must be 5 characters or longer."),
-  dateOfBirth: zod.coerce.date("Date cannot be empty."),
-  country: zod.string().min(1, "Country cannot be empty."),
-  state: zod.string().min(1, "State cannot be empty."),
-  city: zod.string().min(1, "City cannot be empty."),
-  address: zod.string().min(1, "Address cannot be empty"),
-  zipCode: zod
-    .string()
-    .regex(
-      /^\d{5}(?:[-\s]\d{4})?$/,
-      "Zip code is not correct format. (12345[-6789])"
-    ),
-};
-
-const AdminCreateZodForm = zod.object({
-  ...UserCreateSecondFormTemplate,
-});
-
-// Here we add some additional fields for skills and availability
-const VolunteerCreateZodForm = zod.object({
-  ...UserCreateSecondFormTemplate,
-  skills: zod.array(zod.string()),
-  availability: zod.array(
-    zod.object({
-      dayOfWeek: zod.number().gt(0, "You must select a day"),
-      startTime: zod.string(),
-      endTime: zod.string(),
-    })
-  ),
-});
 
 export const Signup: React.FC = () => {
   const [formStep, setFormStep] = useState(0);
