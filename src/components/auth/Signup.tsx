@@ -312,6 +312,10 @@ export const Signup = () => {
       body: formObj,
     });
 
+    const content = await response.json();
+
+    console.log(content);
+
     return Promise.resolve();
   };
 
@@ -325,7 +329,9 @@ export const Signup = () => {
       body: formObj,
     });
 
-    console.log(response);
+    const content = await response.json();
+
+    console.log(content);
 
     return Promise.resolve();
   };

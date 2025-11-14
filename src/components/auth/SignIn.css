@@ -50,6 +50,18 @@
   text-align: center;
 }
 
+.auth-error {
+  padding: 1rem 0rem;
+  margin: 1rem 0rem;
+  background-color: rgb(255, 89, 89);
+  border: 2px solid var(--color-rose-500);
+  border-radius: 1rem;
+  color: white;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 900;
+}
+
 /* Form styling */
 .auth-form {
   display: flex;

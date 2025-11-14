@@ -22,20 +22,16 @@ import "./SignIn.css";
 interface FormData {
   email: string;
   password: string;
-  confirmPassword?: string; // optional field (only used in registration)
 }
 
 // Our main Auth component (functional React component with TypeScript)
 const SignIn: React.FC = () => {
-  // State to track whether user is on Register page or Login page
-  const [isRegister, setIsRegister] = useState<boolean>(false);
   const [role, setRole] = useState<"volunteer" | "organizer">("volunteer");
 
   // State to store form input values (email, password, confirmPassword)
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
-    confirmPassword: "",
   });
 
   // State for loading and errors
@@ -53,27 +49,41 @@ const SignIn: React.FC = () => {
     if (error) setError("");
   };
 
-  // Mock registration function - replace with your actual API call
-  const registerUser = async (userData: FormData): Promise<void> => {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  // Mock login function - replace with your actual API call
+  const loginVolunteer = async (userData: FormData): Promise<void> => {
+    const baseURL = import.meta.env.VITE_APP_BACKEND_URL as string;
 
-    // Add your actual registration logic here
-    console.log("Registering user:", userData);
+    const response = await fetch(`${baseURL}/auth/vol/login`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userData),
+    });
+
+    const content = await response.json();
+
+    console.log(content);
 
     // For demo purposes, always succeed. In real app, check response
     return Promise.resolve();
   };
 
-  // Mock login function - replace with your actual API call
-  const loginUser = async (userData: FormData): Promise<void> => {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const loginAdmin = async (userData: FormData): Promise<void> => {
+    const baseURL = import.meta.env.VITE_APP_BACKEND_URL as string;
 
-    // Add your actual login logic here
-    console.log("Logging in user:", userData);
+    const response = await fetch(`${baseURL}/auth/org/login`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(userData),
+    });
 
-    // For demo purposes, always succeed. In real app, check response
+    const content = await response.json();
+
     return Promise.resolve();
   };
 
@@ -85,28 +95,10 @@ const SignIn: React.FC = () => {
     setError("");
 
     try {
-      if (formData.password.length < 6) {
-        throw new Error("Password must be at least 6 characters long");
-      }
-
-      if (isRegister) {
-        // Registration logic
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error("Passwords do not match");
-        }
-
-        await registerUser(formData);
-        console.log("Registration successful:", formData);
-
-        // Redirect to volunteer profile after successful registration
-        navigate("/Profile");
+      if (role === "volunteer") {
+        await loginVolunteer(formData);
       } else {
-        // Login logic
-        await loginUser(formData);
-        console.log("Login successful:", formData);
-
-        // Redirect to home page after successful login
-        navigate("/volunteer-profile"); //
+        await loginAdmin(formData);
       }
     } catch (err) {
       // Handle errors from API or validation
@@ -124,51 +116,34 @@ const SignIn: React.FC = () => {
     <div className="auth-container">
       {/* Card (glass-like box in the middle) */}
       <div className="auth-card">
-        {/* Title changes depending on whether it's login or register */}
-        <h2 className="auth-title">
-          {isRegister ? "Create Account" : "Welcome Back"}
-        </h2>
-
+        <h2 className="auth-title">Welcome back</h2>
         {/* Subtitle under the title */}
-        <p className="auth-subtitle">
-          {isRegister ? "Register to get started" : "Sign in to your account"}
-        </p>
-
-        {/* Error message display */}
-        {error && <div className="error-message">{error}</div>}
-
-        {/* Role Selection */}
-        {isRegister && (
-          <div className="role-selection">
-            <p className="register-text">Registering as:</p>
-            <div className="role-options">
-              <button
-                type="button"
-                className={`role-button ${
-                  role === "volunteer" ? "active" : ""
-                }`}
-                onClick={() => setRole("volunteer")}
-                disabled={loading}
-              >
-                Volunteer
-              </button>
-              <button
-                type="button"
-                className={`role-button ${
-                  role === "organizer" ? "active" : ""
-                }`}
-                onClick={() => setRole("organizer")}
-                disabled={loading}
-              >
-                Organizer
-              </button>
-            </div>
+        <p className="auth-subtitle">Sign in to your account</p>
+        {error && <p className="auth-error">{error}</p>}
+        <div className="role-selection">
+          <p className="register-text">Signing in as:</p>
+          <div className="role-options">
+            <button
+              type="button"
+              className={`role-button ${role === "volunteer" ? "active" : ""}`}
+              onClick={() => setRole("volunteer")}
+              disabled={loading}
+            >
+              Volunteer
+            </button>
+            <button
+              type="button"
+              className={`role-button ${role === "organizer" ? "active" : ""}`}
+              onClick={() => setRole("organizer")}
+              disabled={loading}
+            >
+              Organizer
+            </button>
           </div>
-        )}
+        </div>
 
         {/* Form section */}
         <form onSubmit={handleSubmit} className="auth-form">
-          {/* Email input with user icon */}
           <div className="input-group">
             <FaUser className="input-icon" />
             <input
@@ -196,56 +171,29 @@ const SignIn: React.FC = () => {
             />
           </div>
 
-          {/* Confirm password field only shows up on Register page */}
-          {isRegister && (
-            <div className="input-group">
-              <FaLock className="input-icon" />
-              <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                disabled={loading}
-              />
-            </div>
-          )}
-
-          {/* Submit button */}
           <button type="submit" className="auth-button" disabled={loading}>
-            {loading ? "Processing..." : isRegister ? "Register" : "Sign In"}
+            {loading ? "Processing..." : "Sign In"}
           </button>
         </form>
 
         {/* Footer link to toggle between Register and Login */}
         <div className="auth-footer">
-          {isRegister ? (
-            <p>
-              Already have an account?{" "}
-              <span onClick={() => !loading && setIsRegister(false)}>
-                Sign In
-              </span>
-            </p>
-          ) : (
-            <p className="text-center text-navy font-medium">
-              Don't have an account?&nbsp;
-              <span
-                className="font-bold cursor-pointer"
-                onClick={() => {
-                  console.log("Navigate to signup clicked");
-                  navigate("/signup");
-                }}
-              >
-                Sign up
-              </span>
-            </p>
-          )}
+          <p className="text-center text-navy font-medium">
+            Don't have an account?&nbsp;
+            <span
+              className="font-bold cursor-pointer"
+              onClick={() => {
+                console.log("Navigate to signup clicked");
+                navigate("/signup");
+              }}
+            >
+              Sign up
+            </span>
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-// Export this component so it can be used in App.tsx or elsewhere
 export default SignIn;
