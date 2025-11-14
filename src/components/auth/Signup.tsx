@@ -67,7 +67,123 @@ const initialUserCreateForm: UserCreateForm = {
   availability: [],
 };
 
-export const Signup: React.FC = () => {
+//admin_str
+// {
+//   "email": "user@example.com",
+//   "password": "stringst",
+//   "first_name": "string",
+//   "last_name": "string",
+//   "description": "stringstri",
+//   "date_of_birth": "2025-11-14"
+// }
+//image
+
+//vol_str
+// {
+//   "skills": [
+//     "string"
+//   ],
+//   "date_of_birth": "2025-11-14",
+//   "available_times": [
+//     {
+//       "day": 1,
+//       "end": "12:00",
+//       "start": "09:00"
+//     },
+//     {
+//       "day": 5,
+//       "end": "16:30",
+//       "start": "13:00"
+//     }
+//   ],
+//   "last_name": "string",
+//   "location": "string",
+//   "first_name": "string",
+//   "password": "stringst",
+//   "email": "user@example.com",
+//   "description": "stringstri"
+// }
+//image
+
+interface DynamicObject {
+  [key: string]: any;
+}
+
+const volunteerIntoFormData = (userObj: UserCreateForm) => {
+  const formData = new FormData();
+
+  const {
+    availability,
+    imagePreview,
+    image,
+    zipCode,
+    address,
+    country,
+    state,
+    city,
+    confirmPassword,
+    role,
+    ...volunteerObj
+  } = userObj;
+
+  const location = `${address}, ${city}, ${state} ${zipCode}, ${country}`;
+
+  const JSONRequestBody: DynamicObject = {
+    first_name: volunteerObj.firstName,
+    last_name: volunteerObj.lastName,
+    email: volunteerObj.email,
+    password: volunteerObj.password,
+    description: volunteerObj.description,
+    date_of_birth: volunteerObj.dateOfBirth,
+    location: location,
+    skills: volunteerObj.skills,
+    available_times: availability.map((time) => ({
+      day: time.dayOfWeek,
+      start: time.startTime,
+      end: time.endTime,
+    })),
+  };
+
+  formData.set("vol_str", JSON.stringify(JSONRequestBody));
+
+  if (image) {
+    formData.set("image", image);
+  }
+
+  return formData;
+};
+
+const adminIntoFormData = (userObj: UserCreateForm) => {
+  const formData = new FormData();
+
+  const {
+    firstName,
+    lastName,
+    email,
+    password,
+    description,
+    dateOfBirth,
+    image,
+  } = userObj;
+
+  const JSONRequestBody = {
+    first_name: firstName,
+    last_name: lastName,
+    email,
+    password,
+    description,
+    date_of_birth: dateOfBirth,
+  };
+
+  formData.set("admin_str", JSON.stringify(JSONRequestBody));
+  if (image) {
+    formData.set("image", image);
+  }
+
+  return formData;
+};
+
+export const Signup = () => {
   const [formStep, setFormStep] = useState(0);
   const { formData, dispatch } = useFormReducer(initialUserCreateForm);
   const [loading, setLoading] = useState<boolean>(false);
@@ -186,18 +302,30 @@ export const Signup: React.FC = () => {
     });
   };
 
-  const registerVolunteer = async (volunteerData: UserCreateForm) => {
-    console.log("Registering user:", volunteerData);
+  const registerVolunteer = async (userData: UserCreateForm) => {
+    const formObj = volunteerIntoFormData(userData);
+
+    const baseURL = import.meta.env.VITE_APP_BACKEND_URL;
+
+    const response = await fetch(`${baseURL}/auth/vol/signup`, {
+      method: "POST",
+      body: formObj,
+    });
 
     return Promise.resolve();
   };
 
   const registerAdmin = async (userData: UserCreateForm) => {
-    console.log("Registering user:", userData);
+    const formObj = adminIntoFormData(userData);
 
-    const { skills, availability, ...adminData } = userData;
+    const baseURL = import.meta.env.VITE_APP_BACKEND_URL;
 
-    console.log(adminData);
+    const response = await fetch(`${baseURL}/auth/org/signup`, {
+      method: "POST",
+      body: formObj,
+    });
+
+    console.log(response);
 
     return Promise.resolve();
   };
