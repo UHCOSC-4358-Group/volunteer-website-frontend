@@ -3,6 +3,8 @@ import { UserCreateForm } from "../components/auth/Signup";
 
 enum FormReducerActionTypes {
   CHANGE_TEXT = "CHANGE_TEXT",
+  UPLOAD_FILE = "UPLOAD_FILE",
+  CLEAR_FILE = "CLEAR_FILE",
   CHANGE_ROLE = "CHANGE_ROLE",
   APPEND_ARRAY = "APPEND_ARRAY",
   DEDUCT_ARRAY = "DEDUCT_ARRAY",
@@ -20,13 +22,29 @@ function isUserCreateForm(form: unknown): form is UserCreateForm {
 function formReducerClosure<T>(initialFormState: T) {
   return function formReducerFunction<T>(
     state: T,
-    action: { type: FormReducerActionTypes; field: string; payload: string }
+    action: {
+      type: FormReducerActionTypes;
+      field: string;
+      payload: string;
+      file?: File | null;
+    }
   ) {
     switch (action.type) {
       case FormReducerActionTypes.CHANGE_TEXT:
         return {
           ...state,
           [action.field]: action.payload,
+        };
+      case FormReducerActionTypes.UPLOAD_FILE:
+        return {
+          ...state,
+          [action.field]: action.file,
+        };
+      case FormReducerActionTypes.CLEAR_FILE:
+        return {
+          ...state,
+          image: null,
+          imagePreview: "",
         };
       case FormReducerActionTypes.CLEAR_FORM:
         return { ...initialFormState };

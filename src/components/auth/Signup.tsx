@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import SignupFirstForm from "./SignupFirstForm";
 import SignupSecondForm from "./SignupSecondForm";
@@ -41,6 +41,8 @@ export interface UserCreateForm {
   country: string;
   address: string;
   zipCode: string;
+  image: File | null;
+  imagePreview: string;
   skills: string[];
   availability: TimeAvailable[];
 }
@@ -59,6 +61,8 @@ const initialUserCreateForm: UserCreateForm = {
   country: "United States",
   address: "",
   zipCode: "",
+  image: null,
+  imagePreview: "",
   skills: [],
   availability: [],
 };
@@ -67,6 +71,16 @@ export const Signup: React.FC = () => {
   const [formStep, setFormStep] = useState(0);
   const { formData, dispatch } = useFormReducer(initialUserCreateForm);
   const [loading, setLoading] = useState<boolean>(false);
+
+  // For deleting images once they change
+  useEffect(() => {
+    return () => {
+      if (formData.imagePreview) {
+        URL.revokeObjectURL(formData.imagePreview);
+      }
+    };
+  }, [formData.imagePreview]);
+
   const handleTextChange = (
     e:
       | ChangeEvent<HTMLInputElement>
@@ -77,6 +91,33 @@ export const Signup: React.FC = () => {
       type: FormReducerActionTypes.CHANGE_TEXT,
       field: e.target.name,
       payload: e.target.value,
+    });
+  };
+
+  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null;
+    dispatch({
+      type: FormReducerActionTypes.UPLOAD_FILE,
+      field: e.target.name,
+      payload: "",
+      file,
+    });
+
+    if (file) {
+      const previewURL = URL.createObjectURL(file);
+      dispatch({
+        type: FormReducerActionTypes.CHANGE_TEXT,
+        field: "imagePreview",
+        payload: previewURL,
+      });
+    }
+  };
+
+  const handleFileRemoval = () => {
+    dispatch({
+      type: FormReducerActionTypes.CLEAR_FILE,
+      field: "",
+      payload: "",
     });
   };
 
@@ -145,14 +186,18 @@ export const Signup: React.FC = () => {
     });
   };
 
-  const registerVolunteer = async (userData: UserCreateForm) => {
-    console.log("Registering user:", userData);
+  const registerVolunteer = async (volunteerData: UserCreateForm) => {
+    console.log("Registering user:", volunteerData);
 
     return Promise.resolve();
   };
 
   const registerAdmin = async (userData: UserCreateForm) => {
     console.log("Registering user:", userData);
+
+    const { skills, availability, ...adminData } = userData;
+
+    console.log(adminData);
 
     return Promise.resolve();
   };
@@ -186,6 +231,8 @@ export const Signup: React.FC = () => {
       loading={loading}
       handleSubmit={handleSubmit}
       handleTextChange={handleTextChange}
+      handleFileUpload={handleFileUpload}
+      handleFileRemoval={handleFileRemoval}
       handleSkillsAddition={handleSkillAddition}
       handleSkillsDeletion={handleSkillsDeletion}
       handleNewAvailabilityAddition={handleNewAvailabilityAddition}

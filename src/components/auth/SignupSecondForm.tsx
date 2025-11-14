@@ -99,6 +99,8 @@ const SignupSecondForm = ({
   loading,
   handleSubmit,
   handleTextChange,
+  handleFileUpload,
+  handleFileRemoval,
   handleSkillsAddition,
   handleSkillsDeletion,
   handleNewAvailabilityAddition,
@@ -116,6 +118,8 @@ const SignupSecondForm = ({
       | React.ChangeEvent<HTMLSelectElement>
       | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
+  handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFileRemoval: () => void;
   handleSkillsAddition: (newSkill: string) => void;
   handleSkillsDeletion: (skillToDelete: string) => void;
   handleNewAvailabilityAddition: () => void;
@@ -142,6 +146,8 @@ const SignupSecondForm = ({
         handleSkillsAddition={handleSkillsAddition}
         handleSkillsDeletion={handleSkillsDeletion}
         handleTextChange={handleTextChange}
+        handleFileUpload={handleFileUpload}
+        handleFileRemoval={handleFileRemoval}
         handleNewAvailabilityAddition={handleNewAvailabilityAddition}
         handleDayChange={handleDayChange}
         handleStartTimeChange={handleStartTimeChange}
@@ -156,6 +162,8 @@ const SignupSecondForm = ({
         loading={loading}
         handleSubmit={handleSubmit}
         handleTextChange={handleTextChange}
+        handleFileUpload={handleFileUpload}
+        handleFileRemoval={handleFileRemoval}
         formData={formData}
         setFormStep={setFormStep}
       />

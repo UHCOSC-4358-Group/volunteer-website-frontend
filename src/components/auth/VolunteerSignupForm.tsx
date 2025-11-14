@@ -169,6 +169,8 @@ function VolunteerSignupForm({
   loading,
   handleSubmit,
   handleTextChange,
+  handleFileUpload,
+  handleFileRemoval,
   handleSkillsAddition,
   handleSkillsDeletion,
   handleNewAvailabilityAddition,
@@ -186,6 +188,8 @@ function VolunteerSignupForm({
       | React.ChangeEvent<HTMLSelectElement>
       | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
+  handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFileRemoval: () => void;
   handleSkillsAddition: (newSkill: string) => void;
   handleSkillsDeletion: (newSkill: string) => void;
   handleNewAvailabilityAddition: () => void;
@@ -321,12 +325,44 @@ function VolunteerSignupForm({
             required
             handler={handleTextChange}
           />
+          <div className="md:col-span-2 flex flex-col items-center justify-center">
+            <label
+              htmlFor="image"
+              className="text-navy block font-semibold p-2"
+            >
+              Enter your picture:
+            </label>
+            <input
+              type="file"
+              id="image"
+              name="image"
+              accept="image/*"
+              className=""
+              onChange={handleFileUpload}
+            />
+            {formData.imagePreview && (
+              <>
+                <img
+                  src={formData.imagePreview}
+                  alt="Profile picture preview"
+                  className="w-[400px] h-auto m-5 border-navy border-5"
+                />
+                <button
+                  className="bg-teal text-white mt-2 font-semibold py-2 px-4 rounded-full shadow-md transition-transform hover:scale-105"
+                  type="button"
+                  onClick={handleFileRemoval}
+                >
+                  Remove
+                </button>
+              </>
+            )}
+          </div>
           <div className="md:col-span-2">
             <label
               htmlFor="skills"
               className="text-navy block font-semibold mb-1"
             >
-              Skills *
+              Skills:
             </label>
             <select
               id="skills"

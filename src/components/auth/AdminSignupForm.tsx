@@ -53,6 +53,8 @@ const AdminCreateZodForm = zod.object({
 function AdminSignupForm({
   handleSubmit,
   handleTextChange,
+  handleFileUpload,
+  handleFileRemoval,
   formData,
   setFormStep,
 }: {
@@ -64,6 +66,8 @@ function AdminSignupForm({
       | React.ChangeEvent<HTMLSelectElement>
       | React.ChangeEvent<HTMLTextAreaElement>
   ) => void;
+  handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleFileRemoval: () => void;
   formData: UserCreateForm;
   setFormStep: React.Dispatch<React.SetStateAction<number>>;
 }) {
@@ -183,6 +187,38 @@ function AdminSignupForm({
             required
             handler={handleTextChange}
           />
+          <div className="md:col-span-2 flex flex-col items-center justify-center text-sm">
+            <label
+              htmlFor="image"
+              className="text-navy text-lg block font-semibold mb-2"
+            >
+              Enter your picture:
+            </label>
+            <input
+              type="file"
+              id="image"
+              name="image"
+              accept="image/*"
+              className="border"
+              onChange={handleFileUpload}
+            />
+            {formData.imagePreview && (
+              <>
+                <img
+                  src={formData.imagePreview}
+                  alt="Profile picture preview"
+                  className="w-[400px] h-auto m-5 border-navy border-5"
+                />
+                <button
+                  className="bg-teal text-white mt-2 font-semibold py-2 px-4 rounded-full shadow-md transition-transform hover:scale-105"
+                  type="button"
+                  onClick={handleFileRemoval}
+                >
+                  Remove
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="flex justify-around items-center mt-12">
