@@ -1,0 +1,108 @@
+import { createContext, useContext, useReducer, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+
+interface User {
+  id: number;
+  role: "volunteer" | "admin";
+}
+
+interface AuthState {
+  user: User | null;
+  loading: boolean;
+}
+
+export interface AuthContextType extends AuthState {
+  login: (user: User) => void;
+  logout: () => void;
+}
+
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  login: () => {},
+  logout: () => {},
+});
+
+type AuthAction =
+  | { type: "LOGIN"; payload: User }
+  | { type: "LOGOUT" }
+  | { type: "STOP_LOADING" };
+
+function authReducer(state: any, action: AuthAction) {
+  switch (action.type) {
+    case "LOGIN":
+      return {
+        ...state,
+        user: action.payload,
+      };
+    case "LOGOUT":
+      return { ...state, user: null };
+    case "STOP_LOADING":
+      return {
+        ...state,
+        loading: false,
+      };
+    default:
+      return state;
+  }
+}
+
+const initialState: AuthState = {
+  user: null,
+  loading: true,
+};
+
+export const AuthProvider = () => {
+  const [state, dispatch] = useReducer(authReducer, initialState);
+  const navigate = useNavigate();
+
+  const login = (user: User) => {
+    dispatch({ type: "LOGIN", payload: user });
+    if (user.role === "volunteer") {
+      navigate("/volunteer-profile");
+    } else {
+      navigate("OrgDashboard");
+    }
+  };
+
+  const logout = () => {
+    dispatch({ type: "LOGOUT" });
+  };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const BaseURL = import.meta.env.VITE_APP_BACKEND_URL;
+        const response = await fetch(`${BaseURL}/auth`, {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+
+        if (response.ok) {
+          const { id, user_type } = await response.json();
+          const user: User = {
+            id,
+            role: user_type,
+          };
+          login(user);
+        } else {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("❌ Auth check failed", error);
+      } finally {
+        dispatch({ type: "STOP_LOADING" });
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  return { ...state, login, logout };
+};
+
+export const useAuth = () => {
+  return useContext(AuthContext);
+};

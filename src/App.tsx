@@ -1,3 +1,4 @@
+import { Routes, Route, Navigate } from "react-router-dom";
 import VolunteerProfile from "./components/VolunteerProfile";
 import SignIn from "./components/auth/SignIn";
 // @ts-ignore
@@ -9,7 +10,6 @@ import CreateEvent from "./components/CreateEvent";
 import EventsPage from "./components/EventPage";
 // @ts-ignore
 import Matching from "./components/Matching";
-import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./components/Layout";
 // @ts-ignore
 import UserEventSite from "./components/userEventSite";
@@ -18,13 +18,22 @@ import about, { AboutPage } from "./components/aboutPage";
 // @ts-ignore
 import contact, { ContactPage } from "./components/contactPage";
 import { Signup } from "./components/auth/Signup";
+import {
+  AuthContext,
+  AuthProvider,
+  AuthContextType,
+} from "./hooks/user-context";
+import { UnauthorizedPage } from "./components/auth/UnauthorizedPage";
 // App functionality with routing
 function App() {
+  const authState: AuthContextType = AuthProvider();
+
   return (
-    <div>
+    <AuthContext.Provider value={authState}>
       <Routes>
         <Route path="/" element={<SignIn />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route element={<Layout />}>
           <Route path="/volunteer-profile" element={<VolunteerProfile />} />
           <Route path="/volunteer-history" element={<VolunteerHistory />} />
@@ -41,7 +50,7 @@ function App() {
           element={<Navigate to="/volunteer-profile" replace />}
         />
       </Routes>
-    </div>
+    </AuthContext.Provider>
   );
 }
 export default App;

@@ -14,6 +14,8 @@ import { FaUser, FaLock } from "react-icons/fa";
 // Import useNavigate hook from react-router-dom for navigation
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../hooks/user-context";
+
 // Import our external CSS file for styling
 import "./SignIn.css";
 
@@ -26,6 +28,8 @@ interface FormData {
 
 // Our main Auth component (functional React component with TypeScript)
 const SignIn: React.FC = () => {
+  const { login } = useAuth();
+
   const [role, setRole] = useState<"volunteer" | "organizer">("volunteer");
 
   // State to store form input values (email, password, confirmPassword)
@@ -55,8 +59,8 @@ const SignIn: React.FC = () => {
 
     const response = await fetch(`${baseURL}/auth/vol/login`, {
       method: "POST",
+      credentials: "include",
       headers: {
-        Accept: "application/json",
         "Content-Type": "application/json",
       },
       body: JSON.stringify(userData),
@@ -64,10 +68,16 @@ const SignIn: React.FC = () => {
 
     const content = await response.json();
 
-    console.log(content);
+    if (response.ok) {
+      const user = {
+        id: content.id,
+        role: content.user_type,
+      };
 
-    // For demo purposes, always succeed. In real app, check response
-    return Promise.resolve();
+      login(user);
+    } else {
+      throw Error(content.message);
+    }
   };
 
   const loginAdmin = async (userData: FormData): Promise<void> => {
@@ -75,8 +85,8 @@ const SignIn: React.FC = () => {
 
     const response = await fetch(`${baseURL}/auth/org/login`, {
       method: "POST",
+      credentials: "include",
       headers: {
-        Accept: "application/json",
         "Content-Type": "application/json",
       },
       body: JSON.stringify(userData),
@@ -84,7 +94,16 @@ const SignIn: React.FC = () => {
 
     const content = await response.json();
 
-    return Promise.resolve();
+    if (response.ok) {
+      const user = {
+        id: content.id,
+        role: content.user_type,
+      };
+
+      login(user);
+    } else {
+      throw Error(content.message);
+    }
   };
 
   // Handle form submission
@@ -183,7 +202,6 @@ const SignIn: React.FC = () => {
             <span
               className="font-bold cursor-pointer"
               onClick={() => {
-                console.log("Navigate to signup clicked");
                 navigate("/signup");
               }}
             >
