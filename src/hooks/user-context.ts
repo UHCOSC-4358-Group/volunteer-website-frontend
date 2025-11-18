@@ -65,8 +65,26 @@ export const AuthProvider = () => {
     }
   };
 
-  const logout = () => {
-    dispatch({ type: "LOGOUT" });
+  const logout = async () => {
+    try {
+      const BaseURL = import.meta.env.VITE_APP_BACKEND_URL;
+      const response = await fetch(`${BaseURL}/auth/logout`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
+      });
+
+      if (response.ok) {
+        dispatch({ type: "LOGOUT" });
+        navigate("/");
+      } else {
+        throw Error("Could not log out user.");
+      }
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   useEffect(() => {

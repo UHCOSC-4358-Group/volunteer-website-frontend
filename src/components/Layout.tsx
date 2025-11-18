@@ -1,8 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Link } from "react-router-dom";
-import {
-  VolunteerSVG,
-} from "../assets/Svg";
+import { useAuth } from "../hooks/user-context";
+import { VolunteerSVG } from "../assets/Svg";
 
 const PALETTE = {
   navy: "#22577A",
@@ -13,8 +12,11 @@ const PALETTE = {
 };
 
 export default function Layout() {
+  const { user, logout } = useAuth();
   const link = ({ isActive }: { isActive: boolean }) =>
-    `px-2 py-1 rounded ${isActive ? "bg-white text-[#22577A]" : "hover:underline"}`;
+    `px-2 py-1 rounded ${
+      isActive ? "bg-white text-[#22577A]" : "hover:underline"
+    }`;
 
   return (
     <div>
@@ -27,34 +29,37 @@ export default function Layout() {
             <div className="text-4xl font-thin">Volunteer</div>
           </div>
           <nav className="p-4 bg-[#38A3A5] text-white flex gap-4">
-            <NavLink to="/volunteer-profile" className={link}>User View</NavLink>
-            <NavLink to="/volunteer-history" className={link}>History</NavLink>
-            <NavLink to="/OrgDashboard" className={link}>Dashboard</NavLink>
-            <NavLink to="/event-page" className={link}>Events</NavLink> {/* Here we can see all the events, and create one also */}
+            <NavLink to="/volunteer-profile" className={link}>
+              User View
+            </NavLink>
+            <NavLink to="/volunteer-history" className={link}>
+              History
+            </NavLink>
+            <NavLink to="/OrgDashboard" className={link}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/event-page" className={link}>
+              Events
+            </NavLink>{" "}
+            {/* Here we can see all the events, and create one also */}
           </nav>
           <div className="hidden sm:flex gap-4 items-center pr-6">
-            <Link
-              to="/"
-              className="hover:opacity-80 transition-opacity"
+            <a
+              onClick={logout}
+              className="hover:opacity-80 transition-opacity cursor-pointer"
             >
               Logout
-            </Link>
-            <Link
-              to="/about"
-              className="hover:opacity-80 transition-opacity"
-            >
+            </a>
+            <Link to="/about" className="hover:opacity-80 transition-opacity">
               About
             </Link>
-            <Link
-              to="/contact"
-              className="hover:opacity-80 transition-opacity"
-            >
+            <Link to="/contact" className="hover:opacity-80 transition-opacity">
               Contact
             </Link>
           </div>
         </nav>
       </header>
-      <main className="p-6">
+      <main>
         <Outlet />
       </main>
     </div>
