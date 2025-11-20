@@ -13,6 +13,15 @@ const PALETTE = {
 
 export default function Layout() {
   const { user, logout } = useAuth();
+  
+  // Determine user roles (backend returns "admin" for organizers)
+  const isAdmin = user?.role === "admin";
+  const displayName =
+    user?.name ||
+    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
+    user?.email ||
+    "Volunteer";
+
   const link = ({ isActive }: { isActive: boolean }) =>
     `px-2 py-1 rounded ${
       isActive ? "bg-white text-[#22577A]" : "hover:underline"
@@ -28,28 +37,47 @@ export default function Layout() {
             </div>
             <div className="text-4xl font-thin">Volunteer</div>
           </div>
-          <nav className="p-4 bg-[#38A3A5] text-white flex gap-4">
-            <NavLink to="/volunteer-profile" className={link}>
-              User View
-            </NavLink>
-            <NavLink to="/volunteer-history" className={link}>
-              History
-            </NavLink>
-            <NavLink to="/OrgDashboard" className={link}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/event-page" className={link}>
-              Events
-            </NavLink>{" "}
-            {/* Here we can see all the events, and create one also */}
-          </nav>
+          
+          {/* Main Navigation Links - Only show for Admin/Organizer */}
+          {isAdmin && (
+            <nav className="p-4 bg-[#38A3A5] text-white flex gap-4">
+              <NavLink to="/volunteer-profile" className={link}>
+                User View
+              </NavLink>
+              <NavLink to="/volunteer-history" className={link}>
+                History
+              </NavLink>
+              <NavLink to="/OrgDashboard" className={link}>
+                Dashboard
+              </NavLink>
+              <NavLink to="/event-page" className={link}>
+                Events
+              </NavLink>
+            </nav>
+          )}
+
+          {/* Right-side links - Show for all users */}
           <div className="hidden sm:flex gap-4 items-center pr-6">
-            <a
-              onClick={logout}
-              className="hover:opacity-80 transition-opacity cursor-pointer"
-            >
-              Logout
-            </a>
+            {user ? (
+              <>
+                <span className="text-sm">Hello, {displayName}</span>
+                <a
+                  onClick={logout}
+                  className="hover:opacity-80 transition-opacity cursor-pointer"
+                >
+                  Logout
+                </a>
+              </>
+            ) : (
+              <>
+                <Link to="/" className="hover:opacity-80 transition-opacity">
+                  Login
+                </Link>
+                <Link to="/signup" className="hover:opacity-80 transition-opacity">
+                  Sign Up
+                </Link>
+              </>
+            )}
             <Link to="/about" className="hover:opacity-80 transition-opacity">
               About
             </Link>

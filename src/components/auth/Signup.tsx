@@ -322,8 +322,6 @@ export const Signup = () => {
   const registerAdmin = async (userData: UserCreateForm) => {
     const formObj = adminIntoFormData(userData);
 
-    const baseURL = import.meta.env.VITE_APP_BACKEND_URL;
-
     const response = await fetch(`/api/auth/org/signup`, {
       method: "POST",
       body: formObj,

@@ -72,6 +72,12 @@ const SignIn: React.FC = () => {
       const user = {
         id: content.id,
         role: content.user_type,
+        first_name: content.first_name,
+        last_name: content.last_name,
+        email: content.email,
+        name:
+          [content.first_name, content.last_name].filter(Boolean).join(" ") ||
+          content.email,
       };
 
       login(user);
@@ -98,6 +104,12 @@ const SignIn: React.FC = () => {
       const user = {
         id: content.id,
         role: content.user_type,
+        first_name: content.first_name,
+        last_name: content.last_name,
+        email: content.email,
+        name:
+          [content.first_name, content.last_name].filter(Boolean).join(" ") ||
+          content.email,
       };
 
       login(user);
