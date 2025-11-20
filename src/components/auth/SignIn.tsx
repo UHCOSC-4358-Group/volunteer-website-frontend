@@ -55,9 +55,9 @@ const SignIn: React.FC = () => {
 
   // Mock login function - replace with your actual API call
   const loginVolunteer = async (userData: FormData): Promise<void> => {
-    const baseURL = import.meta.env.VITE_APP_BACKEND_URL as string;
+    // const baseURL = import.meta.env.VITE_APP_BACKEND_URL as string;
 
-    const response = await fetch(`${baseURL}/auth/vol/login`, {
+    const response = await fetch("/api/auth/vol/login", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -81,9 +81,9 @@ const SignIn: React.FC = () => {
   };
 
   const loginAdmin = async (userData: FormData): Promise<void> => {
-    const baseURL = import.meta.env.VITE_APP_BACKEND_URL as string;
+    // const baseURL = import.meta.env.VITE_APP_BACKEND_URL as string;
 
-    const response = await fetch(`${baseURL}/auth/org/login`, {
+    const response = await fetch("/api/auth/org/login", {
       method: "POST",
       credentials: "include",
       headers: {
