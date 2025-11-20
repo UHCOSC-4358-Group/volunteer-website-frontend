@@ -305,9 +305,9 @@ export const Signup = () => {
   const registerVolunteer = async (userData: UserCreateForm) => {
     const formObj = volunteerIntoFormData(userData);
 
-    const baseURL = import.meta.env.VITE_APP_BACKEND_URL;
+    // const baseURL = import.meta.env.VITE_APP_BACKEND_URL;
 
-    const response = await fetch(`${baseURL}/auth/vol/signup`, {
+    const response = await fetch(`/api/auth/vol/signup`, {
       method: "POST",
       body: formObj,
     });
@@ -324,7 +324,7 @@ export const Signup = () => {
 
     const baseURL = import.meta.env.VITE_APP_BACKEND_URL;
 
-    const response = await fetch(`${baseURL}/auth/org/signup`, {
+    const response = await fetch(`/api/auth/org/signup`, {
       method: "POST",
       body: formObj,
     });

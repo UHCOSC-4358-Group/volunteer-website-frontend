@@ -67,8 +67,8 @@ export const AuthProvider = () => {
 
   const logout = async () => {
     try {
-      const BaseURL = import.meta.env.VITE_APP_BACKEND_URL;
-      const response = await fetch(`${BaseURL}/auth/logout`, {
+      // const BaseURL = import.meta.env.VITE_APP_BACKEND_URL;
+      const response = await fetch("/api/auth/logout", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -90,8 +90,8 @@ export const AuthProvider = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const BaseURL = import.meta.env.VITE_APP_BACKEND_URL;
-        const response = await fetch(`${BaseURL}/auth`, {
+        // const BaseURL = import.meta.env.VITE_APP_BACKEND_URL;
+        const response = await fetch("/api/auth", {
           credentials: "include",
           headers: {
             Accept: "application/json",
