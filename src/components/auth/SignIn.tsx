@@ -82,7 +82,7 @@ const SignIn: React.FC = () => {
 
       login(user);
     } else {
-      throw Error(content.message);
+      throw Error(content.error.message);
     }
   };
 
@@ -114,7 +114,7 @@ const SignIn: React.FC = () => {
 
       login(user);
     } else {
-      throw Error(content.message);
+      throw Error(content.error.message);
     }
   };
 
@@ -128,8 +128,10 @@ const SignIn: React.FC = () => {
     try {
       if (role === "volunteer") {
         await loginVolunteer(formData);
+        navigate("/volunteer-profile");
       } else {
         await loginAdmin(formData);
+        navigate("/OrgDashboard");
       }
     } catch (err) {
       // Handle errors from API or validation

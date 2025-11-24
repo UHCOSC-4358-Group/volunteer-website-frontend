@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 import SignupFirstForm from "./SignupFirstForm";
 import SignupSecondForm from "./SignupSecondForm";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../hooks/user-context";
 
 import {
   useFormReducer,
@@ -191,6 +193,8 @@ export const Signup = () => {
   const [formStep, setFormStep] = useState(0);
   const { formData, dispatch } = useFormReducer(initialUserCreateForm);
   const [loading, setLoading] = useState<boolean>(false);
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   // For deleting images once they change
   useEffect(() => {
@@ -318,9 +322,18 @@ export const Signup = () => {
 
     const content = await response.json();
 
-    console.log(content);
+    if (content.error) {
+      throw Error(content.error.message);
+    }
 
-    return Promise.resolve();
+    login({
+      id: content.id,
+      role: content.user_type,
+      first_name: content.first_name,
+      last_name: content.last_name,
+      email: content.email,
+      name: `${content.first_name} ${content.last_name}`,
+    });
   };
 
   const registerAdmin = async (userData: UserCreateForm) => {
@@ -335,7 +348,18 @@ export const Signup = () => {
 
     console.log(content);
 
-    return Promise.resolve();
+    if (content.error) {
+      throw Error(content.error.message);
+    }
+
+    login({
+      id: content.id,
+      role: content.user_type,
+      first_name: content.first_name,
+      last_name: content.last_name,
+      email: content.email,
+      name: `${content.first_name} ${content.last_name}`,
+    });
   };
 
   // Handle form submission
@@ -346,11 +370,13 @@ export const Signup = () => {
     try {
       if (formData.role == "volunteer") {
         await registerVolunteer(formData);
+        navigate("/volunteer-profile");
       } else {
         await registerAdmin(formData);
+        navigate("/OrgDashboard");
       }
     } catch (error) {
-      console.log(error);
+      alert(error);
     } finally {
       setLoading(false);
     }
