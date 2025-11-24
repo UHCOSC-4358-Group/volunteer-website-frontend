@@ -126,8 +126,6 @@ const volunteerIntoFormData = (userObj: UserCreateForm) => {
     ...volunteerObj
   } = userObj;
 
-  const location = `${address}, ${city}, ${state} ${zipCode}, ${country}`;
-
   const JSONRequestBody: DynamicObject = {
     first_name: volunteerObj.firstName,
     last_name: volunteerObj.lastName,
@@ -135,7 +133,13 @@ const volunteerIntoFormData = (userObj: UserCreateForm) => {
     password: volunteerObj.password,
     description: volunteerObj.description,
     date_of_birth: volunteerObj.dateOfBirth,
-    location: location,
+    location: {
+      address,
+      city,
+      state,
+      country,
+      zip_code: zipCode,
+    },
     skills: volunteerObj.skills,
     available_times: availability.map((time) => ({
       day: time.dayOfWeek,
@@ -144,7 +148,7 @@ const volunteerIntoFormData = (userObj: UserCreateForm) => {
     })),
   };
 
-  formData.set("vol_str", JSON.stringify(JSONRequestBody));
+  formData.set("vol_data", JSON.stringify(JSONRequestBody));
 
   if (image) {
     formData.set("image", image);
@@ -175,7 +179,7 @@ const adminIntoFormData = (userObj: UserCreateForm) => {
     date_of_birth: dateOfBirth,
   };
 
-  formData.set("admin_str", JSON.stringify(JSONRequestBody));
+  formData.set("admin_data", JSON.stringify(JSONRequestBody));
   if (image) {
     formData.set("image", image);
   }

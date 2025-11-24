@@ -62,11 +62,6 @@ export const AuthProvider = () => {
 
   const login = (user: User) => {
     dispatch({ type: "LOGIN", payload: user });
-    if (user.role === "volunteer") {
-      navigate("/volunteer-profile");
-    } else {
-      navigate("OrgDashboard");
-    }
   };
 
   const logout = async () => {
