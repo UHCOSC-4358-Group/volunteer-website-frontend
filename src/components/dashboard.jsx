@@ -2,11 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/user-context";
-import {
-  getOrgDashboard,
-  fetchAdminOrgEvents,
-  deleteOrgEvent,
-} from "../services/orgService";
+import { getOrgDashboard, deleteOrgEvent } from "../services/orgService";
 
 // ---- Brand palette ----
 const PALETTE = {
@@ -222,6 +218,7 @@ function DarkModeToggle({ darkMode, onToggle }) {
 export default function OrgDashboard() {
   const { user } = useAuth();
   const adminId = user?.id;
+  const token = user?.token;
 
   const [darkMode, setDarkMode] = useState(false);
 
@@ -252,34 +249,28 @@ export default function OrgDashboard() {
   //  LOAD REAL BACKEND DATA
   // ============================
   useEffect(() => {
-    if (!adminId) return;
+    if (!adminId || !token) return;
 
     const loadDashboard = async () => {
       try {
-        const [profileData, orgEvents] = await Promise.all([
-          getOrgDashboard(adminId),
-          fetchAdminOrgEvents(),
-        ]);
+        const data = await getOrgDashboard(adminId, token);
 
         // Map backend events to dashboard format
-        const mappedEvents = (orgEvents || []).map((evt) => ({
+        const mappedEvents = (data.upcoming_events || []).map(evt => ({
           id: evt.id,
           name: evt.name,
           description: evt.description,
           location: formatLocation(evt.location),
           requiredSkills: Array.isArray(evt.needed_skills)
-            ? evt.needed_skills
+            ? evt.needed_skills.map(s => typeof s === 'string' ? s : s.skill)
             : [],
           urgency: (evt.urgency || "Low").toLowerCase(),
           date: evt.day,
           assigned: evt.assigned ?? 0,
-          capacity: evt.capacity ?? 0,
-          start_time: evt.start_time,
-          end_time: evt.end_time,
         }));
 
         const summaryObj = {
-          orgName: profileData.organization?.name ?? "My Organization",
+          orgName: data.organization?.name ?? "My Organization",
           volunteers: 0, // backend doesn't provide yet
           upcomingEvents: mappedEvents.length,
           pendingMatches: 0, // backend doesn't provide yet
@@ -290,7 +281,7 @@ export default function OrgDashboard() {
         setEvents(mappedEvents);
       } catch (err) {
         console.error("Dashboard load error:", err);
-        setErrorMessage(err?.message || "Failed to load dashboard");
+        setErrorMessage("Failed to load dashboard data");
       } finally {
         setLoadingSummary(false);
         setLoadingEvents(false);
@@ -298,16 +289,49 @@ export default function OrgDashboard() {
     };
 
     loadDashboard();
-  }, [adminId]);
+  }, [adminId, token]);
 
+  // Derived memo for skill filters
   const skillsUniverse = useMemo(() => {
     const set = new Set();
     events.forEach((evt) => evt.requiredSkills.forEach((s) => set.add(s)));
     return ["All", ...Array.from(set)];
   }, [events]);
 
+  // Filter events based on search criteria
+  const filteredEvents = useMemo(() => {
+    return events.filter((evt) => {
+      const matchesSearch =
+        evt.name?.toLowerCase().includes(search.toLowerCase()) ||
+        evt.description?.toLowerCase().includes(search.toLowerCase()) ||
+        evt.location?.toLowerCase().includes(search.toLowerCase());
+
+      const matchesUrgency =
+        urgency === "All" ||
+        (evt.urgency || "").toLowerCase() === urgency.toLowerCase();
+
+      const matchesSkill =
+        skill === "All" ||
+        (Array.isArray(evt.requiredSkills) &&
+          evt.requiredSkills.some(
+            (s) => s.toLowerCase() === skill.toLowerCase()
+          ));
+
+      const matchesFrom = from ? new Date(evt.date) >= new Date(from) : true;
+      const matchesTo = to ? new Date(evt.date) <= new Date(to) : true;
+
+      return (
+        matchesSearch &&
+        matchesUrgency &&
+        matchesSkill &&
+        matchesFrom &&
+        matchesTo
+      );
+    });
+  }, [events, search, urgency, skill, from, to]);
+
   // ==============================================================
-  //                            RENDER
+  //                            HANDLERS
   // ==============================================================
 
   const goCreateEvent = () => navigate("/create-event");
@@ -318,8 +342,10 @@ export default function OrgDashboard() {
   const goUserMode = () => navigate("/volunteer-profile");
 
   const handleDelete = async (eventId) => {
+    if (!window.confirm("Are you sure you want to delete this event?")) return;
+    
     try {
-      await deleteOrgEvent(eventId);
+      await deleteOrgEvent(eventId, token);
       setEvents((prev) => prev.filter((evt) => evt.id !== eventId));
     } catch (err) {
       console.error("Failed to delete event", err);
@@ -327,34 +353,9 @@ export default function OrgDashboard() {
     }
   };
 
-  const filteredEvents = events.filter((evt) => {
-    const matchesSearch =
-      evt.name?.toLowerCase().includes(search.toLowerCase()) ||
-      evt.description?.toLowerCase().includes(search.toLowerCase()) ||
-      evt.location?.toLowerCase().includes(search.toLowerCase());
-
-    const matchesUrgency =
-      urgency === "All" ||
-      (evt.urgency || "").toLowerCase() === urgency.toLowerCase();
-
-    const matchesSkill =
-      skill === "All" ||
-      (Array.isArray(evt.requiredSkills) &&
-        evt.requiredSkills.some(
-          (s) => s.toLowerCase() === skill.toLowerCase()
-        ));
-
-    const matchesFrom = from ? new Date(evt.date) >= new Date(from) : true;
-    const matchesTo = to ? new Date(evt.date) <= new Date(to) : true;
-
-    return (
-      matchesSearch &&
-      matchesUrgency &&
-      matchesSkill &&
-      matchesFrom &&
-      matchesTo
-    );
-  });
+  // ==============================================================
+  //                            RENDER
+  // ==============================================================
 
   return (
     <div
@@ -410,14 +411,18 @@ export default function OrgDashboard() {
         </div>
       </header>
 
+      {/* Error Message */}
+      {errorMessage && (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pt-4">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            {errorMessage}
+          </div>
+        </div>
+      )}
+
       {/* SUMMARY CARDS */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {errorMessage && (
-            <div className="sm:col-span-2 lg:col-span-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {errorMessage}
-            </div>
-          )}
           {loadingSummary ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div
@@ -571,7 +576,7 @@ export default function OrgDashboard() {
                           darkMode ? "text-gray-500" : "text-gray-500"
                         }`}
                       >
-                        No events available.
+                        {events.length === 0 ? "No events available." : "No events match your filters."}
                       </td>
                     </tr>
                   ) : (
@@ -606,8 +611,8 @@ export default function OrgDashboard() {
                           {e.location}
                         </td>
                         <td className="py-3 pr-4 space-x-1">
-                          {e.requiredSkills.map((s) => (
-                            <Badge key={s} tone="blue" darkMode={darkMode}>
+                          {e.requiredSkills.map((s, idx) => (
+                            <Badge key={`${s}-${idx}`} tone="blue" darkMode={darkMode}>
                               {s}
                             </Badge>
                           ))}
