@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import VolunteerProfile from "./components/VolunteerProfile";
 import SignIn from "./components/auth/SignIn";
+import AdminProfile from './components/AdminProfile';
 // @ts-ignore
 import OrgDashboard from "./components/dashboard";
 // @ts-ignore
@@ -36,6 +37,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route element={<Layout />}>
+          <Route path="/admin-profile" element={<AdminProfile />} />
           <Route path="/volunteer-profile" element={<VolunteerProfile />} />
           <Route path="/volunteer-history" element={<VolunteerHistory />} />
           <Route path="/OrgDashboard" element={<OrgDashboard />} />

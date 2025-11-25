@@ -38,6 +38,9 @@ export default function Layout() {
 
             {isAdmin && (
               <>
+                <NavLink to="/admin-profile" className={link}>
+                  Admin Profile
+                </NavLink>
                 <NavLink to="/volunteer-profile" className={link}>
                   User View
                 </NavLink>
