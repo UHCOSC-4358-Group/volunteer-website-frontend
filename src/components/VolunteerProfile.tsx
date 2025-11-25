@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useAuth } from "../hooks/user-context";
 import {
   NotificationModal,
   type Notification,
@@ -50,13 +51,77 @@ const PALETTE = {
 };
 
 // Helper function to format skills from form data
-const formatSkills = (skills: string[]): string[] => {
+const formatSkills = (skills: string[] = []): string[] => {
   return skills.map(skill => {
     return skill
       .split('-')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   });
+};
+
+const formatAddress = (rawProfile: any): string => {
+  const address1 = rawProfile?.address1 ?? rawProfile?.address ?? rawProfile?.location ?? "";
+  const address2 = rawProfile?.address2 ?? "";
+  const city = rawProfile?.city ?? "";
+  const state = rawProfile?.state ?? "";
+  const zip = rawProfile?.zip ?? rawProfile?.zipCode ?? rawProfile?.postalCode ?? "";
+  const country = rawProfile?.country ?? "";
+
+  const firstLine = [address1, address2].filter(Boolean).join(", ");
+  const cityState = [city, state].filter(Boolean).join(", ");
+  const segments = [firstLine, cityState, zip, country]
+    .filter((part) => part && part.trim().length > 0)
+    .map((part) => part.trim());
+
+  return segments.join(", ");
+};
+
+const normalizeJoinDate = (rawDate?: string) => {
+  if (!rawDate) return new Date();
+  const date = new Date(rawDate);
+  return isNaN(date.getTime()) ? new Date() : date;
+};
+
+const buildUserProfile = (rawProfile: any, fallbackAuthUser?: any): UserProfile => {
+  const firstName =
+    rawProfile?.firstName ??
+    rawProfile?.first_name ??
+    fallbackAuthUser?.first_name ??
+    (fallbackAuthUser?.name ? fallbackAuthUser.name.split(" ")[0] : "");
+  const lastName =
+    rawProfile?.lastName ??
+    rawProfile?.last_name ??
+    fallbackAuthUser?.last_name ??
+    (fallbackAuthUser?.name ? fallbackAuthUser.name.split(" ").slice(1).join(" ") : "");
+
+  const name =
+    rawProfile?.fullName ||
+    rawProfile?.name ||
+    [firstName, lastName].filter(Boolean).join(" ").trim() ||
+    fallbackAuthUser?.name ||
+    "User";
+
+  const email = rawProfile?.email ?? fallbackAuthUser?.email ?? "user@example.com";
+  const address = formatAddress(rawProfile);
+  const bio = rawProfile?.preferences ?? rawProfile?.bio ?? rawProfile?.description ?? "";
+  const skills = Array.isArray(rawProfile?.skills)
+    ? formatSkills(rawProfile.skills.map(String))
+    : [];
+  const joinDate = normalizeJoinDate(
+    rawProfile?.joinDate ?? rawProfile?.join_date ?? rawProfile?.created_at
+  ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+  return {
+    name,
+    email,
+    phone: rawProfile?.phone ?? rawProfile?.phoneNumber ?? "",
+    address: address || "-",
+    bio: bio || "No bio provided yet.",
+    skills,
+    joinDate,
+    totalHours: rawProfile?.totalHours ?? 0,
+  };
 };
 
 function Card({
@@ -171,37 +236,32 @@ function EventCard(props: Event) {
 
 function VolunteerProfile() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   const [signedUpEvents, setSignedUpEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [activeEventTab, setActiveEventTab] = useState<'all' | 'upcoming' | 'past'>('all');
 
-  // Load user profile from localStorage
+  // Load user profile from signup data or auth context
   useEffect(() => {
-    const savedProfile = localStorage.getItem('volunteerProfile');
+    const savedProfile = localStorage.getItem("volunteerProfile");
+
     if (savedProfile) {
-      const profileData = JSON.parse(savedProfile);
-      
-      // Transform the profile data to match UserProfile interface
-      const transformedProfile: UserProfile = {
-        name: profileData.fullName || "User",
-        email: "user@example.com", // You may want to add this to Profile form
-        phone: "(555) 000-0000", // You may want to add this to Profile form
-        address: [
-          profileData.address1,
-          profileData.address2,
-          `${profileData.city}, ${profileData.state} ${profileData.zip}`
-        ].filter(Boolean).join(', '),
-        bio: profileData.preferences || "No bio provided yet.",
-        skills: formatSkills(profileData.skills),
-        joinDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-        totalHours: 0 // This will be calculated from events
-      };
-      
-      setUserProfile(transformedProfile);
+      try {
+        const parsedProfile = JSON.parse(savedProfile);
+        setUserProfile(buildUserProfile(parsedProfile, user));
+        return;
+      } catch (error) {
+        console.error("Failed to parse saved volunteer profile", error);
+      }
     }
-  }, []);
+
+    if (user) {
+      setUserProfile(buildUserProfile({}, user));
+    }
+  }, [user]);
 
   // Load signed-up events from localStorage
   useEffect(() => {
@@ -209,23 +269,16 @@ function VolunteerProfile() {
     if (savedEvents) {
       const events = JSON.parse(savedEvents);
       setSignedUpEvents(events);
-      
-      // Update total hours based on events (estimate 3 hours per event)
-      if (userProfile) {
-        setUserProfile({
-          ...userProfile,
-          totalHours: events.length * 3
-        });
-      }
     }
   }, []);
 
-  const filteredEvents = signedUpEvents.filter(event => 
-    event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    event.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    setUserProfile((prev) =>
+      prev ? { ...prev, totalHours: signedUpEvents.length * 3 } : prev
+    );
+  }, [signedUpEvents]);
 
+  // Categorize events
   const upcomingEvents = signedUpEvents.filter(event => {
     const eventDate = new Date(event.date + 'T00:00:00');
     const today = new Date();
@@ -233,10 +286,36 @@ function VolunteerProfile() {
     return eventDate >= today;
   });
 
+  const pastEvents = signedUpEvents.filter(event => {
+    const eventDate = new Date(event.date + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return eventDate < today;
+  });
+
+  // Filter events based on active tab and search term
+  const getFilteredEvents = () => {
+    let eventsToFilter = signedUpEvents;
+    
+    if (activeEventTab === 'upcoming') {
+      eventsToFilter = upcomingEvents;
+    } else if (activeEventTab === 'past') {
+      eventsToFilter = pastEvents;
+    }
+
+    return eventsToFilter.filter(event => 
+      event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const filteredEvents = getFilteredEvents();
+
   const notifications: Notification[] = [
     {
       title: "Event Summary",
-      description: `You have ${upcomingEvents.length} upcoming event${upcomingEvents.length !== 1 ? 's' : ''}`,
+      description: `You have ${upcomingEvents.length} upcoming event${upcomingEvents.length !== 1 ? 's' : ''} and ${pastEvents.length} past event${pastEvents.length !== 1 ? 's' : ''}`,
     },
     ...(upcomingEvents.length > 0 ? [{
       title: "Next Event",
@@ -356,7 +435,7 @@ function VolunteerProfile() {
                 <div className="text-lg" style={{ color: "#64748B" }}>
                   {signedUpEvents.length === 0 
                     ? "Ready to make a difference today?" 
-                    : `You have ${upcomingEvents.length} upcoming event${upcomingEvents.length !== 1 ? 's' : ''}`
+                    : `You have ${upcomingEvents.length} upcoming and ${pastEvents.length} past events`
                   }
                 </div>
               </div>
@@ -402,9 +481,14 @@ function VolunteerProfile() {
               subtitle="Hours volunteered"
             />
             <Card
-              icon={<SearchSVG size={64} />}
+              icon={<CalendarSVG size={64} />}
               title={upcomingEvents.length.toString()}
               subtitle="Upcoming events"
+            />
+            <Card
+              icon={<CalendarSVG size={64} />}
+              title={pastEvents.length.toString()}
+              subtitle="Past events"
             />
           </div>
         </section>
@@ -419,7 +503,7 @@ function VolunteerProfile() {
                 <div className="text-xl" style={{ color: "#64748B" }}>
                   {signedUpEvents.length === 0 
                     ? "Events you've signed up for" 
-                    : `${filteredEvents.length} event${filteredEvents.length !== 1 ? 's' : ''} found`
+                    : `${filteredEvents.length} ${activeEventTab} event${filteredEvents.length !== 1 ? 's' : ''} found`
                   }
                 </div>
               </div>
@@ -448,22 +532,83 @@ function VolunteerProfile() {
                 />
               </div>
             </div>
+
+            {/* Event Type Tabs */}
+            <div className="flex justify-center mt-6 mb-4">
+              <div className="flex rounded-full p-1" style={{ backgroundColor: PALETTE.sand }}>
+                <button
+                  onClick={() => setActiveEventTab('all')}
+                  className={`px-6 py-2 rounded-full transition-all ${
+                    activeEventTab === 'all' 
+                      ? 'bg-white shadow-sm' 
+                      : 'hover:bg-white hover:bg-opacity-50'
+                  }`}
+                  style={{ 
+                    color: activeEventTab === 'all' ? PALETTE.navy : PALETTE.teal,
+                    fontWeight: activeEventTab === 'all' ? '600' : '400'
+                  }}
+                >
+                  All Events ({signedUpEvents.length})
+                </button>
+                <button
+                  onClick={() => setActiveEventTab('upcoming')}
+                  className={`px-6 py-2 rounded-full transition-all ${
+                    activeEventTab === 'upcoming' 
+                      ? 'bg-white shadow-sm' 
+                      : 'hover:bg-white hover:bg-opacity-50'
+                  }`}
+                  style={{ 
+                    color: activeEventTab === 'upcoming' ? PALETTE.navy : PALETTE.teal,
+                    fontWeight: activeEventTab === 'upcoming' ? '600' : '400'
+                  }}
+                >
+                  Upcoming ({upcomingEvents.length})
+                </button>
+                <button
+                  onClick={() => setActiveEventTab('past')}
+                  className={`px-6 py-2 rounded-full transition-all ${
+                    activeEventTab === 'past' 
+                      ? 'bg-white shadow-sm' 
+                      : 'hover:bg-white hover:bg-opacity-50'
+                  }`}
+                  style={{ 
+                    color: activeEventTab === 'past' ? PALETTE.navy : PALETTE.teal,
+                    fontWeight: activeEventTab === 'past' ? '600' : '400'
+                  }}
+                >
+                  Past ({pastEvents.length})
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 pt-5 pb-5 gap-4 md:gap-8 justify-items-center max-w-7xl mx-auto">
             {filteredEvents.length === 0 ? (
               <div className="col-span-3 text-center p-12 bg-white rounded-2xl shadow-md">
-                <div className="text-6xl mb-4" style={{ color: PALETTE.mint }}>📋</div>
+                <div className="text-6xl mb-4" style={{ color: PALETTE.mint }}>
+                  {activeEventTab === 'upcoming' ? '📅' : activeEventTab === 'past' ? '✅' : '📋'}
+                </div>
                 <h3 className="text-xl font-semibold mb-2" style={{ color: PALETTE.navy }}>
-                  {signedUpEvents.length === 0 ? "No Events Signed Up Yet" : "No Events Match Your Search"}
+                  {signedUpEvents.length === 0 
+                    ? "No Events Signed Up Yet" 
+                    : activeEventTab === 'upcoming'
+                    ? "No Upcoming Events"
+                    : activeEventTab === 'past'
+                    ? "No Past Events"
+                    : "No Events Match Your Search"
+                  }
                 </h3>
                 <p className="mb-6" style={{ color: PALETTE.teal }}>
                   {signedUpEvents.length === 0 
                     ? "Browse available events and sign up to see them here!" 
+                    : activeEventTab === 'upcoming'
+                    ? "You don't have any upcoming events. Check out available events!"
+                    : activeEventTab === 'past'
+                    ? "You haven't completed any events yet."
                     : "Try adjusting your search terms."
                   }
                 </p>
-                {signedUpEvents.length === 0 && (
+                {signedUpEvents.length === 0 || activeEventTab === 'upcoming' ? (
                   <button
                     onClick={() => navigate('/user-event-site')}
                     className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
@@ -471,7 +616,7 @@ function VolunteerProfile() {
                   > 
                     Browse Events
                   </button>
-                )}
+                ) : null}
               </div>
             ) : (
               filteredEvents.map((event) => (
