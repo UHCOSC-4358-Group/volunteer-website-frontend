@@ -33,9 +33,7 @@ const formatLocation = (location) => {
   return parts.join(", ") || "No location";
 };
 
-
 // Small Reusable UI Components (same as before)
-
 
 function StatCard({ label, value, sublabel, onClick, darkMode = false }) {
   return (
@@ -50,14 +48,26 @@ function StatCard({ label, value, sublabel, onClick, darkMode = false }) {
       onClick={onClick}
       role={onClick ? "button" : undefined}
     >
-      <div className={`text-sm mb-1 ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+      <div
+        className={`text-sm mb-1 ${
+          darkMode ? "text-gray-400" : "text-gray-500"
+        }`}
+      >
         {label}
       </div>
-      <div className={`text-3xl font-semibold tracking-tight ${darkMode ? "text-white" : ""}`}>
+      <div
+        className={`text-3xl font-semibold tracking-tight ${
+          darkMode ? "text-white" : ""
+        }`}
+      >
         {value}
       </div>
       {sublabel && (
-        <div className={`text-xs mt-1 ${darkMode ? "text-gray-500" : "text-gray-400"}`}>
+        <div
+          className={`text-xs mt-1 ${
+            darkMode ? "text-gray-500" : "text-gray-400"
+          }`}
+        >
           {sublabel}
         </div>
       )}
@@ -67,12 +77,30 @@ function StatCard({ label, value, sublabel, onClick, darkMode = false }) {
 
 function Badge({ children, tone = "gray", darkMode = false }) {
   const tones = {
-    gray: { bg: darkMode ? "#4B5563" : PALETTE.sand, fg: darkMode ? "#E5E7EB" : PALETTE.navy },
-    green: { bg: darkMode ? "#065F46" : PALETTE.mint, fg: darkMode ? "#D1FAE5" : PALETTE.navy },
-    teal: { bg: darkMode ? "#115E59" : "#E3F4F4", fg: darkMode ? "#99F6E4" : PALETTE.teal },
-    red: { bg: darkMode ? "#7F1D1D" : "#FEE2E2", fg: darkMode ? "#FECACA" : "#991B1B" },
-    yellow: { bg: darkMode ? "#713F12" : "#FEF9C3", fg: darkMode ? "#FDE68A" : "#854D0E" },
-    blue: { bg: darkMode ? "#1E3A8A" : "#E0F2FE", fg: darkMode ? "#BFDBFE" : "#075985" },
+    gray: {
+      bg: darkMode ? "#4B5563" : PALETTE.sand,
+      fg: darkMode ? "#E5E7EB" : PALETTE.navy,
+    },
+    green: {
+      bg: darkMode ? "#065F46" : PALETTE.mint,
+      fg: darkMode ? "#D1FAE5" : PALETTE.navy,
+    },
+    teal: {
+      bg: darkMode ? "#115E59" : "#E3F4F4",
+      fg: darkMode ? "#99F6E4" : PALETTE.teal,
+    },
+    red: {
+      bg: darkMode ? "#7F1D1D" : "#FEE2E2",
+      fg: darkMode ? "#FECACA" : "#991B1B",
+    },
+    yellow: {
+      bg: darkMode ? "#713F12" : "#FEF9C3",
+      fg: darkMode ? "#FDE68A" : "#854D0E",
+    },
+    blue: {
+      bg: darkMode ? "#1E3A8A" : "#E0F2FE",
+      fg: darkMode ? "#BFDBFE" : "#075985",
+    },
   };
 
   return (
@@ -85,7 +113,14 @@ function Badge({ children, tone = "gray", darkMode = false }) {
   );
 }
 
-function Button({ children, onClick, variant = "primary", type = "button", className = "", darkMode = false }) {
+function Button({
+  children,
+  onClick,
+  variant = "primary",
+  type = "button",
+  className = "",
+  darkMode = false,
+}) {
   const variants = {
     primary: `text-white`,
     secondary: `border text-gray-900`,
@@ -107,8 +142,18 @@ function Button({ children, onClick, variant = "primary", type = "button", class
       className={`rounded-xl px-3.5 py-2.5 text-sm font-medium shadow-sm transition focus:outline-none ${variants[variant]} ${className}`}
       style={{
         backgroundColor: getBackgroundColor(),
-        borderColor: variant === "secondary" ? (darkMode ? "#6B7280" : PALETTE.teal) : undefined,
-        color: variant === "primary" || variant === "danger" ? "#FFFFFF" : darkMode ? "#F3F4F6" : PALETTE.navy,
+        borderColor:
+          variant === "secondary"
+            ? darkMode
+              ? "#6B7280"
+              : PALETTE.teal
+            : undefined,
+        color:
+          variant === "primary" || variant === "danger"
+            ? "#FFFFFF"
+            : darkMode
+            ? "#F3F4F6"
+            : PALETTE.navy,
       }}
     >
       {children}
@@ -119,11 +164,15 @@ function Button({ children, onClick, variant = "primary", type = "button", class
 function Input({ label, id, darkMode = false, ...props }) {
   return (
     <label className="flex flex-col gap-1 text-sm w-full" htmlFor={id}>
-      <span className={darkMode ? "text-gray-300" : "text-gray-700"}>{label}</span>
+      <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+        {label}
+      </span>
       <input
         id={id}
         className={`rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-          darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"
+          darkMode
+            ? "bg-gray-700 border-gray-600 text-white"
+            : "bg-white border-gray-300"
         }`}
         {...props}
       />
@@ -134,11 +183,15 @@ function Input({ label, id, darkMode = false, ...props }) {
 function Select({ label, id, children, darkMode = false, ...props }) {
   return (
     <label className="flex flex-col gap-1 text-sm w-full" htmlFor={id}>
-      <span className={darkMode ? "text-gray-300" : "text-gray-700"}>{label}</span>
+      <span className={darkMode ? "text-gray-300" : "text-gray-700"}>
+        {label}
+      </span>
       <select
         id={id}
         className={`rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
-          darkMode ? "bg-gray-700 border-gray-600 text-white" : "bg-white border-gray-300"
+          darkMode
+            ? "bg-gray-700 border-gray-600 text-white"
+            : "bg-white border-gray-300"
         }`}
         {...props}
       >
@@ -214,7 +267,9 @@ export default function OrgDashboard() {
           name: evt.name,
           description: evt.description,
           location: formatLocation(evt.location),
-          requiredSkills: Array.isArray(evt.needed_skills) ? evt.needed_skills : [],
+          requiredSkills: Array.isArray(evt.needed_skills)
+            ? evt.needed_skills
+            : [],
           urgency: (evt.urgency || "Low").toLowerCase(),
           date: evt.day,
           assigned: evt.assigned ?? 0,
@@ -225,10 +280,10 @@ export default function OrgDashboard() {
 
         const summaryObj = {
           orgName: profileData.organization?.name ?? "My Organization",
-          volunteers: 0,            // backend doesn't provide yet
+          volunteers: 0, // backend doesn't provide yet
           upcomingEvents: mappedEvents.length,
-          pendingMatches: 0,        // backend doesn't provide yet
-          attendanceRate: 1,        // placeholder
+          pendingMatches: 0, // backend doesn't provide yet
+          attendanceRate: 1, // placeholder
         };
 
         setSummary(summaryObj);
@@ -243,20 +298,21 @@ export default function OrgDashboard() {
     };
 
     loadDashboard();
-  }, [adminId, token]);
+  }, [adminId]);
 
   const skillsUniverse = useMemo(() => {
     const set = new Set();
-    events.forEach(evt => evt.requiredSkills.forEach(s => set.add(s)));
+    events.forEach((evt) => evt.requiredSkills.forEach((s) => set.add(s)));
     return ["All", ...Array.from(set)];
   }, [events]);
 
   // ==============================================================
   //                            RENDER
-  // ============================================================== 
+  // ==============================================================
 
   const goCreateEvent = () => navigate("/create-event");
-  const goEditEvent = (event) => navigate("/create-event", { state: { isEditing: true, event } });
+  const goEditEvent = (event) =>
+    navigate("/create-event", { state: { isEditing: true, event } });
   const goOpenMatching = () => navigate("/matching");
   const goHistory = () => navigate("/volunteer-history");
   const goUserMode = () => navigate("/volunteer-profile");
@@ -278,17 +334,26 @@ export default function OrgDashboard() {
       evt.location?.toLowerCase().includes(search.toLowerCase());
 
     const matchesUrgency =
-      urgency === "All" || (evt.urgency || "").toLowerCase() === urgency.toLowerCase();
+      urgency === "All" ||
+      (evt.urgency || "").toLowerCase() === urgency.toLowerCase();
 
     const matchesSkill =
       skill === "All" ||
       (Array.isArray(evt.requiredSkills) &&
-        evt.requiredSkills.some((s) => s.toLowerCase() === skill.toLowerCase()));
+        evt.requiredSkills.some(
+          (s) => s.toLowerCase() === skill.toLowerCase()
+        ));
 
     const matchesFrom = from ? new Date(evt.date) >= new Date(from) : true;
     const matchesTo = to ? new Date(evt.date) <= new Date(to) : true;
 
-    return matchesSearch && matchesUrgency && matchesSkill && matchesFrom && matchesTo;
+    return (
+      matchesSearch &&
+      matchesUrgency &&
+      matchesSkill &&
+      matchesFrom &&
+      matchesTo
+    );
   });
 
   return (
@@ -299,7 +364,9 @@ export default function OrgDashboard() {
     >
       <header
         className={`sticky top-0 z-10 backdrop-blur border-b transition-colors duration-300 ${
-          darkMode ? "bg-gray-800/80 border-gray-700" : "bg-white/80 border-gray-200"
+          darkMode
+            ? "bg-gray-800/80 border-gray-700"
+            : "bg-white/80 border-gray-200"
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -312,15 +379,33 @@ export default function OrgDashboard() {
             >
               {summary?.orgName ?? "Organization Dashboard"}
             </h1>
-            <p className={darkMode ? "text-gray-400" : "text-gray-500"}>Admin overview & quick actions</p>
+            <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
+              Admin overview & quick actions
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
             <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
-            <Button onClick={goCreateEvent} darkMode={darkMode}>Create Event</Button>
-            <Button variant="secondary" onClick={goOpenMatching} darkMode={darkMode}>Open Matching</Button>
-            <Button variant="subtle" onClick={goHistory} darkMode={darkMode}>Volunteer History</Button>
-            <Button variant="secondary" onClick={goUserMode} darkMode={darkMode}>User View</Button>
+            <Button onClick={goCreateEvent} darkMode={darkMode}>
+              Create Event
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={goOpenMatching}
+              darkMode={darkMode}
+            >
+              Open Matching
+            </Button>
+            <Button variant="subtle" onClick={goHistory} darkMode={darkMode}>
+              Volunteer History
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={goUserMode}
+              darkMode={darkMode}
+            >
+              User View
+            </Button>
           </div>
         </div>
       </header>
@@ -344,9 +429,21 @@ export default function OrgDashboard() {
             ))
           ) : (
             <>
-              <StatCard label="Volunteers" value={summary?.volunteers ?? 0} darkMode={darkMode} />
-              <StatCard label="Upcoming Events" value={summary?.upcomingEvents ?? 0} darkMode={darkMode} />
-              <StatCard label="Pending Matches" value={summary?.pendingMatches ?? 0} darkMode={darkMode} />
+              <StatCard
+                label="Volunteers"
+                value={summary?.volunteers ?? 0}
+                darkMode={darkMode}
+              />
+              <StatCard
+                label="Upcoming Events"
+                value={summary?.upcomingEvents ?? 0}
+                darkMode={darkMode}
+              />
+              <StatCard
+                label="Pending Matches"
+                value={summary?.pendingMatches ?? 0}
+                darkMode={darkMode}
+              />
               <StatCard
                 label="Attendance Rate"
                 value={`${Math.round((summary?.attendanceRate ?? 0) * 100)}%`}
@@ -361,7 +458,9 @@ export default function OrgDashboard() {
         <section className="mt-8">
           <div
             className={`rounded-2xl border p-4 shadow-sm transition-colors duration-300 ${
-              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              darkMode
+                ? "bg-gray-800 border-gray-700"
+                : "bg-white border-gray-200"
             }`}
           >
             <h2
@@ -387,22 +486,48 @@ export default function OrgDashboard() {
                 />
               </div>
 
-              <Select id="urgency" label="Urgency" value={urgency} onChange={(e) => setUrgency(e.target.value)} darkMode={darkMode}>
+              <Select
+                id="urgency"
+                label="Urgency"
+                value={urgency}
+                onChange={(e) => setUrgency(e.target.value)}
+                darkMode={darkMode}
+              >
                 <option>All</option>
                 <option>Low</option>
                 <option>Medium</option>
                 <option>High</option>
               </Select>
 
-              <Select id="skill" label="Required Skill" value={skill} onChange={(e) => setSkill(e.target.value)} darkMode={darkMode}>
+              <Select
+                id="skill"
+                label="Required Skill"
+                value={skill}
+                onChange={(e) => setSkill(e.target.value)}
+                darkMode={darkMode}
+              >
                 {skillsUniverse.map((s) => (
                   <option key={s}>{s}</option>
                 ))}
               </Select>
 
               <div className="grid grid-cols-2 gap-2">
-                <Input id="from" label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} darkMode={darkMode} />
-                <Input id="to" label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} darkMode={darkMode} />
+                <Input
+                  id="from"
+                  label="From"
+                  type="date"
+                  value={from}
+                  onChange={(e) => setFrom(e.target.value)}
+                  darkMode={darkMode}
+                />
+                <Input
+                  id="to"
+                  label="To"
+                  type="date"
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  darkMode={darkMode}
+                />
               </div>
             </div>
 
@@ -410,7 +535,13 @@ export default function OrgDashboard() {
             <div className="mt-4 overflow-x-auto">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className={`text-left border-b ${darkMode ? "text-gray-400 border-gray-700" : "text-gray-600 border-gray-200"}`}>
+                  <tr
+                    className={`text-left border-b ${
+                      darkMode
+                        ? "text-gray-400 border-gray-700"
+                        : "text-gray-600 border-gray-200"
+                    }`}
+                  >
                     <th className="py-2 pr-4">Event</th>
                     <th className="py-2 pr-4">Location</th>
                     <th className="py-2 pr-4">Skills</th>
@@ -423,26 +554,57 @@ export default function OrgDashboard() {
                 <tbody>
                   {loadingEvents ? (
                     <tr>
-                      <td colSpan={7} className={`py-10 text-center ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
+                      <td
+                        colSpan={7}
+                        className={`py-10 text-center ${
+                          darkMode ? "text-gray-500" : "text-gray-500"
+                        }`}
+                      >
                         Loading events...
                       </td>
                     </tr>
                   ) : filteredEvents.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className={`py-10 text-center ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
+                      <td
+                        colSpan={7}
+                        className={`py-10 text-center ${
+                          darkMode ? "text-gray-500" : "text-gray-500"
+                        }`}
+                      >
                         No events available.
                       </td>
                     </tr>
                   ) : (
                     filteredEvents.map((e) => (
-                      <tr key={e.id} className={`border-b last:border-0 ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
+                      <tr
+                        key={e.id}
+                        className={`border-b last:border-0 ${
+                          darkMode ? "border-gray-700" : "border-gray-200"
+                        }`}
+                      >
                         <td className="py-3 pr-4">
-                          <div className={`font-medium ${darkMode ? "text-white" : ""}`}>{e.name}</div>
-                          <div className={`line-clamp-1 max-w-[420px] ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                          <div
+                            className={`font-medium ${
+                              darkMode ? "text-white" : ""
+                            }`}
+                          >
+                            {e.name}
+                          </div>
+                          <div
+                            className={`line-clamp-1 max-w-[420px] ${
+                              darkMode ? "text-gray-400" : "text-gray-500"
+                            }`}
+                          >
                             {e.description}
                           </div>
                         </td>
-                        <td className={`py-3 pr-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{e.location}</td>
+                        <td
+                          className={`py-3 pr-4 ${
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {e.location}
+                        </td>
                         <td className="py-3 pr-4 space-x-1">
                           {e.requiredSkills.map((s) => (
                             <Badge key={s} tone="blue" darkMode={darkMode}>
@@ -451,23 +613,59 @@ export default function OrgDashboard() {
                           ))}
                         </td>
                         <td className="py-3 pr-4">
-                          {e.urgency === "high" && <Badge tone="red" darkMode={darkMode}>High</Badge>}
-                          {e.urgency === "medium" && <Badge tone="yellow" darkMode={darkMode}>Medium</Badge>}
-                          {e.urgency === "low" && <Badge tone="green" darkMode={darkMode}>Low</Badge>}
+                          {e.urgency === "high" && (
+                            <Badge tone="red" darkMode={darkMode}>
+                              High
+                            </Badge>
+                          )}
+                          {e.urgency === "medium" && (
+                            <Badge tone="yellow" darkMode={darkMode}>
+                              Medium
+                            </Badge>
+                          )}
+                          {e.urgency === "low" && (
+                            <Badge tone="green" darkMode={darkMode}>
+                              Low
+                            </Badge>
+                          )}
                         </td>
-                        <td className={`py-3 pr-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>
+                        <td
+                          className={`py-3 pr-4 ${
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
                           {new Date(e.date).toLocaleDateString()}
                         </td>
-                        <td className={`py-3 pr-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{e.assigned}</td>
+                        <td
+                          className={`py-3 pr-4 ${
+                            darkMode ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {e.assigned}
+                        </td>
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
-                            <Button variant="secondary" onClick={() => goEditEvent(e)} darkMode={darkMode}>
+                            <Button
+                              variant="secondary"
+                              onClick={() => goEditEvent(e)}
+                              darkMode={darkMode}
+                            >
                               Edit
                             </Button>
-                            <Button variant="subtle" onClick={() => alert(`Open matching with event ${e.id}`)} darkMode={darkMode}>
+                            <Button
+                              variant="subtle"
+                              onClick={() =>
+                                alert(`Open matching with event ${e.id}`)
+                              }
+                              darkMode={darkMode}
+                            >
                               Match
                             </Button>
-                            <Button variant="danger" onClick={() => handleDelete(e.id)} darkMode={darkMode}>
+                            <Button
+                              variant="danger"
+                              onClick={() => handleDelete(e.id)}
+                              darkMode={darkMode}
+                            >
                               Delete
                             </Button>
                           </div>
@@ -486,12 +684,16 @@ export default function OrgDashboard() {
           {/* Volunteers */}
           <div
             className={`lg:col-span-2 rounded-2xl border p-4 shadow-sm ${
-              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              darkMode
+                ? "bg-gray-800 border-gray-700"
+                : "bg-white border-gray-200"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
               <h2
-                className={`text-lg font-medium ${darkMode ? "text-white" : ""}`}
+                className={`text-lg font-medium ${
+                  darkMode ? "text-white" : ""
+                }`}
                 style={{ color: darkMode ? "#FFFFFF" : PALETTE.navy }}
               >
                 Volunteers (Coming Soon)
@@ -501,17 +703,26 @@ export default function OrgDashboard() {
               </span>
             </div>
 
-            <div className="py-10 text-center text-gray-500">Feature coming soon</div>
+            <div className="py-10 text-center text-gray-500">
+              Feature coming soon
+            </div>
           </div>
 
           {/* Match Queue */}
           <div
             className={`rounded-2xl border p-4 shadow-sm ${
-              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              darkMode
+                ? "bg-gray-800 border-gray-700"
+                : "bg-white border-gray-200"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <h2 className={`text-lg font-medium ${darkMode ? "text-white" : ""}`} style={{ color: darkMode ? "#FFFFFF" : PALETTE.navy }}>
+              <h2
+                className={`text-lg font-medium ${
+                  darkMode ? "text-white" : ""
+                }`}
+                style={{ color: darkMode ? "#FFFFFF" : PALETTE.navy }}
+              >
                 Match Queue (Coming Soon)
               </h2>
               <Button variant="secondary" darkMode={darkMode}>
@@ -519,7 +730,9 @@ export default function OrgDashboard() {
               </Button>
             </div>
 
-            <div className="py-10 text-center text-gray-500">Feature coming soon</div>
+            <div className="py-10 text-center text-gray-500">
+              Feature coming soon
+            </div>
           </div>
         </section>
 
@@ -527,11 +740,18 @@ export default function OrgDashboard() {
         <section className="mt-8">
           <div
             className={`rounded-2xl border p-4 shadow-sm ${
-              darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+              darkMode
+                ? "bg-gray-800 border-gray-700"
+                : "bg-white border-gray-200"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <h2 className={`text-lg font-medium ${darkMode ? "text-white" : ""}`} style={{ color: darkMode ? "#FFFFFF" : PALETTE.navy }}>
+              <h2
+                className={`text-lg font-medium ${
+                  darkMode ? "text-white" : ""
+                }`}
+                style={{ color: darkMode ? "#FFFFFF" : PALETTE.navy }}
+              >
                 Notifications (Coming Soon)
               </h2>
               <Button variant="subtle" darkMode={darkMode}>
@@ -539,7 +759,9 @@ export default function OrgDashboard() {
               </Button>
             </div>
 
-            <div className="py-10 text-center text-gray-500">Feature coming soon</div>
+            <div className="py-10 text-center text-gray-500">
+              Feature coming soon
+            </div>
           </div>
         </section>
       </main>
