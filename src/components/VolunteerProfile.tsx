@@ -5,8 +5,7 @@ import { useAuth } from "../hooks/user-context";
 import {
   NotificationModal,
   type Notification,
-} 
-from "../components/NotificationModal";
+} from "../components/NotificationModal";
 import {
   SearchSVG,
   ProfileSVG,
@@ -42,6 +41,54 @@ interface UserProfile {
   totalHours: number;
 }
 
+interface ApiLocation {
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  country?: string;
+}
+
+interface ApiVolunteer {
+  id: number;
+  email: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip_code?: string;
+  skills?: string[];
+  preferences?: {
+    indoor_only?: boolean;
+    max_distance_miles?: number;
+  };
+  availability?: string[];
+}
+
+interface ApiEvent {
+  event_id?: number;
+  id?: number;
+  name?: string;
+  location?: ApiLocation;
+  day?: string;
+  start_time?: string;
+  end_time?: string;
+  urgency?: string;
+  description?: string;
+  organization?: string;
+  capacity?: number;
+  assigned?: number;
+  needed_skills?: string[];
+}
+
+interface VolunteerApiResponse {
+  volunteer: ApiVolunteer;
+  upcoming_events: ApiEvent[];
+  past_events: ApiEvent[];
+}
+
 const PALETTE = {
   navy: "#22577A",
   teal: "#38A3A5",
@@ -50,22 +97,23 @@ const PALETTE = {
   sand: "#F0EADF",
 };
 
-// Helper function to format skills from form data
-const formatSkills = (skills: string[] = []): string[] => {
-  return skills.map(skill => {
-    return skill
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  });
-};
+const API_PREFIX = "/api";
+
+// Helper function to format skills
+const formatSkills = (skills: string[] = []): string[] =>
+  skills.map((skill) =>
+    skill
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
+  );
 
 const formatAddress = (rawProfile: any): string => {
-  const address1 = rawProfile?.address1 ?? rawProfile?.address ?? rawProfile?.location ?? "";
+  const address1 = rawProfile?.address1 ?? rawProfile?.address ?? "";
   const address2 = rawProfile?.address2 ?? "";
   const city = rawProfile?.city ?? "";
   const state = rawProfile?.state ?? "";
-  const zip = rawProfile?.zip ?? rawProfile?.zipCode ?? rawProfile?.postalCode ?? "";
+  const zip = rawProfile?.zip ?? rawProfile?.zip_code ?? rawProfile?.zipCode ?? "";
   const country = rawProfile?.country ?? "";
 
   const firstLine = [address1, address2].filter(Boolean).join(", ");
@@ -77,50 +125,48 @@ const formatAddress = (rawProfile: any): string => {
   return segments.join(", ");
 };
 
-const normalizeJoinDate = (rawDate?: string) => {
-  if (!rawDate) return new Date();
-  const date = new Date(rawDate);
-  return isNaN(date.getTime()) ? new Date() : date;
-};
-
-const buildUserProfile = (rawProfile: any, fallbackAuthUser?: any): UserProfile => {
-  const firstName =
-    rawProfile?.firstName ??
-    rawProfile?.first_name ??
-    fallbackAuthUser?.first_name ??
-    (fallbackAuthUser?.name ? fallbackAuthUser.name.split(" ")[0] : "");
-  const lastName =
-    rawProfile?.lastName ??
-    rawProfile?.last_name ??
-    fallbackAuthUser?.last_name ??
-    (fallbackAuthUser?.name ? fallbackAuthUser.name.split(" ").slice(1).join(" ") : "");
-
+const buildUserProfileFromApi = (vol: ApiVolunteer, fallbackAuthUser?: any): UserProfile => {
   const name =
-    rawProfile?.fullName ||
-    rawProfile?.name ||
-    [firstName, lastName].filter(Boolean).join(" ").trim() ||
+    [vol.first_name, vol.last_name].filter(Boolean).join(" ").trim() ||
     fallbackAuthUser?.name ||
     "User";
 
-  const email = rawProfile?.email ?? fallbackAuthUser?.email ?? "user@example.com";
-  const address = formatAddress(rawProfile);
-  const bio = rawProfile?.preferences ?? rawProfile?.bio ?? rawProfile?.description ?? "";
-  const skills = Array.isArray(rawProfile?.skills)
-    ? formatSkills(rawProfile.skills.map(String))
-    : [];
-  const joinDate = normalizeJoinDate(
-    rawProfile?.joinDate ?? rawProfile?.join_date ?? rawProfile?.created_at
-  ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const preferences: string[] = [];
+  if (vol.preferences?.indoor_only) preferences.push("Prefers indoor only");
+  if (vol.preferences?.max_distance_miles != null)
+    preferences.push(`Max distance: ${vol.preferences.max_distance_miles} miles`);
+
+  const availability = Array.isArray(vol.availability)
+  ? vol.availability.map((day) => {
+      // Map numeric codes to day names
+      const dayMap: {[key: string]: string} = {
+        "1": "Monday",
+        "2": "Tuesday", 
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday", 
+        "7": "Sunday"
+      };
+      
+      const normalizedDay = day.toString().toLowerCase();
+      return dayMap[normalizedDay] || day;
+    })
+  : [];
+
+  const skills = Array.isArray(vol.skills) ? formatSkills(vol.skills) : [];
 
   return {
     name,
-    email,
-    phone: rawProfile?.phone ?? rawProfile?.phoneNumber ?? "",
-    address: address || "-",
-    bio: bio || "No bio provided yet.",
+    email: vol.email ?? fallbackAuthUser?.email ?? "user@example.com",
+    phone: vol.phone ?? "",
+    address: formatAddress(vol) || "-",
+    bio: [...preferences, availability.length ? `Availability: ${availability.join(", ")}` : ""]
+      .filter(Boolean)
+      .join(" • ") || "No preferences provided.",
     skills,
-    joinDate,
-    totalHours: rawProfile?.totalHours ?? 0,
+    joinDate: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    totalHours: 0, // will be estimated from past events
   };
 };
 
@@ -154,7 +200,10 @@ function Card({
 function EventCard(props: Event) {
   const { name, organization, type, description, date, time, location, volunteersSignedUp, maxVolunteers } = props;
 
-  const capacityPct = Math.min(100, Math.round((volunteersSignedUp / maxVolunteers) * 100));
+  const capacityPct =
+    maxVolunteers > 0
+      ? Math.min(100, Math.round((volunteersSignedUp / maxVolunteers) * 100))
+      : 0;
   const capacityBarColor = capacityPct > 80 ? "#e67e22" : PALETTE.green;
 
   return (
@@ -236,66 +285,124 @@ function EventCard(props: Event) {
 
 function VolunteerProfile() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const [signedUpEvents, setSignedUpEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activeEventTab, setActiveEventTab] = useState<'all' | 'upcoming' | 'past'>('all');
+  const [loadingApi, setLoadingApi] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load user profile from signup data or auth context
+  const mapApiEvent = (evt: any): Event => {
+    const locationParts = [
+      evt?.location?.address,
+      evt?.location?.city,
+      evt?.location?.state,
+      evt?.location?.zip_code,
+      evt?.location?.country,
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+    const time =
+      evt?.start_time && evt?.end_time
+        ? `${evt.start_time} - ${evt.end_time}`
+        : evt?.start_time || evt?.end_time || "Time TBD";
+
+    return {
+      id: evt?.event_id ?? evt?.id ?? Math.floor(Math.random() * 1_000_000),
+      name: evt?.name ?? "Event",
+      date: evt?.day ?? "",
+      time,
+      location: locationParts || "Location TBA",
+      type: evt?.urgency ?? "General",
+      description: evt?.description ?? "",
+      organization: evt?.organization ?? "",
+      volunteersSignedUp: evt?.assigned ?? 0,
+      maxVolunteers: evt?.capacity ?? evt?.maxVolunteers ?? 0,
+      requirements: Array.isArray(evt?.needed_skills) ? evt.needed_skills : [],
+    };
+  };
+
+  // Fetch from backend when user is available
   useEffect(() => {
-    const savedProfile = localStorage.getItem("volunteerProfile");
+    if (authLoading || !user?.id) return;
 
-    if (savedProfile) {
+    const controller = new AbortController();
+    const loadProfile = async () => {
       try {
-        const parsedProfile = JSON.parse(savedProfile);
-        setUserProfile(buildUserProfile(parsedProfile, user));
-        return;
-      } catch (error) {
-        console.error("Failed to parse saved volunteer profile", error);
+        setLoadingApi(true);
+        setError(null);
+        const res = await fetch(`${API_PREFIX}/vol/${user.id}`, {
+          method: "GET",
+          credentials: "include",
+          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          signal: controller.signal,
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            setError("Please log in to view your profile.");
+            return;
+          }
+          if (res.status === 404) {
+            setError("Volunteer profile not found.");
+            return;
+          }
+          throw new Error(`Failed to load profile (${res.status})`);
+        }
+
+        const data: VolunteerApiResponse = await res.json();
+        if (data?.volunteer) {
+          setUserProfile(buildUserProfileFromApi(data.volunteer, user));
+        }
+
+        const upcoming = Array.isArray(data?.upcoming_events)
+          ? data.upcoming_events.map(mapApiEvent)
+          : [];
+        const past = Array.isArray(data?.past_events)
+          ? data.past_events.map(mapApiEvent)
+          : [];
+        setEvents([...upcoming, ...past]);
+      } catch (err: any) {
+        if (err.name === "AbortError") return;
+        console.error("Failed to load profile", err);
+        setError(err?.message || "Could not load profile.");
+      } finally {
+        setLoadingApi(false);
       }
-    }
+    };
 
-    if (user) {
-      setUserProfile(buildUserProfile({}, user));
-    }
-  }, [user]);
-
-  // Load signed-up events from localStorage
-  useEffect(() => {
-    const savedEvents = localStorage.getItem('signedUpEvents');
-    if (savedEvents) {
-      const events = JSON.parse(savedEvents);
-      setSignedUpEvents(events);
-    }
-  }, []);
-
-  useEffect(() => {
-    setUserProfile((prev) =>
-      prev ? { ...prev, totalHours: signedUpEvents.length * 3 } : prev
-    );
-  }, [signedUpEvents]);
+    loadProfile();
+    return () => controller.abort();
+  }, [authLoading, user?.id]);
 
   // Categorize events
-  const upcomingEvents = signedUpEvents.filter(event => {
+  const upcomingEvents = events.filter(event => {
     const eventDate = new Date(event.date + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return eventDate >= today;
   });
 
-  const pastEvents = signedUpEvents.filter(event => {
+  const pastEvents = events.filter(event => {
     const eventDate = new Date(event.date + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return eventDate < today;
   });
 
+  useEffect(() => {
+    setUserProfile((prev) =>
+      prev ? { ...prev, totalHours: pastEvents.length * 3 } : prev
+    );
+  }, [pastEvents.length]);
+
   // Filter events based on active tab and search term
   const getFilteredEvents = () => {
-    let eventsToFilter = signedUpEvents;
+    let eventsToFilter = events;
     
     if (activeEventTab === 'upcoming') {
       eventsToFilter = upcomingEvents;
@@ -325,6 +432,37 @@ function VolunteerProfile() {
 
   // Get first name from full name
   const firstName = userProfile?.name.split(' ')[0] || 'User';
+
+  if (loadingApi || authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: PALETTE.sand }}>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 mx-auto mb-4" style={{ borderColor: PALETTE.teal }}></div>
+          <p style={{ color: PALETTE.navy }} className="text-lg font-semibold">Loading your profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: PALETTE.sand }}>
+        <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md text-center border" style={{ borderColor: PALETTE.mint }}>
+          <h2 className="text-2xl font-bold mb-3" style={{ color: PALETTE.navy }}>Volunteer Profile</h2>
+          <p className="mb-6" style={{ color: "#475569" }}>{error}</p>
+          <div className="flex justify-center gap-3">
+            <button
+              onClick={() => navigate("/")}
+              className="font-semibold py-2 px-6 rounded-full shadow-md"
+              style={{ backgroundColor: PALETTE.teal, color: "white" }}
+            >
+              Go to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -433,10 +571,9 @@ function VolunteerProfile() {
               <div>
                 <div style={{ color: PALETTE.navy }}>Welcome back, {firstName}!</div>
                 <div className="text-lg" style={{ color: "#64748B" }}>
-                  {signedUpEvents.length === 0 
-                    ? "Ready to make a difference today?" 
-                    : `You have ${upcomingEvents.length} upcoming and ${pastEvents.length} past events`
-                  }
+                  {events.length === 0
+                    ? "Ready to make a difference today?"
+                    : `You have ${upcomingEvents.length} upcoming and ${pastEvents.length} past events`}
                 </div>
               </div>
               <div className="flex gap-4">
@@ -472,12 +609,12 @@ function VolunteerProfile() {
           <div className="flex justify-around gap-8 p-4 flex-col items-center md:flex-row">
             <Card
               icon={<VolunteerSVG size={64} />}
-              title={signedUpEvents.length.toString()}
+              title={events.length.toString()}
               subtitle="Total events"
             />
             <Card
               icon={<ClockSVG size={64} />}
-              title={(signedUpEvents.length * 3).toString()}
+              title={(pastEvents.length * 3).toString()}
               subtitle="Hours volunteered"
             />
             <Card
@@ -501,10 +638,9 @@ function VolunteerProfile() {
                   Your Events
                 </div>
                 <div className="text-xl" style={{ color: "#64748B" }}>
-                  {signedUpEvents.length === 0 
-                    ? "Events you've signed up for" 
-                    : `${filteredEvents.length} ${activeEventTab} event${filteredEvents.length !== 1 ? 's' : ''} found`
-                  }
+                  {events.length === 0
+                    ? "Events you've signed up for"
+                    : `${filteredEvents.length} ${activeEventTab} event${filteredEvents.length !== 1 ? 's' : ''} found`}
                 </div>
               </div>
 
@@ -548,7 +684,7 @@ function VolunteerProfile() {
                     fontWeight: activeEventTab === 'all' ? '600' : '400'
                   }}
                 >
-                  All Events ({signedUpEvents.length})
+                  All Events ({events.length})
                 </button>
                 <button
                   onClick={() => setActiveEventTab('upcoming')}
@@ -589,7 +725,7 @@ function VolunteerProfile() {
                   {activeEventTab === 'upcoming' ? '📅' : activeEventTab === 'past' ? '✅' : '📋'}
                 </div>
                 <h3 className="text-xl font-semibold mb-2" style={{ color: PALETTE.navy }}>
-                  {signedUpEvents.length === 0 
+                  {events.length === 0 
                     ? "No Events Signed Up Yet" 
                     : activeEventTab === 'upcoming'
                     ? "No Upcoming Events"
@@ -599,7 +735,7 @@ function VolunteerProfile() {
                   }
                 </h3>
                 <p className="mb-6" style={{ color: PALETTE.teal }}>
-                  {signedUpEvents.length === 0 
+                  {events.length === 0 
                     ? "Browse available events and sign up to see them here!" 
                     : activeEventTab === 'upcoming'
                     ? "You don't have any upcoming events. Check out available events!"
@@ -608,7 +744,7 @@ function VolunteerProfile() {
                     : "Try adjusting your search terms."
                   }
                 </p>
-                {signedUpEvents.length === 0 || activeEventTab === 'upcoming' ? (
+                {events.length === 0 || activeEventTab === 'upcoming' ? (
                   <button
                     onClick={() => navigate('/user-event-site')}
                     className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
