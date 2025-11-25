@@ -1,11 +1,19 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import {
+  createOrgEvent,
+  updateOrgEvent,
+} from "../services/orgService";
+import { useAuth } from "../hooks/user-context";
 
 interface Event {
   id: number;
   name: string;
-  date: string;
-  time: string;
+  date?: string;
+  day?: string;
+  time?: string;
+  start_time?: string;
+  end_time?: string;
   location: string;
   type: string;
   description: string;
@@ -13,6 +21,8 @@ interface Event {
   volunteersSignedUp: number;
   maxVolunteers: number;
   requirements: string[];
+  capacity?: number;
+  needed_skills?: string[];
 }
 
 const PALETTE = {
@@ -26,10 +36,12 @@ const PALETTE = {
 function CreateEvent() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   
   // Check if we're editing an existing event
   const isEditing = location.state?.isEditing || false;
   const existingEvent = location.state?.event || null;
+  const [adminOrgId, setAdminOrgId] = useState<number | null>(null);
 
   const [formData, setFormData] = useState<Omit<Event, 'id' | 'volunteersSignedUp'>>({
     name: "",
@@ -38,29 +50,61 @@ function CreateEvent() {
     location: "",
     type: "",
     description: "",
-    organization: "",
+    organization: "My Organization",
     maxVolunteers: 10,
     requirements: [],
   });
 
   const [currentRequirement, setCurrentRequirement] = useState("");
+  const [submitStatus, setSubmitStatus] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Populate form if editing
   useEffect(() => {
     if (isEditing && existingEvent) {
+      const parsedDate = existingEvent.day || existingEvent.date || "";
+      const parsedTime =
+        (existingEvent.start_time || existingEvent.time || "").slice(0, 5);
       setFormData({
         name: existingEvent.name,
-        date: existingEvent.date,
-        time: existingEvent.time,
+        date: parsedDate,
+        time: parsedTime,
         location: existingEvent.location,
         type: existingEvent.type,
         description: existingEvent.description,
         organization: existingEvent.organization,
-        maxVolunteers: existingEvent.maxVolunteers,
-        requirements: existingEvent.requirements,
+        maxVolunteers: existingEvent.capacity || existingEvent.maxVolunteers,
+        requirements: existingEvent.requirements || existingEvent.needed_skills || [],
       });
     }
   }, [isEditing, existingEvent]);
+
+  // Fetch admin org id for create/update calls
+  useEffect(() => {
+    const fetchAdmin = async () => {
+      try {
+        const res = await fetch("/api/auth/admin", {
+          credentials: "include",
+          headers: {
+            Accept: "application/json",
+          },
+        });
+        if (res.ok) {
+          const admin = await res.json();
+          setAdminOrgId(admin?.org_id ?? null);
+          if (!admin?.org_id) {
+            setSubmitStatus("You must be assigned to an organization before creating events.");
+          }
+        } else {
+          setSubmitStatus("Unable to load admin profile. Please log in again.");
+        }
+      } catch (err) {
+        setSubmitStatus("Unable to load admin profile. Please try again.");
+      }
+    };
+
+    fetchAdmin();
+  }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -89,8 +133,10 @@ function CreateEvent() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setSubmitStatus(null);
 
     // Validation
     if (!formData.name || !formData.date || !formData.time || !formData.location || 
@@ -99,57 +145,47 @@ function CreateEvent() {
       return;
     }
 
-    // Get existing events from localStorage
-    const savedEvents = localStorage.getItem('events');
-    const events: Event[] = savedEvents ? JSON.parse(savedEvents) : [];
-
-    if (isEditing && existingEvent) {
-      // UPDATE existing event
-      const updatedEvents = events.map(event => {
-        if (event.id === existingEvent.id) {
-          return {
-            ...event,
-            ...formData,
-            // Preserve the volunteersSignedUp count
-            volunteersSignedUp: existingEvent.volunteersSignedUp,
-          };
-        }
-        return event;
-      });
-
-      localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-      // Also update in signedUpEvents if it exists there
-      const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
-      const updatedSignedUpEvents = signedUpEvents.map((event: Event) => {
-        if (event.id === existingEvent.id) {
-          return {
-            ...event,
-            ...formData,
-            volunteersSignedUp: existingEvent.volunteersSignedUp,
-          };
-        }
-        return event;
-      });
-      localStorage.setItem('signedUpEvents', JSON.stringify(updatedSignedUpEvents));
-
-      alert(`Event "${formData.name}" updated successfully!`);
-    } else {
-      // CREATE new event
-      const newEvent: Event = {
-        ...formData,
-        id: Date.now(), // Simple ID generation
-        volunteersSignedUp: 0,
-      };
-
-      const updatedEvents = [...events, newEvent];
-      localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-      alert(`Event "${formData.name}" created successfully!`);
+    if (!adminOrgId) {
+      setSubmitStatus("No organization found for this admin. Please assign an org before creating events.");
+      return;
     }
 
-    // Navigate back to events page
-    navigate('/events');
+    // Build payload matching backend EventCreate
+    const [startHour, startMinute] = formData.time.split(":").map((n) => parseInt(n, 10));
+    const startTime = `${String(startHour).padStart(2, "0")}:${String(startMinute).padStart(2, "0")}:00`;
+    const endHour = startHour === 23 ? 23 : startHour + 1;
+    const endMinute = startHour === 23 ? Math.min(startMinute + 59, 59) : startMinute;
+    const endTime = `${String(endHour).padStart(2, "0")}:${String(endMinute).padStart(2, "0")}:00`;
+
+    const payload = {
+      name: formData.name,
+      description: formData.description,
+      location: null, // Location capture not yet implemented in UI
+      needed_skills: formData.requirements,
+      urgency: "Low",
+      capacity: formData.maxVolunteers,
+      day: formData.date,
+      start_time: startTime,
+      end_time: endTime,
+      org_id: adminOrgId,
+    };
+
+    try {
+      setSubmitting(true);
+      if (isEditing && existingEvent) {
+        await updateOrgEvent(existingEvent.id, payload);
+        setSubmitStatus(`Event "${formData.name}" updated successfully.`);
+      } else {
+        await createOrgEvent(payload);
+        setSubmitStatus(`Event "${formData.name}" created successfully.`);
+      }
+      navigate("/OrgDashboard");
+    } catch (err: any) {
+      const message = err?.message || "Failed to save event.";
+      setSubmitStatus(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -164,6 +200,11 @@ function CreateEvent() {
           </p>
 
           <form onSubmit={handleSubmit}>
+            {submitStatus && (
+              <div className="mb-4 rounded border border-blue-200 bg-blue-50 px-4 py-3 text-blue-800">
+                {submitStatus}
+              </div>
+            )}
             {/* Event Name */}
             <div className="mb-4">
               <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
@@ -354,7 +395,7 @@ function CreateEvent() {
             <div className="flex gap-4 justify-center">
               <button
                 type="button"
-                onClick={() => navigate('/events')}
+                onClick={() => navigate('/OrgDashboard')}
                 className="px-8 py-3 rounded-full font-semibold border transition-transform hover:scale-105"
                 style={{
                   color: PALETTE.navy,

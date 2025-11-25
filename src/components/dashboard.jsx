@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/user-context";
-import { getOrgDashboard } from "../services/orgService";
+import {
+  getOrgDashboard,
+  fetchAdminOrgEvents,
+  deleteOrgEvent,
+} from "../services/orgService";
 
 // ---- Brand palette ----
 const PALETTE = {
@@ -11,6 +15,22 @@ const PALETTE = {
   green: "#26A96C",
   mint: "#80ED99",
   sand: "#F0EADF",
+};
+
+const formatLocation = (location) => {
+  if (!location) return "No location";
+  if (typeof location === "string") return location;
+  const parts = [
+    location.address,
+    location.city,
+    location.state,
+    location.zip_code,
+    location.country,
+  ]
+    .filter(Boolean)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return parts.join(", ") || "No location";
 };
 
 
@@ -149,7 +169,6 @@ function DarkModeToggle({ darkMode, onToggle }) {
 export default function OrgDashboard() {
   const { user } = useAuth();
   const adminId = user?.id;
-  const token = user?.token;
 
   const [darkMode, setDarkMode] = useState(false);
 
@@ -158,6 +177,7 @@ export default function OrgDashboard() {
   const [events, setEvents] = useState([]);
   const [loadingSummary, setLoadingSummary] = useState(true);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // unused until backend adds them
   const [volunteers] = useState([]);
@@ -179,26 +199,32 @@ export default function OrgDashboard() {
   //  LOAD REAL BACKEND DATA
   // ============================
   useEffect(() => {
-    if (!adminId || !token) return;
+    if (!adminId) return;
 
     const loadDashboard = async () => {
       try {
-        const data = await getOrgDashboard(adminId, token);
+        const [profileData, orgEvents] = await Promise.all([
+          getOrgDashboard(adminId),
+          fetchAdminOrgEvents(),
+        ]);
 
         // Map backend events to dashboard format
-        const mappedEvents = (data.upcoming_events || []).map(evt => ({
+        const mappedEvents = (orgEvents || []).map((evt) => ({
           id: evt.id,
           name: evt.name,
           description: evt.description,
-          location: evt.location?.address ?? "No location",
-          requiredSkills: evt.needed_skills?.map(s => s.skill) ?? [],
-          urgency: evt.urgency,
+          location: formatLocation(evt.location),
+          requiredSkills: Array.isArray(evt.needed_skills) ? evt.needed_skills : [],
+          urgency: (evt.urgency || "Low").toLowerCase(),
           date: evt.day,
           assigned: evt.assigned ?? 0,
+          capacity: evt.capacity ?? 0,
+          start_time: evt.start_time,
+          end_time: evt.end_time,
         }));
 
         const summaryObj = {
-          orgName: data.organization?.name ?? "My Organization",
+          orgName: profileData.organization?.name ?? "My Organization",
           volunteers: 0,            // backend doesn't provide yet
           upcomingEvents: mappedEvents.length,
           pendingMatches: 0,        // backend doesn't provide yet
@@ -209,6 +235,7 @@ export default function OrgDashboard() {
         setEvents(mappedEvents);
       } catch (err) {
         console.error("Dashboard load error:", err);
+        setErrorMessage(err?.message || "Failed to load dashboard");
       } finally {
         setLoadingSummary(false);
         setLoadingEvents(false);
@@ -226,12 +253,43 @@ export default function OrgDashboard() {
 
   // ==============================================================
   //                            RENDER
-  // ==============================================================
+  // ============================================================== 
 
   const goCreateEvent = () => navigate("/create-event");
+  const goEditEvent = (event) => navigate("/create-event", { state: { isEditing: true, event } });
   const goOpenMatching = () => navigate("/matching");
   const goHistory = () => navigate("/volunteer-history");
   const goUserMode = () => navigate("/volunteer-profile");
+
+  const handleDelete = async (eventId) => {
+    try {
+      await deleteOrgEvent(eventId);
+      setEvents((prev) => prev.filter((evt) => evt.id !== eventId));
+    } catch (err) {
+      console.error("Failed to delete event", err);
+      setErrorMessage("Failed to delete event. Please try again.");
+    }
+  };
+
+  const filteredEvents = events.filter((evt) => {
+    const matchesSearch =
+      evt.name?.toLowerCase().includes(search.toLowerCase()) ||
+      evt.description?.toLowerCase().includes(search.toLowerCase()) ||
+      evt.location?.toLowerCase().includes(search.toLowerCase());
+
+    const matchesUrgency =
+      urgency === "All" || (evt.urgency || "").toLowerCase() === urgency.toLowerCase();
+
+    const matchesSkill =
+      skill === "All" ||
+      (Array.isArray(evt.requiredSkills) &&
+        evt.requiredSkills.some((s) => s.toLowerCase() === skill.toLowerCase()));
+
+    const matchesFrom = from ? new Date(evt.date) >= new Date(from) : true;
+    const matchesTo = to ? new Date(evt.date) <= new Date(to) : true;
+
+    return matchesSearch && matchesUrgency && matchesSkill && matchesFrom && matchesTo;
+  });
 
   return (
     <div
@@ -270,6 +328,11 @@ export default function OrgDashboard() {
       {/* SUMMARY CARDS */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {errorMessage && (
+            <div className="sm:col-span-2 lg:col-span-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {errorMessage}
+            </div>
+          )}
           {loadingSummary ? (
             Array.from({ length: 4 }).map((_, i) => (
               <div
@@ -281,12 +344,12 @@ export default function OrgDashboard() {
             ))
           ) : (
             <>
-              <StatCard label="Volunteers" value={summary.volunteers} darkMode={darkMode} />
-              <StatCard label="Upcoming Events" value={summary.upcomingEvents} darkMode={darkMode} />
-              <StatCard label="Pending Matches" value={summary.pendingMatches} darkMode={darkMode} />
+              <StatCard label="Volunteers" value={summary?.volunteers ?? 0} darkMode={darkMode} />
+              <StatCard label="Upcoming Events" value={summary?.upcomingEvents ?? 0} darkMode={darkMode} />
+              <StatCard label="Pending Matches" value={summary?.pendingMatches ?? 0} darkMode={darkMode} />
               <StatCard
                 label="Attendance Rate"
-                value={`${Math.round(summary.attendanceRate * 100)}%`}
+                value={`${Math.round((summary?.attendanceRate ?? 0) * 100)}%`}
                 sublabel="Last 30 days"
                 darkMode={darkMode}
               />
@@ -364,14 +427,14 @@ export default function OrgDashboard() {
                         Loading events...
                       </td>
                     </tr>
-                  ) : events.length === 0 ? (
+                  ) : filteredEvents.length === 0 ? (
                     <tr>
                       <td colSpan={7} className={`py-10 text-center ${darkMode ? "text-gray-500" : "text-gray-500"}`}>
                         No events available.
                       </td>
                     </tr>
                   ) : (
-                    events.map((e) => (
+                    filteredEvents.map((e) => (
                       <tr key={e.id} className={`border-b last:border-0 ${darkMode ? "border-gray-700" : "border-gray-200"}`}>
                         <td className="py-3 pr-4">
                           <div className={`font-medium ${darkMode ? "text-white" : ""}`}>{e.name}</div>
@@ -398,14 +461,14 @@ export default function OrgDashboard() {
                         <td className={`py-3 pr-4 ${darkMode ? "text-gray-300" : "text-gray-700"}`}>{e.assigned}</td>
                         <td className="py-3 pr-4">
                           <div className="flex items-center gap-2">
-                            <Button variant="secondary" onClick={() => alert(`Edit ${e.id}`)} darkMode={darkMode}>
+                            <Button variant="secondary" onClick={() => goEditEvent(e)} darkMode={darkMode}>
                               Edit
                             </Button>
                             <Button variant="subtle" onClick={() => alert(`Open matching with event ${e.id}`)} darkMode={darkMode}>
                               Match
                             </Button>
-                            <Button variant="danger" onClick={() => alert(`Archive ${e.id}`)} darkMode={darkMode}>
-                              Archive
+                            <Button variant="danger" onClick={() => handleDelete(e.id)} darkMode={darkMode}>
+                              Delete
                             </Button>
                           </div>
                         </td>
