@@ -1,17 +1,29 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/user-context";
+import {
+  createOrgEvent,
+  updateOrgEvent,
+  getOrgDashboard,
+  ApiLocation,
+  LocationPayload,
+} from "../services/orgService";
 
-interface Event {
-  id: number;
+type Urgency = "Low" | "Medium" | "High" | "Critical";
+
+interface EventFormData {
   name: string;
   date: string;
-  time: string;
-  location: string;
-  type: string;
+  startTime: string;
+  endTime: string;
+  locationAddress: string;
+  locationCity: string;
+  locationState: string;
+  locationZip: string;
+  locationCountry: string;
   description: string;
-  organization: string;
-  volunteersSignedUp: number;
   maxVolunteers: number;
+  urgency: Urgency;
   requirements: string[];
 }
 
@@ -26,46 +38,100 @@ const PALETTE = {
 function CreateEvent() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   
   // Check if we're editing an existing event
   const isEditing = location.state?.isEditing || false;
   const existingEvent = location.state?.event || null;
 
-  const [formData, setFormData] = useState<Omit<Event, 'id' | 'volunteersSignedUp'>>({
+  const [formData, setFormData] = useState<EventFormData>({
     name: "",
     date: "",
-    time: "",
-    location: "",
-    type: "",
+    startTime: "",
+    endTime: "",
+    locationAddress: "",
+    locationCity: "",
+    locationState: "",
+    locationZip: "",
+    locationCountry: "",
     description: "",
-    organization: "",
     maxVolunteers: 10,
+    urgency: "Low",
     requirements: [],
   });
 
   const [currentRequirement, setCurrentRequirement] = useState("");
+  const [orgId, setOrgId] = useState<number | null>(null);
+  const [orgName, setOrgName] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingOrg, setLoadingOrg] = useState(true);
 
   // Populate form if editing
   useEffect(() => {
     if (isEditing && existingEvent) {
+      const loc: ApiLocation | undefined =
+        existingEvent.locationObj || existingEvent.location;
+
+      const toTimeInput = (value?: string) =>
+        value ? value.toString().slice(0, 5) : "";
+
+      const formattedUrgency =
+        existingEvent.urgency &&
+        (existingEvent.urgency.charAt(0).toUpperCase() +
+          existingEvent.urgency.slice(1));
+
       setFormData({
-        name: existingEvent.name,
-        date: existingEvent.date,
-        time: existingEvent.time,
-        location: existingEvent.location,
-        type: existingEvent.type,
-        description: existingEvent.description,
-        organization: existingEvent.organization,
-        maxVolunteers: existingEvent.maxVolunteers,
-        requirements: existingEvent.requirements,
+        name: existingEvent.name || "",
+        date: existingEvent.date || existingEvent.day || "",
+        startTime: toTimeInput(existingEvent.startTime || existingEvent.start_time),
+        endTime: toTimeInput(existingEvent.endTime || existingEvent.end_time),
+        locationAddress: loc?.address || "",
+        locationCity: loc?.city || "",
+        locationState: loc?.state || "",
+        locationZip: loc?.zip_code || "",
+        locationCountry: loc?.country || "",
+        description: existingEvent.description || "",
+        maxVolunteers:
+          existingEvent.maxVolunteers ||
+          existingEvent.capacity ||
+          0,
+        urgency: (formattedUrgency as Urgency) || "Low",
+        requirements:
+          existingEvent.requiredSkills ||
+          existingEvent.requirements ||
+          [],
       });
     }
   }, [isEditing, existingEvent]);
+
+  useEffect(() => {
+    const loadOrg = async () => {
+      if (!user?.id) {
+        setLoadingOrg(false);
+        return;
+      }
+
+      try {
+        const data = await getOrgDashboard(user.id);
+        setOrgId(data?.organization?.id ?? data?.admin?.org_id ?? null);
+        setOrgName(data?.organization?.name ?? "");
+      } catch (err) {
+        console.error("Failed to load organization info", err);
+        setErrorMessage("Unable to load your organization details.");
+      } finally {
+        setLoadingOrg(false);
+      }
+    };
+
+    loadOrg();
+  }, [user?.id]);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
+    if (errorMessage) setErrorMessage("");
     setFormData(prev => ({
       ...prev,
       [name]: name === "maxVolunteers" ? parseInt(value) || 0 : value,
@@ -89,67 +155,105 @@ function CreateEvent() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
 
-    // Validation
-    if (!formData.name || !formData.date || !formData.time || !formData.location || 
-        !formData.type || !formData.organization || formData.maxVolunteers < 1) {
+    if (
+      !formData.name ||
+      !formData.date ||
+      !formData.startTime ||
+      !formData.endTime ||
+      !formData.description
+    ) {
       alert("Please fill in all required fields!");
       return;
     }
 
-    // Get existing events from localStorage
-    const savedEvents = localStorage.getItem('events');
-    const events: Event[] = savedEvents ? JSON.parse(savedEvents) : [];
-
-    if (isEditing && existingEvent) {
-      // UPDATE existing event
-      const updatedEvents = events.map(event => {
-        if (event.id === existingEvent.id) {
-          return {
-            ...event,
-            ...formData,
-            // Preserve the volunteersSignedUp count
-            volunteersSignedUp: existingEvent.volunteersSignedUp,
-          };
-        }
-        return event;
-      });
-
-      localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-      // Also update in signedUpEvents if it exists there
-      const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
-      const updatedSignedUpEvents = signedUpEvents.map((event: Event) => {
-        if (event.id === existingEvent.id) {
-          return {
-            ...event,
-            ...formData,
-            volunteersSignedUp: existingEvent.volunteersSignedUp,
-          };
-        }
-        return event;
-      });
-      localStorage.setItem('signedUpEvents', JSON.stringify(updatedSignedUpEvents));
-
-      alert(`Event "${formData.name}" updated successfully!`);
-    } else {
-      // CREATE new event
-      const newEvent: Event = {
-        ...formData,
-        id: Date.now(), // Simple ID generation
-        volunteersSignedUp: 0,
-      };
-
-      const updatedEvents = [...events, newEvent];
-      localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-      alert(`Event "${formData.name}" created successfully!`);
+    if (formData.maxVolunteers < 1) {
+      setErrorMessage("Capacity must be at least 1.");
+      return;
     }
 
-    // Navigate back to events page
-    navigate('/events');
+    const start = new Date(`1970-01-01T${formData.startTime}`);
+    const end = new Date(`1970-01-01T${formData.endTime}`);
+    if (start >= end) {
+      setErrorMessage("End time must be after start time.");
+      return;
+    }
+
+    const locationFields = [
+      formData.locationAddress,
+      formData.locationCity,
+      formData.locationState,
+      formData.locationZip,
+      formData.locationCountry,
+    ];
+
+    const hasLocation = locationFields.some((v) => v && v.trim() !== "");
+    let locationPayload: LocationPayload | null = null;
+
+    if (hasLocation) {
+      const allProvided = locationFields.every((v) => v && v.trim() !== "");
+      if (!allProvided) {
+        setErrorMessage(
+          "Please complete all location fields or leave them all blank."
+        );
+        return;
+      }
+
+      locationPayload = {
+        address: formData.locationAddress,
+        city: formData.locationCity,
+        state: formData.locationState,
+        zip_code: formData.locationZip,
+        country: formData.locationCountry,
+      };
+    }
+
+    const basePayload = {
+      name: formData.name,
+      description: formData.description,
+      day: formData.date,
+      start_time: formData.startTime,
+      end_time: formData.endTime,
+      urgency: formData.urgency,
+      capacity: formData.maxVolunteers,
+      needed_skills: formData.requirements,
+      location: locationPayload,
+    };
+
+    setSubmitting(true);
+    try {
+      if (isEditing && existingEvent?.id) {
+        await updateOrgEvent(existingEvent.id, basePayload);
+        alert(`Event "${formData.name}" updated successfully!`);
+      } else {
+        if (!orgId) {
+          setErrorMessage(
+            "You must be assigned to an organization before creating events."
+          );
+          setSubmitting(false);
+          return;
+        }
+
+        await createOrgEvent({
+          ...basePayload,
+          org_id: orgId,
+        });
+
+        alert(`Event "${formData.name}" created successfully!`);
+      }
+
+      navigate("/OrgDashboard");
+    } catch (err) {
+      console.error("Failed to save event", err);
+      const message =
+        err instanceof Error ? err.message : "Failed to save event.";
+      setErrorMessage(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -162,6 +266,11 @@ function CreateEvent() {
           <p className="text-center mb-6" style={{ color: PALETTE.teal }}>
             {isEditing ? "Update your event information" : "Fill in the details to create a volunteer opportunity"}
           </p>
+          {errorMessage && (
+            <p className="text-center mb-4 text-red-600 font-semibold">
+              {errorMessage}
+            </p>
+          )}
 
           <form onSubmit={handleSubmit}>
             {/* Event Name */}
@@ -184,18 +293,22 @@ function CreateEvent() {
             {/* Organization */}
             <div className="mb-4">
               <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
-                Organization *
+                Organization
               </label>
               <input
                 type="text"
                 name="organization"
-                value={formData.organization}
-                onChange={handleInputChange}
+                value={orgName || "Loading organization..."}
+                readOnly
                 className="w-full p-3 rounded border focus:outline-none focus:ring-2"
                 style={{ borderColor: PALETTE.mint }}
-                placeholder="e.g., Green Earth Foundation"
-                required
+                placeholder="Organization name"
               />
+              {!orgId && !loadingOrg && (
+                <p className="text-sm text-red-600 mt-1">
+                  You need to be assigned to an organization to create events.
+                </p>
+              )}
             </div>
 
             {/* Date and Time */}
@@ -216,12 +329,26 @@ function CreateEvent() {
               </div>
               <div>
                 <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
-                  Time *
+                  Start Time *
                 </label>
                 <input
                   type="time"
-                  name="time"
-                  value={formData.time}
+                  name="startTime"
+                  value={formData.startTime}
+                  onChange={handleInputChange}
+                  className="w-full p-3 rounded border focus:outline-none focus:ring-2"
+                  style={{ borderColor: PALETTE.mint }}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+                  End Time *
+                </label>
+                <input
+                  type="time"
+                  name="endTime"
+                  value={formData.endTime}
                   onChange={handleInputChange}
                   className="w-full p-3 rounded border focus:outline-none focus:ring-2"
                   style={{ borderColor: PALETTE.mint }}
@@ -233,39 +360,77 @@ function CreateEvent() {
             {/* Location */}
             <div className="mb-4">
               <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
-                Location *
+                Location (optional)
               </label>
-              <input
-                type="text"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                className="w-full p-3 rounded border focus:outline-none focus:ring-2"
-                style={{ borderColor: PALETTE.mint }}
-                placeholder="e.g., Santa Monica Beach, CA"
-                required
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  name="locationAddress"
+                  value={formData.locationAddress}
+                  onChange={handleInputChange}
+                  className="w-full p-3 rounded border focus:outline-none focus:ring-2"
+                  style={{ borderColor: PALETTE.mint }}
+                  placeholder="Street address"
+                />
+                <input
+                  type="text"
+                  name="locationCity"
+                  value={formData.locationCity}
+                  onChange={handleInputChange}
+                  className="w-full p-3 rounded border focus:outline-none focus:ring-2"
+                  style={{ borderColor: PALETTE.mint }}
+                  placeholder="City"
+                />
+                <input
+                  type="text"
+                  name="locationState"
+                  value={formData.locationState}
+                  onChange={handleInputChange}
+                  className="w-full p-3 rounded border focus:outline-none focus:ring-2"
+                  style={{ borderColor: PALETTE.mint }}
+                  placeholder="State / Province"
+                />
+                <input
+                  type="text"
+                  name="locationZip"
+                  value={formData.locationZip}
+                  onChange={handleInputChange}
+                  className="w-full p-3 rounded border focus:outline-none focus:ring-2"
+                  style={{ borderColor: PALETTE.mint }}
+                  placeholder="Zip / Postal code"
+                />
+                <input
+                  type="text"
+                  name="locationCountry"
+                  value={formData.locationCountry}
+                  onChange={handleInputChange}
+                  className="w-full p-3 rounded border focus:outline-none focus:ring-2 md:col-span-2"
+                  style={{ borderColor: PALETTE.mint }}
+                  placeholder="Country"
+                />
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                Provide full address details or leave all fields blank.
+              </p>
             </div>
 
             {/* Type */}
             <div className="mb-4">
               <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
-                Event Type *
+                Urgency *
               </label>
               <select
-                name="type"
-                value={formData.type}
+                name="urgency"
+                value={formData.urgency}
                 onChange={handleInputChange}
                 className="w-full p-3 rounded border focus:outline-none focus:ring-2"
                 style={{ borderColor: PALETTE.mint }}
                 required
               >
-                <option value="">Select a type</option>
-                <option value="Environment">Environment</option>
-                <option value="Community">Community</option>
-                <option value="Education">Education</option>
-                <option value="Healthcare">Healthcare</option>
-                <option value="Other">Other</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+                <option value="Critical">Critical</option>
               </select>
             </div>
 
@@ -354,7 +519,7 @@ function CreateEvent() {
             <div className="flex gap-4 justify-center">
               <button
                 type="button"
-                onClick={() => navigate('/events')}
+                onClick={() => navigate('/OrgDashboard')}
                 className="px-8 py-3 rounded-full font-semibold border transition-transform hover:scale-105"
                 style={{
                   color: PALETTE.navy,
@@ -366,10 +531,15 @@ function CreateEvent() {
               </button>
               <button
                 type="submit"
-                className="px-8 py-3 rounded-full font-semibold text-white shadow-md transition-transform hover:scale-105"
+                disabled={submitting}
+                className="px-8 py-3 rounded-full font-semibold text-white shadow-md transition-transform hover:scale-105 disabled:opacity-70 disabled:cursor-not-allowed"
                 style={{ backgroundColor: PALETTE.green }}
               >
-                {isEditing ? "Update Event" : "Create Event"}
+                {submitting
+                  ? "Saving..."
+                  : isEditing
+                  ? "Update Event"
+                  : "Create Event"}
               </button>
             </div>
           </form>

@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/user-context";
-import { getOrgDashboard, deleteOrgEvent } from "../services/orgService";
+import {
+  getOrgDashboard,
+  getOrgEvents,
+  deleteOrgEvent,
+} from "../services/orgService";
 
 // ---- Brand palette ----
 const PALETTE = {
@@ -216,9 +220,8 @@ function DarkModeToggle({ darkMode, onToggle }) {
 // ========================================================================
 
 export default function OrgDashboard() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const adminId = user?.id;
-  const token = user?.token;
 
   const [darkMode, setDarkMode] = useState(false);
 
@@ -249,28 +252,47 @@ export default function OrgDashboard() {
   //  LOAD REAL BACKEND DATA
   // ============================
   useEffect(() => {
-    if (!adminId || !token) return;
+    if (loading) return;
+    if (!adminId) return;
 
     const loadDashboard = async () => {
+      setLoadingSummary(true);
+      setLoadingEvents(true);
       try {
-        const data = await getOrgDashboard(adminId, token);
+        const [profile, orgEvents] = await Promise.all([
+          getOrgDashboard(adminId),
+          getOrgEvents(),
+        ]);
 
-        // Map backend events to dashboard format
-        const mappedEvents = (data.upcoming_events || []).map(evt => ({
+        const mapEvent = (evt) => ({
           id: evt.id,
           name: evt.name,
           description: evt.description,
           location: formatLocation(evt.location),
+          locationObj: evt.location,
           requiredSkills: Array.isArray(evt.needed_skills)
-            ? evt.needed_skills.map(s => typeof s === 'string' ? s : s.skill)
+            ? evt.needed_skills.map((s) =>
+                typeof s === "string" ? s : s.skill
+              )
             : [],
           urgency: (evt.urgency || "Low").toLowerCase(),
           date: evt.day,
+          startTime: evt.start_time,
+          endTime: evt.end_time,
+          capacity: evt.capacity,
           assigned: evt.assigned ?? 0,
-        }));
+          orgId: evt.org_id,
+        });
+
+        const eventsFromApi =
+          (Array.isArray(orgEvents) && orgEvents.length > 0
+            ? orgEvents
+            : profile?.upcoming_events) || [];
+
+        const mappedEvents = eventsFromApi.map(mapEvent);
 
         const summaryObj = {
-          orgName: data.organization?.name ?? "My Organization",
+          orgName: profile?.organization?.name ?? "My Organization",
           volunteers: 0, // backend doesn't provide yet
           upcomingEvents: mappedEvents.length,
           pendingMatches: 0, // backend doesn't provide yet
@@ -289,7 +311,7 @@ export default function OrgDashboard() {
     };
 
     loadDashboard();
-  }, [adminId, token]);
+  }, [adminId, loading]);
 
   // Derived memo for skill filters
   const skillsUniverse = useMemo(() => {
@@ -345,7 +367,7 @@ export default function OrgDashboard() {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
     
     try {
-      await deleteOrgEvent(eventId, token);
+      await deleteOrgEvent(eventId);
       setEvents((prev) => prev.filter((evt) => evt.id !== eventId));
     } catch (err) {
       console.error("Failed to delete event", err);
