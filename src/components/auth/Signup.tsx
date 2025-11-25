@@ -331,6 +331,7 @@ export const Signup = () => {
       role: content.user_type,
       first_name: content.first_name,
       last_name: content.last_name,
+      image_url: content.image_url,
       email: content.email,
       name: `${content.first_name} ${content.last_name}`,
     });
@@ -357,6 +358,7 @@ export const Signup = () => {
       role: content.user_type,
       first_name: content.first_name,
       last_name: content.last_name,
+      image_url: content.image_url,
       email: content.email,
       name: `${content.first_name} ${content.last_name}`,
     });

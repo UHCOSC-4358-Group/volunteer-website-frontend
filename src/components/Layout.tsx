@@ -3,33 +3,20 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../hooks/user-context";
 import { VolunteerSVG } from "../assets/Svg";
 
-const PALETTE = {
-  navy: "#22577A",
-  teal: "#38A3A5",
-  green: "#26A96C",
-  mint: "#80ED99",
-  sand: "#F0EADF",
-};
-
 export default function Layout() {
   const { user, logout } = useAuth();
-  
+
   // Determine user roles (backend returns "admin" for organizers)
   const isAdmin = user?.role === "admin";
-  const displayName =
-    user?.name ||
-    [user?.first_name, user?.last_name].filter(Boolean).join(" ") ||
-    user?.email ||
-    "Volunteer";
+  const isVolunteer = user?.role === "volunteer";
 
   const link = ({ isActive }: { isActive: boolean }) =>
     `px-2 py-1 rounded ${
       isActive ? "bg-white text-[#22577A]" : "hover:underline"
     }`;
-
   return (
     <div>
-      <header className="text-white" style={{ backgroundColor: PALETTE.teal }}>
+      <header className="text-white bg-teal">
         <nav className="flex justify-between items-center">
           <div className="flex items-center gap-4 pl-3">
             <div>
@@ -37,30 +24,56 @@ export default function Layout() {
             </div>
             <div className="text-4xl font-thin">Volunteer</div>
           </div>
-          
-          {/* Main Navigation Links - Only show for Admin/Organizer */}
-          {isAdmin && (
-            <nav className="p-4 bg-[#38A3A5] text-white flex gap-4">
-              <NavLink to="/volunteer-profile" className={link}>
-                User View
-              </NavLink>
-              <NavLink to="/volunteer-history" className={link}>
-                History
-              </NavLink>
-              <NavLink to="/OrgDashboard" className={link}>
-                Dashboard
-              </NavLink>
-              <NavLink to="/event-page" className={link}>
-                Events
-              </NavLink>
-            </nav>
-          )}
+          <nav className="p-4 bg-[#38A3A5] text-white flex gap-4">
+            {isVolunteer && (
+              <>
+                <NavLink to="/volunteer-profile" className={link}>
+                  Profile
+                </NavLink>
+                <NavLink to="/user-event-site" className={link}>
+                  Events
+                </NavLink>
+              </>
+            )}
+
+            {isAdmin && (
+              <>
+                <NavLink to="/volunteer-profile" className={link}>
+                  Profile
+                </NavLink>
+                <NavLink to="/volunteer-history" className={link}>
+                  Volunteer History
+                </NavLink>
+                <NavLink to="/OrgDashboard" className={link}>
+                  Dashboard
+                </NavLink>
+                <NavLink to="/event-page" className={link}>
+                  Events
+                </NavLink>
+              </>
+            )}
+
+            <NavLink to="/about" className={link}>
+              About
+            </NavLink>
+            <NavLink to="/contact" className={link}>
+              Contact
+            </NavLink>
+          </nav>
 
           {/* Right-side links - Show for all users */}
           <div className="hidden sm:flex gap-4 items-center pr-6">
             {user ? (
               <>
-                <span className="text-sm">Hello, {displayName}</span>
+                <NavLink
+                  to={isAdmin ? "/OrgDashboard" : "/volunteer-profile"}
+                  className="hover:opacity-80 transition-opacity"
+                >
+                  <img
+                    className="w-12 h-12 rounded-full object-cover border-navy border-1"
+                    src={user.image_url}
+                  />
+                </NavLink>
                 <a
                   onClick={logout}
                   className="hover:opacity-80 transition-opacity cursor-pointer"
@@ -73,17 +86,14 @@ export default function Layout() {
                 <Link to="/" className="hover:opacity-80 transition-opacity">
                   Login
                 </Link>
-                <Link to="/signup" className="hover:opacity-80 transition-opacity">
+                <Link
+                  to="/signup"
+                  className="hover:opacity-80 transition-opacity"
+                >
                   Sign Up
                 </Link>
               </>
             )}
-            <Link to="/about" className="hover:opacity-80 transition-opacity">
-              About
-            </Link>
-            <Link to="/contact" className="hover:opacity-80 transition-opacity">
-              Contact
-            </Link>
           </div>
         </nav>
       </header>

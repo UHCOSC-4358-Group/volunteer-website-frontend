@@ -4,10 +4,11 @@ import { useNavigate } from "react-router-dom";
 interface User {
   id: number;
   role: "volunteer" | "admin";
-  first_name?: string;
-  last_name?: string;
-  email?: string;
-  name?: string;
+  first_name: string;
+  last_name: string;
+  image_url: string;
+  email: string;
+  name: string;
 }
 
 interface AuthState {
@@ -98,7 +99,7 @@ export const AuthProvider = () => {
         });
 
         if (response.ok) {
-          const { id, user_type, first_name, last_name, email } =
+          const { id, user_type, first_name, last_name, email, image_url } =
             await response.json();
 
           const user: User = {
@@ -106,6 +107,7 @@ export const AuthProvider = () => {
             role: user_type,
             first_name,
             last_name,
+            image_url,
             email,
             name: [first_name, last_name].filter(Boolean).join(" ") || email,
           };

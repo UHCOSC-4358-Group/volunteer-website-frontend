@@ -74,6 +74,7 @@ const SignIn: React.FC = () => {
         role: content.user_type,
         first_name: content.first_name,
         last_name: content.last_name,
+        image_url: content.image_url,
         email: content.email,
         name:
           [content.first_name, content.last_name].filter(Boolean).join(" ") ||
@@ -97,7 +98,6 @@ const SignIn: React.FC = () => {
       },
       body: JSON.stringify(userData),
     });
-    
 
     const content = await response.json();
 
@@ -107,6 +107,7 @@ const SignIn: React.FC = () => {
         role: content.user_type,
         first_name: content.first_name,
         last_name: content.last_name,
+        image_url: content.image_url,
         email: content.email,
         name:
           [content.first_name, content.last_name].filter(Boolean).join(" ") ||
