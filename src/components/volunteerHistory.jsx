@@ -325,6 +325,49 @@ export default function VolunteerHistoryPage() {
     setOpen(false);
   }
 
+  function exportCSV() {
+    if (rows.length === 0) return;
+
+    const header = [
+      "Volunteer Name",
+      "Event Name",
+      "Description",
+      "Location",
+      "Required Skills",
+      "Urgency",
+      "Event Date",
+      "Hours",
+      "Status"
+    ];
+
+    const csvRows = [
+      header.join(","),
+      ...rows.map(r =>
+        [
+          r.volunteerName,
+          r.eventName,
+          `"${r.description.replace(/"/g, '""')}"`,  // CSV-safe
+          `"${r.location.replace(/"/g, '""')}"`,
+          `"${r.requiredSkills.join("; ").replace(/"/g, '""')}"`,
+          r.urgency,
+          r.eventDate,
+          r.hours,
+          r.status
+        ].join(",")
+      )
+    ];
+
+    const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "volunteer_history.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="min-h-screen" style={{ background: "#0F172A0D" }}>
       <header className="px-6 py-5 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60" style={{ borderColor: "#E5E7EB" }}>
@@ -397,6 +440,20 @@ export default function VolunteerHistoryPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={exportCSV}
+                          disabled={!(r.status === 'Completed' || r.status === 'No-show')}
+                          className={classNames(
+                            "px-3 py-1.5 rounded-xl text-white text-xs shadow transition",
+                            (r.status === "Completed" || r.status === "No-show")
+                              ? "bg-[color:#26A96C] hover:bg-[color:#1e8a59]"
+                              : "bg-gray-300 cursor-not-allowed"
+                          )}
+                          style={{ background: PALETTE.teal }}
+                        >
+                          Generate Report
+                        </button>
+
                         <button onClick={()=>onEdit(r)} className="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50" style={{ borderColor: "#D1D5DB", color: PALETTE.navy }}>Edit</button>
                         <button onClick={()=>onDelete(r.id)} className="px-3 py-1.5 rounded-lg text-sm text-white" style={{ background: PALETTE.error }}>Delete</button>
                       </div>
