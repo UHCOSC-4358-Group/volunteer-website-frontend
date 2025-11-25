@@ -17,6 +17,7 @@ import UserEventSite from "./components/userEventSite";
 import about, { AboutPage } from "./components/aboutPage";
 // @ts-ignore
 import contact, { ContactPage } from "./components/contactPage";
+import AdminOrgRegister from "./components/AdminOrgRegister";
 import { Signup } from "./components/auth/Signup";
 import {
   AuthContext,
@@ -42,6 +43,7 @@ function App() {
           <Route path="/event-page" element={<EventsPage />} />
           <Route path="/matching" element={<Matching />} />
           <Route path="/user-event-site" element={<UserEventSite />} />
+          <Route path="/org/register" element={<AdminOrgRegister />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
         </Route>
