@@ -504,10 +504,12 @@ function VolunteerProfile() {
                   <div className="font-semibold" style={{ color: PALETTE.navy }}>Email</div>
                   <div style={{ color: "#475569" }}>{userProfile?.email ?? "-"}</div>
                 </div>
+                {/*
                 <div>
                   <div className="font-semibold" style={{ color: PALETTE.navy }}>Phone</div>
                   <div style={{ color: "#475569" }}>{userProfile?.phone ?? "-"}</div>
                 </div>
+                */}
                 <div>
                   <div className="font-semibold" style={{ color: PALETTE.navy }}>Address</div>
                   <div style={{ color: "#475569" }}>{userProfile?.address ?? "-"}</div>
@@ -548,6 +550,7 @@ function VolunteerProfile() {
                 >
                   Close
                 </button>
+                {/*
                 <button
                   onClick={() => {
                     setIsEditProfileModalOpen(false);
@@ -558,6 +561,7 @@ function VolunteerProfile() {
                 >
                   Edit Profile
                 </button>
+                */}
               </div>
             </div>
           </div>
