@@ -325,8 +325,8 @@ export default function VolunteerHistoryPage() {
     setOpen(false);
   }
 
-  function exportCSV() {
-    if (rows.length === 0) return;
+  function exportCSV(eventData) {
+    if (!eventData) return;
 
     const header = [
       "Volunteer Name",
@@ -342,19 +342,17 @@ export default function VolunteerHistoryPage() {
 
     const csvRows = [
       header.join(","),
-      ...rows.map(r =>
-        [
-          r.volunteerName,
-          r.eventName,
-          `"${r.description.replace(/"/g, '""')}"`,  // CSV-safe
-          `"${r.location.replace(/"/g, '""')}"`,
-          `"${r.requiredSkills.join("; ").replace(/"/g, '""')}"`,
-          r.urgency,
-          r.eventDate,
-          r.hours,
-          r.status
-        ].join(",")
-      )
+      [
+        eventData.volunteerName,
+        eventData.eventName,
+        `"${eventData.description.replace(/"/g, '""')}"`,
+        `"${eventData.location.replace(/"/g, '""')}"`,
+        `"${eventData.requiredSkills.join("; ").replace(/"/g, '""')}"`,
+        eventData.urgency,
+        eventData.eventDate,
+        eventData.hours,
+        eventData.status
+      ].join(",")
     ];
 
     const blob = new Blob([csvRows.join("\n")], { type: "text/csv" });
@@ -362,11 +360,12 @@ export default function VolunteerHistoryPage() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = "volunteer_history.csv";
+    a.download = `${eventData.eventName}_report.csv`;
     a.click();
 
     URL.revokeObjectURL(url);
   }
+
 
   return (
     <div className="min-h-screen" style={{ background: "#0F172A0D" }}>
@@ -441,7 +440,7 @@ export default function VolunteerHistoryPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-2">
                         <button
-                          onClick={exportCSV}
+                          onClick={() => exportCSV(r)}
                           disabled={!(r.status === 'Completed' || r.status === 'No-show')}
                           className={classNames(
                             "px-3 py-1.5 rounded-xl text-white text-xs shadow transition",
@@ -453,7 +452,7 @@ export default function VolunteerHistoryPage() {
                         >
                           Generate Report
                         </button>
-
+                        
                         <button onClick={()=>onEdit(r)} className="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50" style={{ borderColor: "#D1D5DB", color: PALETTE.navy }}>Edit</button>
                         <button onClick={()=>onDelete(r.id)} className="px-3 py-1.5 rounded-lg text-sm text-white" style={{ background: PALETTE.error }}>Delete</button>
                       </div>
