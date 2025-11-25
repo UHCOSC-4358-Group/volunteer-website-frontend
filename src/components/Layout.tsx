@@ -39,7 +39,7 @@ export default function Layout() {
             {isAdmin && (
               <>
                 <NavLink to="/volunteer-profile" className={link}>
-                  Profile
+                  User View
                 </NavLink>
                 <NavLink to="/volunteer-history" className={link}>
                   Volunteer History
