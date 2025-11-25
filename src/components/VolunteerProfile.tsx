@@ -54,6 +54,7 @@ interface ApiVolunteer {
   email: string;
   first_name: string;
   last_name: string;
+  location?: ApiLocation;
   phone?: string;
   address?: string;
   city?: string;
@@ -109,18 +110,57 @@ const formatSkills = (skills: string[] = []): string[] =>
   );
 
 const formatAddress = (rawProfile: any): string => {
-  const address1 = rawProfile?.address1 ?? rawProfile?.address ?? "";
-  const address2 = rawProfile?.address2 ?? "";
-  const city = rawProfile?.city ?? "";
-  const state = rawProfile?.state ?? "";
-  const zip = rawProfile?.zip ?? rawProfile?.zip_code ?? rawProfile?.zipCode ?? "";
-  const country = rawProfile?.country ?? "";
+  // Accept nested location objects as well as top-level address fields
+  const source = rawProfile?.location ?? rawProfile ?? {};
 
-  const firstLine = [address1, address2].filter(Boolean).join(", ");
-  const cityState = [city, state].filter(Boolean).join(", ");
+  const address1 =
+    rawProfile?.address1 ??
+    source?.address1 ??
+    rawProfile?.address ??
+    source?.address ??
+    rawProfile?.street ??
+    source?.street ??
+    "";
+  const address2 =
+    rawProfile?.address2 ??
+    source?.address2 ??
+    rawProfile?.street2 ??
+    source?.street2 ??
+    rawProfile?.address_line_2 ??
+    source?.address_line_2 ??
+    "";
+  const city =
+    rawProfile?.city ?? source?.city ?? source?.town ?? source?.locality ?? "";
+  const state =
+    rawProfile?.state ??
+    source?.state ??
+    source?.province ??
+    source?.region ??
+    "";
+  const zip =
+    rawProfile?.zip ??
+    rawProfile?.zip_code ??
+    rawProfile?.zipCode ??
+    rawProfile?.postalCode ??
+    source?.zip ??
+    source?.zip_code ??
+    source?.zipCode ??
+    source?.postalCode ??
+    "";
+  const country = rawProfile?.country ?? source?.country ?? "";
+
+  const firstLine = [address1, address2]
+    .map((part) => (typeof part === "string" ? part.trim() : ""))
+    .filter(Boolean)
+    .join(", ");
+  const cityState = [city, state]
+    .map((part) => (typeof part === "string" ? part.trim() : ""))
+    .filter(Boolean)
+    .join(", ");
+
   const segments = [firstLine, cityState, zip, country]
-    .filter((part) => part && part.trim().length > 0)
-    .map((part) => part.trim());
+    .map((part) => (typeof part === "string" ? part.trim() : ""))
+    .filter((part) => part.length > 0);
 
   return segments.join(", ");
 };
@@ -356,7 +396,13 @@ function VolunteerProfile() {
 
         const data: VolunteerApiResponse = await res.json();
         if (data?.volunteer) {
-          setUserProfile(buildUserProfileFromApi(data.volunteer, user));
+          console.log("[volunteer-profile] raw volunteer from API", data.volunteer);
+          const formattedAddress = formatAddress(data.volunteer);
+          console.log("[volunteer-profile] formatted address", formattedAddress);
+
+          const profile = buildUserProfileFromApi(data.volunteer, user);
+          console.log("[volunteer-profile] built user profile", profile);
+          setUserProfile(profile);
         }
 
         const upcoming = Array.isArray(data?.upcoming_events)
@@ -515,7 +561,7 @@ function VolunteerProfile() {
                   <div style={{ color: "#475569" }}>{userProfile?.address ?? "-"}</div>
                 </div>
                 <div>
-                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Bio</div>
+                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Availability</div>
                   <div style={{ color: "#475569" }}>{userProfile?.bio ?? "-"}</div>
                 </div>
                 <div>
