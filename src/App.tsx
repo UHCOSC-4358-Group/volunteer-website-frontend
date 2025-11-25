@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import VolunteerProfile from "./components/VolunteerProfile";
 import SignIn from "./components/auth/SignIn";
-import AdminProfile from './components/AdminProfile';
+import AdminProfile from "./components/AdminProfile";
 // @ts-ignore
 import OrgDashboard from "./components/dashboard";
 // @ts-ignore
@@ -26,6 +26,7 @@ import {
   AuthContextType,
 } from "./hooks/user-context";
 import { UnauthorizedPage } from "./components/auth/UnauthorizedPage";
+import AdminOrgSearch from "./components/AdminOrgSearch";
 // App functionality with routing
 function App() {
   const authState: AuthContextType = AuthProvider();
@@ -46,6 +47,7 @@ function App() {
           <Route path="/matching" element={<Matching />} />
           <Route path="/user-event-site" element={<UserEventSite />} />
           <Route path="/org/register" element={<AdminOrgRegister />} />
+          <Route path="/org/join" element={<AdminOrgSearch />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
         </Route>
