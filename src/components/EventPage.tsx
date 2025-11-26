@@ -201,21 +201,6 @@ function EventsPage() {
               </svg>
             </div>
 
-            {/* Type Filter */}
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="p-3 rounded border focus:outline-none focus:ring-2 bg-white"
-              style={{ borderColor: PALETTE.mint, color: PALETTE.navy }}
-            >
-              <option value="">All Types</option>
-              <option value="Environment">Environment</option>
-              <option value="Community">Community</option>
-              <option value="Education">Education</option>
-              <option value="Healthcare">Healthcare</option>
-              <option value="Other">Other</option>
-            </select>
-
             {/* Create Event Button */}
             <button
               onClick={() => navigate('/create-event')}
