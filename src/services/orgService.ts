@@ -54,6 +54,27 @@ export interface UpdateEventPayload {
   end_time?: string;
 }
 
+export interface Notification {
+  id: number;
+  subject: string;
+  body: string;
+  created_at: string;
+}
+
+export const getNotifications = async (limit: number = 50, offset: number = 0) => {
+  const res = await fetch(`/api/notifications?limit=${limit}&offset=${offset}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+
+  if (!res.ok) throw new Error("Failed to load notifications");
+
+  return res.json();
+};
+
+
+
 export const getOrgDashboard = async (adminId: number) => {
   const res = await fetch(`/api/org/admin/${adminId}`, {
     method: "GET",

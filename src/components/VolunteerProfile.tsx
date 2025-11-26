@@ -2,6 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/user-context";
+import { getNotifications } from "../services/notificationService";
 import {
   NotificationModal,
   type Notification,
@@ -465,16 +466,26 @@ function VolunteerProfile() {
 
   const filteredEvents = getFilteredEvents();
 
-  const notifications: Notification[] = [
-    {
-      title: "Event Summary",
-      description: `You have ${upcomingEvents.length} upcoming event${upcomingEvents.length !== 1 ? 's' : ''} and ${pastEvents.length} past event${pastEvents.length !== 1 ? 's' : ''}`,
-    },
-    ...(upcomingEvents.length > 0 ? [{
-      title: "Next Event",
-      description: `${upcomingEvents[0]?.name} on ${new Date(upcomingEvents[0]?.date + 'T12:00:00').toLocaleDateString()}`
-    }] : [])
-  ];
+const [notifications, setNotifications] = useState<Notification[]>([]);
+
+useEffect(() => {
+  const loadNotifications = async () => {
+    try {
+      const data = await getNotifications();
+
+      // If backend returns { notifications: [...] }
+      const list = Array.isArray(data) ? data : data.notifications ?? [];
+
+      setNotifications(list);
+    } catch (err) {
+      console.error("Failed to load notifications", err);
+    }
+  };
+
+  loadNotifications();
+}, []);
+
+
 
   // Get first name from full name
   const firstName = userProfile?.name.split(' ')[0] || 'User';
