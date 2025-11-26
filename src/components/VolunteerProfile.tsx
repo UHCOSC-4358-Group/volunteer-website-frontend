@@ -239,7 +239,18 @@ function Card({
 }
 
 function EventCard(props: Event) {
-  const { name, organization, type, description, date, time, location, volunteersSignedUp, maxVolunteers } = props;
+  const {
+    name,
+    organization,
+    type,
+    description,
+    date,
+    time,
+    location,
+    volunteersSignedUp,
+    maxVolunteers,
+    requirements,
+  } = props;
 
   const capacityPct =
     maxVolunteers > 0
@@ -247,34 +258,58 @@ function EventCard(props: Event) {
       : 0;
   const capacityBarColor = capacityPct > 80 ? "#e67e22" : PALETTE.green;
 
+  const rawUrgency =
+    typeof type === "string" && type.includes(".") ? type.split(".").pop() : type;
+  const urgencyLabel = rawUrgency
+    ? rawUrgency.charAt(0) + rawUrgency.slice(1).toLowerCase()
+    : "General";
+
+  const formattedDate = (() => {
+    if (!date) return "";
+    // Build date in local time to avoid UTC shift when backend sends YYYY-MM-DD
+    const parts = date.split("-");
+    if (parts.length === 3) {
+      const [y, m, d] = parts.map((p) => Number(p));
+      const localDate = new Date(y, (m || 1) - 1, d || 1);
+      return localDate.toLocaleDateString(undefined, {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    }
+    return new Date(date).toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  })();
+
   return (
     <div
-      className="shadow-lg rounded-xl p-6 h-full min-h-[300px] w-full max-w-[500px] border"
+      className="shadow-lg rounded-xl p-6 h-full min-h-[300px] w-full max-w-[500px] border flex flex-col justify-between"
       style={{ backgroundColor: "#fff", borderColor: PALETTE.mint }}
     >
-      <div>
-        <div className="flex gap-1 justify-between items-center">
+      <div className="flex justify-between items-start gap-3">
+        <div>
           <div className="font-medium text-lg" style={{ color: PALETTE.navy }}>
             {name}
           </div>
-          <div
-            className="text-sm pt-1 pb-1 pl-3 pr-3 font-semibold rounded-xl"
-            style={{ backgroundColor: PALETTE.teal, color: "#fff" }}
-          >
-            {type}
+          <div className="font-normal" style={{ color: "#64748B" }}>
+            {organization}
           </div>
         </div>
-        <div className="font-normal" style={{ color: "#64748B" }}>
-            {organization}
-        </div>
+        <span
+          className="px-3 py-1 text-xs font-semibold rounded-full whitespace-nowrap"
+          style={{ backgroundColor: PALETTE.teal, color: "#fff" }}
+        >
+          {urgencyLabel}
+        </span>
       </div>
 
-      <div className="pt-4 pb-4" style={{ color: "#475569" }}>
-        <div className="pb-2">{description}</div>
-
+      <div className="pt-4 pb-4 space-y-2" style={{ color: "#475569" }}>
         <div className="flex items-center gap-2">
           <CalendarSVG size={20} />
-          <div>{new Date(date + 'T00:00:00').toLocaleDateString()}</div>
+          <div>{formattedDate}</div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -286,15 +321,57 @@ function EventCard(props: Event) {
           <LocationPinSVG size={20} />
           <div>{location}</div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <VolunteerSVG size={20} />
-          <div>
-            {volunteersSignedUp} / {maxVolunteers} volunteers
+        {/*
+        <div className="pt-2 text-sm" style={{ color: PALETTE.navy }}>
+          <div className="font-semibold mb-1" style={{ color: PALETTE.navy }}>
+            Description
+          </div>
+          <div className="text-[#475569]">
+            {description && description.trim().length > 0
+              ? description
+              : "No description provided."}
           </div>
         </div>
+          */}
+        {requirements && requirements.length > 0 && (
+          <div className="mb-3">
+            <p
+              className="text-sm font-semibold mb-1"
+              style={{ color: PALETTE.navy }}
+            >
+              Skills needed:
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {requirements.map((req, idx) => (
+                <span
+                  key={idx}
+                  className="px-2 py-1 rounded-full text-xs"
+                  style={{
+                    backgroundColor: PALETTE.mint,
+                    color: PALETTE.navy,
+                  }}
+                >
+                  {req}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
 
-        <div className="mt-3 h-2 w-full rounded-full" style={{ backgroundColor: "#eef7f0" }}>
+      {/*
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <VolunteerSVG size={20} />
+            <div>
+              {volunteersSignedUp} / {maxVolunteers} volunteers
+            </div>
+          </div>
+          <div className="text-sm font-semibold" style={{ color: PALETTE.teal }}>
+            {capacityPct}% filled
+          </div>
+        </div>
+        */}
+        <div className="mt-2 h-2 w-full rounded-full" style={{ backgroundColor: "#eef7f0" }}>
           <div
             className="h-2 rounded-full"
             style={{ width: `${capacityPct}%`, backgroundColor: capacityBarColor }}
@@ -302,12 +379,24 @@ function EventCard(props: Event) {
         </div>
       </div>
 
-      <div className="flex justify-around font-semibold">
+      <div className="flex justify-around font-semibold mt-4">
+        {/*
+        <button
+          className="pt-1 pb-1 pl-8 pr-8 rounded-3xl shadow"
+          style={{
+            color: PALETTE.teal,
+            backgroundColor: "#ffffff",
+            border: `2px solid ${PALETTE.teal}`,
+          }}
+        >
+          View Details
+        </button>
+        */}
         <button
           className="pt-1 pb-1 pl-8 pr-8 rounded-3xl shadow text-white"
           style={{ backgroundColor: PALETTE.green }}
         >
-          Signed up 😊
+          Signed up ☺️
         </button>
       </div>
     </div>
@@ -349,7 +438,11 @@ function VolunteerProfile() {
       time,
       location: locationParts || "Location TBA",
       type: evt?.urgency ?? "General",
-      description: evt?.description ?? "",
+      description:
+        evt?.description ??
+        evt?.event_description ??
+        evt?.details ??
+        "",
       organization: evt?.organization ?? "",
       volunteersSignedUp: evt?.assigned ?? 0,
       maxVolunteers: evt?.capacity ?? evt?.maxVolunteers ?? 0,
