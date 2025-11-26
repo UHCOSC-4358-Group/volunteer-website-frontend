@@ -468,6 +468,7 @@ export default function OrgDashboard() {
             <Button variant="subtle" onClick={goHistory} darkMode={darkMode}>
               Volunteer History
             </Button>
+            {/*
             <Button
               variant="secondary"
               onClick={goUserMode}
@@ -475,6 +476,7 @@ export default function OrgDashboard() {
             >
               User View
             </Button>
+            */}
           </div>
         </div>
       </header>

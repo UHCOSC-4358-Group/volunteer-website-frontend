@@ -41,9 +41,11 @@ export default function Layout() {
                 <NavLink to="/admin-profile" className={link}>
                   Admin Profile
                 </NavLink>
+                {/*
                 <NavLink to="/volunteer-profile" className={link}>
                   User View
                 </NavLink>
+                */}
                 <NavLink to="/volunteer-history" className={link}>
                   Volunteer History
                 </NavLink>
