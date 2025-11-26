@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/user-context";
+import SelectStateOptions from "./SelectStateOptions"; // Add this import
 import {
   createOrgEvent,
   updateOrgEvent,
@@ -9,7 +10,7 @@ import {
   LocationPayload,
 } from "../services/orgService";
 
-type Urgency = "Low" | "Medium" | "High" | "Critical";
+type Urgency = "Low" | "Medium" | "High" ;
 
 interface EventFormData {
   name: string;
@@ -53,7 +54,7 @@ function CreateEvent() {
     locationCity: "",
     locationState: "",
     locationZip: "",
-    locationCountry: "",
+    locationCountry: "United States",
     description: "",
     maxVolunteers: 10,
     urgency: "Low",
@@ -381,15 +382,16 @@ function CreateEvent() {
                   style={{ borderColor: PALETTE.mint }}
                   placeholder="City"
                 />
-                <input
-                  type="text"
+                {/* CHANGED: Convert to select dropdown */}
+                <select
                   name="locationState"
                   value={formData.locationState}
                   onChange={handleInputChange}
                   className="w-full p-3 rounded border focus:outline-none focus:ring-2"
                   style={{ borderColor: PALETTE.mint }}
-                  placeholder="State / Province"
-                />
+                >
+                  <SelectStateOptions />
+                </select>
                 <input
                   type="text"
                   name="locationZip"
