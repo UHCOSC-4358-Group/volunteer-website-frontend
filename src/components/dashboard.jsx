@@ -272,6 +272,7 @@ export default function OrgDashboard() {
   const navigate = useNavigate();
 
   const toggleDarkMode = () => setDarkMode(!darkMode);
+  const showNoOrg = !loading && organization === null;
 
   // ============================
   //  LOAD REAL BACKEND DATA
@@ -434,7 +435,46 @@ export default function OrgDashboard() {
   //                            RENDER
   // ==============================================================
 
-  return (
+  return showNoOrg && !loadingEvents ? (
+    <div
+      className={`min-h-screen w-full flex items-center justify-center transition-colors duration-300 ${
+        darkMode ? "bg-gray-900 text-white" : "bg-gray-50"
+      }`}
+    >
+      <div
+        className={`rounded-2xl p-8 shadow-md flex flex-col items-center gap-4 ${
+          darkMode
+            ? "bg-gray-800 border border-gray-700"
+            : "bg-white border border-gray-200"
+        }`}
+      >
+        <h2
+          className={`text-lg font-semibold ${
+            darkMode ? "text-white" : "text-gray-900"
+          }`}
+        >
+          No organization found
+        </h2>
+        <p className={darkMode ? "text-gray-400" : "text-gray-500"}>
+          You don't currently belong to an organization. Join or register to get
+          started.
+        </p>
+
+        <div className="flex items-center gap-3 mt-2">
+          <Button
+            variant="secondary"
+            onClick={() => navigate("/org/join")}
+            darkMode={darkMode}
+          >
+            Join Organization
+          </Button>
+          <Button onClick={() => navigate("/org/register")} darkMode={darkMode}>
+            Register Organization
+          </Button>
+        </div>
+      </div>
+    </div>
+  ) : (
     <div
       className={`min-h-screen w-full transition-colors duration-300 ${
         darkMode ? "bg-gray-900 text-white" : "bg-gray-50"
@@ -463,51 +503,67 @@ export default function OrgDashboard() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Org Join Button (only for users without an organization) */}
-            {/* Org Join Dropdown (only if user has no organization) */}
-            {!user?.org_id && (
-              <div className="relative">
+            {/* If backend indicates there's no organization, show clear Join/Register buttons */}
+            {organization === null ? (
+              <div className="flex items-center gap-2">
                 <Button
                   variant="secondary"
                   darkMode={darkMode}
-                  onClick={() => setJoinMenuOpen((prev) => !prev)}
-                  className="flex items-center gap-1"
+                  onClick={goOrgJoin}
                 >
-                  Org Join ▾
+                  Join Organization
                 </Button>
 
-                {joinMenuOpen && (
-                  <div
-                    className={`absolute right-0 mt-2 w-48 rounded-xl shadow-lg border z-20 ${
-                      darkMode
-                        ? "bg-gray-800 border-gray-700"
-                        : "bg-white border-gray-200"
-                    }`}
-                  >
-                    <button
-                      onClick={goOrgJoin}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-t-xl ${
-                        darkMode
-                          ? "hover:bg-gray-700 text-white"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Join Existing Organization
-                    </button>
-
-                    <button
-                      onClick={goOrgRegister}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-b-xl ${
-                        darkMode
-                          ? "hover:bg-gray-700 text-white"
-                          : "text-gray-800"
-                      }`}
-                    >
-                      Register New Organization
-                    </button>
-                  </div>
-                )}
+                <Button onClick={goOrgRegister} darkMode={darkMode}>
+                  Register Organization
+                </Button>
               </div>
+            ) : (
+              /* fall back to previous behavior when organization isn't explicitly null */
+              !user?.org_id && (
+                <div className="relative">
+                  <Button
+                    variant="secondary"
+                    darkMode={darkMode}
+                    onClick={() => setJoinMenuOpen((prev) => !prev)}
+                    className="flex items-center gap-1"
+                  >
+                    Org Join ▾
+                  </Button>
+
+                  {joinMenuOpen && (
+                    <div
+                      className={`absolute right-0 mt-2 w-48 rounded-xl shadow-lg border z-20 ${
+                        darkMode
+                          ? "bg-gray-800 border-gray-700"
+                          : "bg-white border-gray-200"
+                      }`}
+                    >
+                      <button
+                        onClick={goOrgJoin}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-t-xl ${
+                          darkMode
+                            ? "hover:bg-gray-700 text-white"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        Join Existing Organization
+                      </button>
+
+                      <button
+                        onClick={goOrgRegister}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-b-xl ${
+                          darkMode
+                            ? "hover:bg-gray-700 text-white"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        Register New Organization
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )
             )}
 
             <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
@@ -792,7 +848,9 @@ export default function OrgDashboard() {
                             <Button
                               variant="subtle"
                               onClick={() =>
-                                navigate('/matching', { state: { eventId: e.id } })
+                                navigate("/matching", {
+                                  state: { eventId: e.id },
+                                })
                               }
                               darkMode={darkMode}
                             >
