@@ -234,10 +234,13 @@ export default function OrgDashboard() {
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // unused until backend adds them
-  const [volunteers] = useState([]);
-  const [matches] = useState([]);
-  const [notifications] = useState([]);
+  // backend-provided pieces (some were unused previously)
+  // legacy placeholders removed; backend provides recentVolunteers and nearestEventMatches
+  const [notifications, setNotifications] = useState([]);
+  const [nearestEventMatches, setNearestEventMatches] = useState(null);
+  const [recentVolunteers, setRecentVolunteers] = useState([]);
+  const [organization, setOrganization] = useState(null);
+  const [adminProfile, setAdminProfile] = useState(null);
 
   // Basic search filters
   const [search, setSearch] = useState("");
@@ -261,6 +264,8 @@ export default function OrgDashboard() {
       setLoadingSummary(true);
       setLoadingEvents(true);
       try {
+        // fetch admin dashboard which returns admin, organization, upcoming_events,
+        // notifications, nearest_event_matches, recent_volunteers
         const [profile, orgEvents] = await Promise.all([
           getOrgDashboard(adminId),
           getOrgEvents(),
@@ -303,6 +308,19 @@ export default function OrgDashboard() {
 
         setSummary(summaryObj);
         setEvents(mappedEvents);
+
+        // set new backend-provided pieces
+        setAdminProfile(profile?.admin ?? profile?.admin);
+        setOrganization(profile?.organization ?? null);
+        setNotifications(
+          Array.isArray(profile?.notifications) ? profile.notifications : []
+        );
+        setNearestEventMatches(profile?.nearest_event_matches ?? null);
+        setRecentVolunteers(
+          Array.isArray(profile?.recent_volunteers)
+            ? profile.recent_volunteers
+            : []
+        );
       } catch (err) {
         console.error("Dashboard load error:", err);
         setErrorMessage("Failed to load dashboard data");
@@ -367,10 +385,9 @@ export default function OrgDashboard() {
   const goOrgJoin = () => navigate("/org/join");
   const goOrgRegister = () => navigate("/org/register");
 
-
   const handleDelete = async (eventId) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
-    
+
     try {
       await deleteOrgEvent(eventId);
       setEvents((prev) => prev.filter((evt) => evt.id !== eventId));
@@ -429,13 +446,17 @@ export default function OrgDashboard() {
                 {joinMenuOpen && (
                   <div
                     className={`absolute right-0 mt-2 w-48 rounded-xl shadow-lg border z-20 ${
-                      darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                      darkMode
+                        ? "bg-gray-800 border-gray-700"
+                        : "bg-white border-gray-200"
                     }`}
                   >
                     <button
                       onClick={goOrgJoin}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-t-xl ${
-                        darkMode ? "hover:bg-gray-700 text-white" : "text-gray-800"
+                        darkMode
+                          ? "hover:bg-gray-700 text-white"
+                          : "text-gray-800"
                       }`}
                     >
                       Join Existing Organization
@@ -444,7 +465,9 @@ export default function OrgDashboard() {
                     <button
                       onClick={goOrgRegister}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-b-xl ${
-                        darkMode ? "hover:bg-gray-700 text-white" : "text-gray-800"
+                        darkMode
+                          ? "hover:bg-gray-700 text-white"
+                          : "text-gray-800"
                       }`}
                     >
                       Register New Organization
@@ -646,7 +669,9 @@ export default function OrgDashboard() {
                           darkMode ? "text-gray-500" : "text-gray-500"
                         }`}
                       >
-                        {events.length === 0 ? "No events available." : "No events match your filters."}
+                        {events.length === 0
+                          ? "No events available."
+                          : "No events match your filters."}
                       </td>
                     </tr>
                   ) : (
@@ -682,7 +707,11 @@ export default function OrgDashboard() {
                         </td>
                         <td className="py-3 pr-4 space-x-1">
                           {e.requiredSkills.map((s, idx) => (
-                            <Badge key={`${s}-${idx}`} tone="blue" darkMode={darkMode}>
+                            <Badge
+                              key={`${s}-${idx}`}
+                              tone="blue"
+                              darkMode={darkMode}
+                            >
                               {s}
                             </Badge>
                           ))}
@@ -754,9 +783,9 @@ export default function OrgDashboard() {
           </div>
         </section>
 
-        {/* VOLUNTEERS + MATCHES (empty until backend ready) */}
+        {/* RECENT HELPERS + SUGGESTED VOLUNTEERS */}
         <section className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Volunteers */}
+          {/* Recent helpers (from recent_volunteers) */}
           <div
             className={`lg:col-span-2 rounded-2xl border p-4 shadow-sm ${
               darkMode
@@ -771,19 +800,60 @@ export default function OrgDashboard() {
                 }`}
                 style={{ color: darkMode ? "#FFFFFF" : PALETTE.navy }}
               >
-                Volunteers (Coming Soon)
+                Recent Helpers
               </h2>
               <span className={darkMode ? "text-gray-400" : "text-gray-500"}>
-                Backend not implemented
+                {recentVolunteers.length} recent
               </span>
             </div>
 
-            <div className="py-10 text-center text-gray-500">
-              Feature coming soon
-            </div>
+            {recentVolunteers.length === 0 ? (
+              <div className="py-10 text-center text-gray-500">
+                No recent volunteers
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {recentVolunteers.map((v) => (
+                  <div
+                    key={v.id}
+                    className="p-3 rounded-lg bg-transparent flex items-start justify-between"
+                  >
+                    <div>
+                      <div
+                        className={`font-medium ${
+                          darkMode ? "text-white" : ""
+                        }`}
+                      >
+                        {v.first_name} {v.last_name}
+                      </div>
+                      <div
+                        className={`text-sm ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        {v.email}
+                      </div>
+                      {v.last_event && (
+                        <div
+                          className={`text-sm mt-1 ${
+                            darkMode ? "text-gray-400" : "text-gray-500"
+                          }`}
+                        >
+                          <strong>{v.last_event.name}</strong> —{" "}
+                          {v.last_event.day
+                            ? new Date(v.last_event.day).toLocaleDateString()
+                            : ""}
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">ID: {v.id}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Match Queue */}
+          {/* Suggested volunteers for nearest upcoming event */}
           <div
             className={`rounded-2xl border p-4 shadow-sm ${
               darkMode
@@ -798,16 +868,69 @@ export default function OrgDashboard() {
                 }`}
                 style={{ color: darkMode ? "#FFFFFF" : PALETTE.navy }}
               >
-                Match Queue (Coming Soon)
+                Suggested Volunteers
               </h2>
-              <Button variant="secondary" darkMode={darkMode}>
+              <Button
+                variant="secondary"
+                darkMode={darkMode}
+                onClick={goOpenMatching}
+              >
                 Open Matching
               </Button>
             </div>
 
-            <div className="py-10 text-center text-gray-500">
-              Feature coming soon
-            </div>
+            {nearestEventMatches == null ? (
+              <div className="py-10 text-center text-gray-500">
+                No upcoming event to suggest volunteers for
+              </div>
+            ) : nearestEventMatches.length === 0 ? (
+              <div className="py-6 text-center text-gray-500">
+                No matches found
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {nearestEventMatches.map((m) => {
+                  const pct = Math.round(
+                    Math.max(1, Math.min(100, (Number(m.score) || 0) * 10))
+                  );
+                  return (
+                    <div
+                      key={m.volunteer_id}
+                      className="p-3 rounded-lg flex items-center justify-between"
+                    >
+                      <div>
+                        <div
+                          className={`font-medium ${
+                            darkMode ? "text-white" : ""
+                          }`}
+                        >
+                          {m.first_name} {m.last_name}
+                        </div>
+                        <div
+                          className={`text-sm ${
+                            darkMode ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
+                          ID: {m.volunteer_id}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="w-28 bg-[#F1F5F9] rounded-full h-3 overflow-hidden">
+                          <div
+                            style={{
+                              width: `${pct}%`,
+                              backgroundColor: "#06b6d4",
+                              height: 12,
+                            }}
+                          />
+                        </div>
+                        <div className="text-sm text-gray-700">{pct}%</div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -827,16 +950,62 @@ export default function OrgDashboard() {
                 }`}
                 style={{ color: darkMode ? "#FFFFFF" : PALETTE.navy }}
               >
-                Notifications (Coming Soon)
+                Notifications
               </h2>
-              <Button variant="subtle" darkMode={darkMode}>
+              <Button
+                variant="subtle"
+                darkMode={darkMode}
+                onClick={() => {
+                  /* TODO: mark all read */
+                }}
+              >
                 Mark all as read
               </Button>
             </div>
 
-            <div className="py-10 text-center text-gray-500">
-              Feature coming soon
-            </div>
+            {notifications.length === 0 ? (
+              <div className="py-10 text-center text-gray-500">
+                No notifications
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    className="p-3 rounded-lg border flex items-start justify-between"
+                  >
+                    <div>
+                      <div
+                        className={`font-medium ${
+                          darkMode ? "text-white" : ""
+                        }`}
+                      >
+                        {n.subject}
+                      </div>
+                      <div
+                        className={`text-sm mt-1 ${
+                          darkMode ? "text-gray-400" : "text-gray-600"
+                        }`}
+                      >
+                        {n.body}
+                      </div>
+                      <div
+                        className={`text-xs mt-2 ${
+                          darkMode ? "text-gray-500" : "text-gray-500"
+                        }`}
+                      >
+                        {n.created_at
+                          ? new Date(n.created_at).toLocaleString()
+                          : ""}
+                      </div>
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {n.recipient_type}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       </main>
