@@ -1,6 +1,3 @@
-import { useNavigate } from "react-router-dom";
-import { VolunteerSVG } from "../assets/Svg";
-
 const PALETTE = {
   navy: "#22577A",
   teal: "#38A3A5",
@@ -10,28 +7,9 @@ const PALETTE = {
 };
 
 export function ContactPage() {
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: PALETTE.sand }}>
-      {/* Header */}
-      <header className="text-white" style={{ backgroundColor: PALETTE.teal }}>
-        <nav className="flex justify-between items-center p-4">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => navigate(-1)}
-              className="text-white hover:opacity-80 transition-opacity"
-            >
-              ← Back
-            </button>
-            <div>
-              <VolunteerSVG size={48} />
-            </div>
-            <div className="text-2xl font-thin">Contact Us</div>
-          </div>
-        </nav>
-      </header>
-
       {/* Main Content */}
       <main className="max-w-4xl mx-auto p-6">
         <div className="bg-white rounded-2xl shadow-lg p-8">
