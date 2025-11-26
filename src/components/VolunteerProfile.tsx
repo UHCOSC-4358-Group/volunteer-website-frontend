@@ -304,16 +304,6 @@ function EventCard(props: Event) {
 
       <div className="flex justify-around font-semibold">
         <button
-          className="pt-1 pb-1 pl-8 pr-8 rounded-3xl shadow"
-          style={{
-            color: PALETTE.teal,
-            backgroundColor: "#ffffff",
-            border: `2px solid ${PALETTE.teal}`,
-          }}
-        >
-          View Details
-        </button>
-        <button
           className="pt-1 pb-1 pl-8 pr-8 rounded-3xl shadow text-white"
           style={{ backgroundColor: PALETTE.green }}
         >
