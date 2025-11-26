@@ -223,6 +223,8 @@ export default function OrgDashboard() {
   const { user, loading } = useAuth();
   const adminId = user?.id;
 
+  const [joinMenuOpen, setJoinMenuOpen] = useState(false);
+
   const [darkMode, setDarkMode] = useState(false);
 
   // Data states
@@ -362,6 +364,9 @@ export default function OrgDashboard() {
   const goOpenMatching = () => navigate("/matching");
   const goHistory = () => navigate("/volunteer-history");
   const goUserMode = () => navigate("/volunteer-profile");
+  const goOrgJoin = () => navigate("/org/join");
+  const goOrgRegister = () => navigate("/org/register");
+
 
   const handleDelete = async (eventId) => {
     if (!window.confirm("Are you sure you want to delete this event?")) return;
@@ -408,6 +413,47 @@ export default function OrgDashboard() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Org Join Button (only for users without an organization) */}
+            {/* Org Join Dropdown (only if user has no organization) */}
+            {!user?.org_id && (
+              <div className="relative">
+                <Button
+                  variant="secondary"
+                  darkMode={darkMode}
+                  onClick={() => setJoinMenuOpen((prev) => !prev)}
+                  className="flex items-center gap-1"
+                >
+                  Org Join ▾
+                </Button>
+
+                {joinMenuOpen && (
+                  <div
+                    className={`absolute right-0 mt-2 w-48 rounded-xl shadow-lg border z-20 ${
+                      darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200"
+                    }`}
+                  >
+                    <button
+                      onClick={goOrgJoin}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-t-xl ${
+                        darkMode ? "hover:bg-gray-700 text-white" : "text-gray-800"
+                      }`}
+                    >
+                      Join Existing Organization
+                    </button>
+
+                    <button
+                      onClick={goOrgRegister}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 rounded-b-xl ${
+                        darkMode ? "hover:bg-gray-700 text-white" : "text-gray-800"
+                      }`}
+                    >
+                      Register New Organization
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
             <Button onClick={goCreateEvent} darkMode={darkMode}>
               Create Event
