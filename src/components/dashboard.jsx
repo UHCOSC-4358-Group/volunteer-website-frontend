@@ -792,7 +792,7 @@ export default function OrgDashboard() {
                             <Button
                               variant="subtle"
                               onClick={() =>
-                                alert(`Open matching with event ${e.id}`)
+                                navigate('/matching', { state: { eventId: e.id } })
                               }
                               darkMode={darkMode}
                             >
