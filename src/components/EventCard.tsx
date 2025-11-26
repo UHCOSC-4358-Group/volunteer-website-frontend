@@ -176,14 +176,6 @@ function EventCard({ event, onSignUp, showEditButton = false, showRemoveButton =
           <div className="flex justify-between items-center gap-2 flex-wrap">
             <div className="flex gap-2">
               <button
-                onClick={onSignUp}
-                className="px-5 py-2 rounded-full font-semibold text-white shadow-md transition-transform hover:scale-105"
-                style={{ backgroundColor: PALETTE.green }}
-              >
-                Sign Up
-              </button>
-
-              <button
                 onClick={handleViewDetails}
                 className="px-5 py-2 rounded-full font-semibold border transition-transform hover:scale-105"
                 style={{
