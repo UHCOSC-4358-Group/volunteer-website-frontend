@@ -3,10 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useAuth } from "../hooks/user-context";
 import { getNotifications } from "../services/notificationService";
-import {
-  NotificationModal,
-  type Notification,
-} from "../components/NotificationModal";
+import { NotificationModal } from "../components/NotificationModal";
 import {
   SearchSVG,
   ProfileSVG,
@@ -166,7 +163,10 @@ const formatAddress = (rawProfile: any): string => {
   return segments.join(", ");
 };
 
-const buildUserProfileFromApi = (vol: ApiVolunteer, fallbackAuthUser?: any): UserProfile => {
+const buildUserProfileFromApi = (
+  vol: ApiVolunteer,
+  fallbackAuthUser?: any
+): UserProfile => {
   const name =
     [vol.first_name, vol.last_name].filter(Boolean).join(" ").trim() ||
     fallbackAuthUser?.name ||
@@ -175,25 +175,27 @@ const buildUserProfileFromApi = (vol: ApiVolunteer, fallbackAuthUser?: any): Use
   const preferences: string[] = [];
   if (vol.preferences?.indoor_only) preferences.push("Prefers indoor only");
   if (vol.preferences?.max_distance_miles != null)
-    preferences.push(`Max distance: ${vol.preferences.max_distance_miles} miles`);
+    preferences.push(
+      `Max distance: ${vol.preferences.max_distance_miles} miles`
+    );
 
   const availability = Array.isArray(vol.availability)
-  ? vol.availability.map((day) => {
-      // Map numeric codes to day names
-      const dayMap: {[key: string]: string} = {
-        "1": "Monday",
-        "2": "Tuesday", 
-        "3": "Wednesday",
-        "4": "Thursday",
-        "5": "Friday",
-        "6": "Saturday", 
-        "7": "Sunday"
-      };
-      
-      const normalizedDay = day.toString().toLowerCase();
-      return dayMap[normalizedDay] || day;
-    })
-  : [];
+    ? vol.availability.map((day) => {
+        // Map numeric codes to day names
+        const dayMap: { [key: string]: string } = {
+          "1": "Monday",
+          "2": "Tuesday",
+          "3": "Wednesday",
+          "4": "Thursday",
+          "5": "Friday",
+          "6": "Saturday",
+          "7": "Sunday",
+        };
+
+        const normalizedDay = day.toString().toLowerCase();
+        return dayMap[normalizedDay] || day;
+      })
+    : [];
 
   const skills = Array.isArray(vol.skills) ? formatSkills(vol.skills) : [];
 
@@ -202,11 +204,18 @@ const buildUserProfileFromApi = (vol: ApiVolunteer, fallbackAuthUser?: any): Use
     email: vol.email ?? fallbackAuthUser?.email ?? "user@example.com",
     phone: vol.phone ?? "",
     address: formatAddress(vol) || "-",
-    bio: [...preferences, availability.length ? `Availability: ${availability.join(", ")}` : ""]
-      .filter(Boolean)
-      .join(" • ") || "No preferences provided.",
+    bio:
+      [
+        ...preferences,
+        availability.length ? `Availability: ${availability.join(", ")}` : "",
+      ]
+        .filter(Boolean)
+        .join(" • ") || "No preferences provided.",
     skills,
-    joinDate: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    joinDate: new Date().toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    }),
     totalHours: 0, // will be estimated from past events
   };
 };
@@ -243,7 +252,6 @@ function EventCard(props: Event) {
     name,
     organization,
     type,
-    description,
     date,
     time,
     location,
@@ -259,7 +267,9 @@ function EventCard(props: Event) {
   const capacityBarColor = capacityPct > 80 ? "#e67e22" : PALETTE.green;
 
   const rawUrgency =
-    typeof type === "string" && type.includes(".") ? type.split(".").pop() : type;
+    typeof type === "string" && type.includes(".")
+      ? type.split(".").pop()
+      : type;
   const urgencyLabel = rawUrgency
     ? rawUrgency.charAt(0) + rawUrgency.slice(1).toLowerCase()
     : "General";
@@ -358,7 +368,7 @@ function EventCard(props: Event) {
           </div>
         )}
 
-      {/*
+        {/*
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <VolunteerSVG size={20} />
@@ -371,10 +381,16 @@ function EventCard(props: Event) {
           </div>
         </div>
         */}
-        <div className="mt-2 h-2 w-full rounded-full" style={{ backgroundColor: "#eef7f0" }}>
+        <div
+          className="mt-2 h-2 w-full rounded-full"
+          style={{ backgroundColor: "#eef7f0" }}
+        >
           <div
             className="h-2 rounded-full"
-            style={{ width: `${capacityPct}%`, backgroundColor: capacityBarColor }}
+            style={{
+              width: `${capacityPct}%`,
+              backgroundColor: capacityBarColor,
+            }}
           />
         </div>
       </div>
@@ -411,7 +427,9 @@ function VolunteerProfile() {
   const [events, setEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [activeEventTab, setActiveEventTab] = useState<'all' | 'upcoming' | 'past'>('all');
+  const [activeEventTab, setActiveEventTab] = useState<
+    "all" | "upcoming" | "past"
+  >("all");
   const [loadingApi, setLoadingApi] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -439,10 +457,7 @@ function VolunteerProfile() {
       location: locationParts || "Location TBA",
       type: evt?.urgency ?? "General",
       description:
-        evt?.description ??
-        evt?.event_description ??
-        evt?.details ??
-        "",
+        evt?.description ?? evt?.event_description ?? evt?.details ?? "",
       organization: evt?.organization ?? "",
       volunteersSignedUp: evt?.assigned ?? 0,
       maxVolunteers: evt?.capacity ?? evt?.maxVolunteers ?? 0,
@@ -462,7 +477,10 @@ function VolunteerProfile() {
         const res = await fetch(`${API_PREFIX}/vol/${user.id}`, {
           method: "GET",
           credentials: "include",
-          headers: { Accept: "application/json", "Content-Type": "application/json" },
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
           signal: controller.signal,
         });
 
@@ -480,9 +498,15 @@ function VolunteerProfile() {
 
         const data: VolunteerApiResponse = await res.json();
         if (data?.volunteer) {
-          console.log("[volunteer-profile] raw volunteer from API", data.volunteer);
+          console.log(
+            "[volunteer-profile] raw volunteer from API",
+            data.volunteer
+          );
           const formattedAddress = formatAddress(data.volunteer);
-          console.log("[volunteer-profile] formatted address", formattedAddress);
+          console.log(
+            "[volunteer-profile] formatted address",
+            formattedAddress
+          );
 
           const profile = buildUserProfileFromApi(data.volunteer, user);
           console.log("[volunteer-profile] built user profile", profile);
@@ -510,15 +534,15 @@ function VolunteerProfile() {
   }, [authLoading, user?.id]);
 
   // Categorize events
-  const upcomingEvents = events.filter(event => {
-    const eventDate = new Date(event.date + 'T00:00:00');
+  const upcomingEvents = events.filter((event) => {
+    const eventDate = new Date(event.date + "T00:00:00");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return eventDate >= today;
   });
 
-  const pastEvents = events.filter(event => {
-    const eventDate = new Date(event.date + 'T00:00:00');
+  const pastEvents = events.filter((event) => {
+    const eventDate = new Date(event.date + "T00:00:00");
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return eventDate < today;
@@ -533,81 +557,62 @@ function VolunteerProfile() {
   // Filter events based on active tab and search term
   const getFilteredEvents = () => {
     let eventsToFilter = events;
-    
-    if (activeEventTab === 'upcoming') {
+
+    if (activeEventTab === "upcoming") {
       eventsToFilter = upcomingEvents;
-    } else if (activeEventTab === 'past') {
+    } else if (activeEventTab === "past") {
       eventsToFilter = pastEvents;
     }
 
-    return eventsToFilter.filter(event => 
-      event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchTerm.toLowerCase())
+    return eventsToFilter.filter(
+      (event) =>
+        event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        event.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
   const filteredEvents = getFilteredEvents();
 
-const [serverNotifications, setServerNotifications] = useState<Notification[]>([]);
-const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [serverNotifications, setServerNotifications] = useState<any[]>([]);
 
-useEffect(() => {
-  const loadNotifications = async () => {
-    try {
-      const data = await getNotifications();
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const data = await getNotifications();
 
-      // If backend returns { notifications: [...] }
-      const list = Array.isArray(data) ? data : data.notifications ?? [];
+        // If backend returns { notifications: [...] }
+        const list = Array.isArray(data) ? data : data.notifications ?? [];
 
-      setServerNotifications(list);
-    } catch (err) {
-      console.error("Failed to load notifications", err);
-    }
-  };
+        setServerNotifications(list);
+      } catch (err) {
+        console.error("Failed to load notifications", err);
+      }
+    };
 
-  loadNotifications();
-}, []);
+    loadNotifications();
+  }, []);
 
-// Add a local notification about upcoming events (or none) for the volunteer
-useEffect(() => {
-  const nextEvent = upcomingEvents[0];
-  const formattedDate =
-    nextEvent?.date && !Number.isNaN(Date.parse(nextEvent.date))
-      ? new Date(nextEvent.date + "T00:00:00").toLocaleDateString("en-US", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-        })
-      : null;
-
-  const localNotification: Notification =
-    upcomingEvents.length > 0 && nextEvent
-      ? {
-          title: "Upcoming event",
-          description: formattedDate
-            ? `You have ${upcomingEvents.length} upcoming event(s). Next: ${nextEvent.name} on ${formattedDate}.`
-            : `You have ${upcomingEvents.length} upcoming event(s). Next: ${nextEvent.name}.`,
-        }
-      : {
-          title: "No upcoming events",
-          description: "You are not signed up for any upcoming events. Find one to join!",
-        };
-
-  setNotifications([...serverNotifications, localNotification]);
-}, [serverNotifications, upcomingEvents]);
-
-
+  // We no longer add local (client-generated) notifications here. The
+  // notification modal should display server-provided notifications only.
 
   // Get first name from full name
-  const firstName = userProfile?.name.split(' ')[0] || 'User';
+  const firstName = userProfile?.name.split(" ")[0] || "User";
 
   if (loadingApi || authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: PALETTE.sand }}>
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: PALETTE.sand }}
+      >
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 mx-auto mb-4" style={{ borderColor: PALETTE.teal }}></div>
-          <p style={{ color: PALETTE.navy }} className="text-lg font-semibold">Loading your profile...</p>
+          <div
+            className="animate-spin rounded-full h-16 w-16 border-b-4 mx-auto mb-4"
+            style={{ borderColor: PALETTE.teal }}
+          ></div>
+          <p style={{ color: PALETTE.navy }} className="text-lg font-semibold">
+            Loading your profile...
+          </p>
         </div>
       </div>
     );
@@ -615,10 +620,23 @@ useEffect(() => {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6" style={{ backgroundColor: PALETTE.sand }}>
-        <div className="bg-white shadow-lg rounded-2xl p-8 max-w-md text-center border" style={{ borderColor: PALETTE.mint }}>
-          <h2 className="text-2xl font-bold mb-3" style={{ color: PALETTE.navy }}>Volunteer Profile</h2>
-          <p className="mb-6" style={{ color: "#475569" }}>{error}</p>
+      <div
+        className="min-h-screen flex items-center justify-center p-6"
+        style={{ backgroundColor: PALETTE.sand }}
+      >
+        <div
+          className="bg-white shadow-lg rounded-2xl p-8 max-w-md text-center border"
+          style={{ borderColor: PALETTE.mint }}
+        >
+          <h2
+            className="text-2xl font-bold mb-3"
+            style={{ color: PALETTE.navy }}
+          >
+            Volunteer Profile
+          </h2>
+          <p className="mb-6" style={{ color: "#475569" }}>
+            {error}
+          </p>
           <div className="flex justify-center gap-3">
             <button
               onClick={() => navigate("/")}
@@ -636,9 +654,8 @@ useEffect(() => {
   return (
     <>
       <nav className="flex justify-between items-center">
-        <div className="hidden sm:flex gap-4 items-center">
-        </div>
-      </nav>  
+        <div className="hidden sm:flex gap-4 items-center"></div>
+      </nav>
 
       {isEditProfileModalOpen && (
         <div
@@ -651,7 +668,10 @@ useEffect(() => {
           >
             <div className="p-6">
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold" style={{ color: PALETTE.navy }}>
+                <h2
+                  className="text-2xl font-bold"
+                  style={{ color: PALETTE.navy }}
+                >
                   My Profile
                 </h2>
                 <button
@@ -666,12 +686,26 @@ useEffect(() => {
 
               <div className="space-y-4 text-sm">
                 <div>
-                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Name</div>
-                  <div style={{ color: "#475569" }}>{userProfile?.name ?? "-"}</div>
+                  <div
+                    className="font-semibold"
+                    style={{ color: PALETTE.navy }}
+                  >
+                    Name
+                  </div>
+                  <div style={{ color: "#475569" }}>
+                    {userProfile?.name ?? "-"}
+                  </div>
                 </div>
                 <div>
-                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Email</div>
-                  <div style={{ color: "#475569" }}>{userProfile?.email ?? "-"}</div>
+                  <div
+                    className="font-semibold"
+                    style={{ color: PALETTE.navy }}
+                  >
+                    Email
+                  </div>
+                  <div style={{ color: "#475569" }}>
+                    {userProfile?.email ?? "-"}
+                  </div>
                 </div>
                 {/*
                 <div>
@@ -680,29 +714,62 @@ useEffect(() => {
                 </div>
                 */}
                 <div>
-                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Address</div>
-                  <div style={{ color: "#475569" }}>{userProfile?.address ?? "-"}</div>
-                </div>
-                <div>
-                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Availability</div>
-                  <div style={{ color: "#475569" }}>{userProfile?.bio ?? "-"}</div>
-                </div>
-                <div>
-                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Skills</div>
+                  <div
+                    className="font-semibold"
+                    style={{ color: PALETTE.navy }}
+                  >
+                    Address
+                  </div>
                   <div style={{ color: "#475569" }}>
-                    {(userProfile?.skills && userProfile.skills.length > 0)
+                    {userProfile?.address ?? "-"}
+                  </div>
+                </div>
+                <div>
+                  <div
+                    className="font-semibold"
+                    style={{ color: PALETTE.navy }}
+                  >
+                    Availability
+                  </div>
+                  <div style={{ color: "#475569" }}>
+                    {userProfile?.bio ?? "-"}
+                  </div>
+                </div>
+                <div>
+                  <div
+                    className="font-semibold"
+                    style={{ color: PALETTE.navy }}
+                  >
+                    Skills
+                  </div>
+                  <div style={{ color: "#475569" }}>
+                    {userProfile?.skills && userProfile.skills.length > 0
                       ? userProfile.skills.join(", ")
                       : "-"}
                   </div>
                 </div>
                 <div>
-                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Member Since</div>
-                  <div style={{ color: "#475569" }}>{userProfile?.joinDate ?? "-"}</div>
+                  <div
+                    className="font-semibold"
+                    style={{ color: PALETTE.navy }}
+                  >
+                    Member Since
+                  </div>
+                  <div style={{ color: "#475569" }}>
+                    {userProfile?.joinDate ?? "-"}
+                  </div>
                 </div>
                 <div>
-                  <div className="font-semibold" style={{ color: PALETTE.navy }}>Total Hours Volunteered</div>
+                  <div
+                    className="font-semibold"
+                    style={{ color: PALETTE.navy }}
+                  >
+                    Total Hours Volunteered
+                  </div>
                   <div style={{ color: "#475569" }}>
-                    {userProfile?.totalHours != null ? `${userProfile.totalHours} hours` : "-"}
+                    {userProfile?.totalHours != null
+                      ? `${userProfile.totalHours} hours`
+                      : "-"}
                   </div>
                 </div>
               </div>
@@ -742,7 +809,9 @@ useEffect(() => {
           <div className="p-8 text-2xl">
             <div className="flex justify-between">
               <div>
-                <div style={{ color: PALETTE.navy }}>Welcome back, {firstName}!</div>
+                <div style={{ color: PALETTE.navy }}>
+                  Welcome back, {firstName}!
+                </div>
                 <div className="text-lg" style={{ color: "#64748B" }}>
                   {events.length === 0
                     ? "Ready to make a difference today?"
@@ -756,16 +825,16 @@ useEffect(() => {
                   onClick={() => setIsNotificationModalOpen(true)}
                 >
                   <NotificationBellSVG size={30} />
-                  {notifications.length > 0 && (
+                  {serverNotifications.length > 0 && (
                     <span
                       className="absolute -top-1 -right-1 text-xs rounded-full h-5 w-5 flex items-center justify-center"
                       style={{ backgroundColor: "#ef4444", color: "#fff" }}
                     >
-                      {notifications.length}
+                      {serverNotifications.length}
                     </span>
                   )}
                 </button>
-                <button 
+                <button
                   onClick={() => setIsEditProfileModalOpen(true)}
                   className="hover:opacity-80 transition-opacity p-1"
                 >
@@ -776,7 +845,10 @@ useEffect(() => {
           </div>
         </section>
 
-        <div className="ml-5 mr-5" style={{ borderTop: `1px solid ${PALETTE.mint}` }} />
+        <div
+          className="ml-5 mr-5"
+          style={{ borderTop: `1px solid ${PALETTE.mint}` }}
+        />
 
         <section>
           <div className="flex justify-around gap-8 p-4 flex-col items-center md:flex-row">
@@ -813,7 +885,9 @@ useEffect(() => {
                 <div className="text-xl" style={{ color: "#64748B" }}>
                   {events.length === 0
                     ? "Events you've signed up for"
-                    : `${filteredEvents.length} ${activeEventTab} event${filteredEvents.length !== 1 ? 's' : ''} found`}
+                    : `${filteredEvents.length} ${activeEventTab} event${
+                        filteredEvents.length !== 1 ? "s" : ""
+                      } found`}
                 </div>
               </div>
 
@@ -844,45 +918,53 @@ useEffect(() => {
 
             {/* Event Type Tabs */}
             <div className="flex justify-center mt-6 mb-4">
-              <div className="flex rounded-full p-1" style={{ backgroundColor: PALETTE.sand }}>
+              <div
+                className="flex rounded-full p-1"
+                style={{ backgroundColor: PALETTE.sand }}
+              >
                 <button
-                  onClick={() => setActiveEventTab('all')}
+                  onClick={() => setActiveEventTab("all")}
                   className={`px-6 py-2 rounded-full transition-all ${
-                    activeEventTab === 'all' 
-                      ? 'bg-white shadow-sm' 
-                      : 'hover:bg-white hover:bg-opacity-50'
+                    activeEventTab === "all"
+                      ? "bg-white shadow-sm"
+                      : "hover:bg-white hover:bg-opacity-50"
                   }`}
-                  style={{ 
-                    color: activeEventTab === 'all' ? PALETTE.navy : PALETTE.teal,
-                    fontWeight: activeEventTab === 'all' ? '600' : '400'
+                  style={{
+                    color:
+                      activeEventTab === "all" ? PALETTE.navy : PALETTE.teal,
+                    fontWeight: activeEventTab === "all" ? "600" : "400",
                   }}
                 >
                   All Events ({events.length})
                 </button>
                 <button
-                  onClick={() => setActiveEventTab('upcoming')}
+                  onClick={() => setActiveEventTab("upcoming")}
                   className={`px-6 py-2 rounded-full transition-all ${
-                    activeEventTab === 'upcoming' 
-                      ? 'bg-white shadow-sm' 
-                      : 'hover:bg-white hover:bg-opacity-50'
+                    activeEventTab === "upcoming"
+                      ? "bg-white shadow-sm"
+                      : "hover:bg-white hover:bg-opacity-50"
                   }`}
-                  style={{ 
-                    color: activeEventTab === 'upcoming' ? PALETTE.navy : PALETTE.teal,
-                    fontWeight: activeEventTab === 'upcoming' ? '600' : '400'
+                  style={{
+                    color:
+                      activeEventTab === "upcoming"
+                        ? PALETTE.navy
+                        : PALETTE.teal,
+                    fontWeight: activeEventTab === "upcoming" ? "600" : "400",
                   }}
                 >
                   Upcoming ({upcomingEvents.length})
                 </button>
                 <button
-                  onClick={() => setActiveEventTab('past')}
+                  onClick={() => setActiveEventTab("past")}
                   className={`px-6 py-2 rounded-full transition-all ${
-                    activeEventTab === 'past' 
-                      ? 'bg-white shadow-sm' 
-                      : 'hover:bg-white hover:bg-opacity-50'
+                    activeEventTab === "past"
+                      ? "bg-white shadow-sm"
+                      : "hover:bg-white hover:bg-opacity-50"
                   }`}
-                  style={{ 
-                    color: activeEventTab === 'past' ? PALETTE.navy : PALETTE.teal,
-                    fontWeight: activeEventTab === 'past' ? '600' : '400'
+                  style={{
+                    color:
+                      activeEventTab === "past" ? PALETTE.navy : PALETTE.teal,
+                    fontWeight: activeEventTab === "past" ? "600" : "400",
                   }}
                 >
                   Past ({pastEvents.length})
@@ -895,34 +977,39 @@ useEffect(() => {
             {filteredEvents.length === 0 ? (
               <div className="col-span-3 text-center p-12 bg-white rounded-2xl shadow-md">
                 <div className="text-6xl mb-4" style={{ color: PALETTE.mint }}>
-                  {activeEventTab === 'upcoming' ? '📅' : activeEventTab === 'past' ? '✅' : '📋'}
+                  {activeEventTab === "upcoming"
+                    ? "📅"
+                    : activeEventTab === "past"
+                    ? "✅"
+                    : "📋"}
                 </div>
-                <h3 className="text-xl font-semibold mb-2" style={{ color: PALETTE.navy }}>
-                  {events.length === 0 
-                    ? "No Events Signed Up Yet" 
-                    : activeEventTab === 'upcoming'
+                <h3
+                  className="text-xl font-semibold mb-2"
+                  style={{ color: PALETTE.navy }}
+                >
+                  {events.length === 0
+                    ? "No Events Signed Up Yet"
+                    : activeEventTab === "upcoming"
                     ? "No Upcoming Events"
-                    : activeEventTab === 'past'
+                    : activeEventTab === "past"
                     ? "No Past Events"
-                    : "No Events Match Your Search"
-                  }
+                    : "No Events Match Your Search"}
                 </h3>
                 <p className="mb-6" style={{ color: PALETTE.teal }}>
-                  {events.length === 0 
-                    ? "Browse available events and sign up to see them here!" 
-                    : activeEventTab === 'upcoming'
+                  {events.length === 0
+                    ? "Browse available events and sign up to see them here!"
+                    : activeEventTab === "upcoming"
                     ? "You don't have any upcoming events. Check out available events!"
-                    : activeEventTab === 'past'
+                    : activeEventTab === "past"
                     ? "You haven't completed any events yet."
-                    : "Try adjusting your search terms."
-                  }
+                    : "Try adjusting your search terms."}
                 </p>
-                {events.length === 0 || activeEventTab === 'upcoming' ? (
+                {events.length === 0 || activeEventTab === "upcoming" ? (
                   <button
-                    onClick={() => navigate('/user-event-site')}
+                    onClick={() => navigate("/user-event-site")}
                     className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
                     style={{ backgroundColor: PALETTE.teal, color: "white" }}
-                  > 
+                  >
                     Browse Events
                   </button>
                 ) : null}
@@ -942,11 +1029,15 @@ useEffect(() => {
       >
         <div>Made by COSC 4358 team!</div>
       </footer>
-            
+
       <NotificationModal
         isOpen={isNotificationModalOpen}
         onClose={() => setIsNotificationModalOpen(false)}
-        notifications={notifications}
+        notifications={serverNotifications.map((n) => ({
+          title: n?.subject ?? n?.title ?? n?.name ?? "Notification",
+          description:
+            n?.body ?? n?.description ?? n?.message ?? JSON.stringify(n) ?? "",
+        }))}
       />
     </>
   );

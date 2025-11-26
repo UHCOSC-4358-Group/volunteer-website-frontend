@@ -48,9 +48,67 @@ function scoreToNumber(v: number | string) {
   return Number.isFinite(n) ? n : 0;
 }
 
-function VolunteerRow({ v }: { v: VolunteerMatch & { _scoreNum?: number } }) {
+function VolunteerRow({
+  v,
+  event,
+}: {
+  v: VolunteerMatch & { _scoreNum?: number };
+  event: EventMatch;
+}) {
   const num = v._scoreNum ?? scoreToNumber(v.score);
   const pct = Math.round(Math.max(1, Math.min(100, num * 10)));
+
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  async function sendInvite() {
+    setSending(true);
+    setSendError(null);
+    try {
+      const payload = {
+        subject: `Invitation: ${event.name}`,
+        body: `Hi ${v.first_name}, we'd like to invite you to join '${
+          event.name
+        }' on ${event.day ?? "TBD"}${
+          event.start_time ? ` at ${event.start_time}` : ""
+        }. Please visit your dashboard to accept.`,
+        recipient_id: v.volunteer_id,
+        recipient_type: "volunteer",
+      };
+
+      const res = await fetch(`/api/notifications/`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (res.status === 401) {
+        setSendError("Unauthorized. Please sign in.");
+        return;
+      }
+      if (res.status === 403) {
+        setSendError("Forbidden. You don't have permission.");
+        return;
+      }
+
+      if (res.status === 201 || res.ok) {
+        setSent(true);
+      } else {
+        const txt = await res.text().catch(() => "Failed to send notification");
+        setSendError(txt || "Failed to send notification");
+      }
+    } catch (err: any) {
+      setSendError(err?.message || "Unknown error");
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <div className="border-mint bg-white rounded-2xl p-4 flex items-center justify-between gap-4 border">
       <div>
@@ -60,14 +118,35 @@ function VolunteerRow({ v }: { v: VolunteerMatch & { _scoreNum?: number } }) {
         <div className="text-sm text-[#475569]">{v.email}</div>
       </div>
 
-      <div style={{ width: 220 }} className="flex items-center gap-3">
-        <div className="flex-1 bg-[#F1F5F9] rounded-full h-3 overflow-hidden">
-          <div
-            style={{ width: `${pct}%`, backgroundColor: "#06b6d4", height: 12 }}
-          />
+      <div className="flex items-center gap-3">
+        <div style={{ width: 220 }} className="flex items-center gap-3">
+          <div className="flex-1 bg-[#F1F5F9] rounded-full h-3 overflow-hidden">
+            <div
+              style={{
+                width: `${pct}%`,
+                backgroundColor: "#06b6d4",
+                height: 12,
+              }}
+            />
+          </div>
+          <ScoreChip percent={pct} />
         </div>
-        <ScoreChip percent={pct} />
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={sendInvite}
+            disabled={sending || sent}
+            className={`px-3 py-1 rounded-full text-sm font-medium ${
+              sent ? "bg-gray-200 text-gray-700" : "bg-indigo-600 text-white"
+            }`}
+            title={sent ? "Invitation sent" : "Invite volunteer"}
+          >
+            {sending ? "Sending…" : sent ? "Invited" : "Invite"}
+          </button>
+        </div>
       </div>
+
+      {sendError && <div className="text-sm text-red-600">{sendError}</div>}
     </div>
   );
 }
@@ -240,7 +319,7 @@ export default function Matching() {
 
                     <div className="space-y-3">
                       {ev.matches.map((v: any) => (
-                        <VolunteerRow key={v.volunteer_id} v={v} />
+                        <VolunteerRow key={v.volunteer_id} v={v} event={ev} />
                       ))}
                     </div>
                   </section>
