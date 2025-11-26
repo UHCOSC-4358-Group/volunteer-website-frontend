@@ -424,7 +424,10 @@ function VolunteerProfile() {
   const { user, loading: authLoading } = useAuth();
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
-  const [events, setEvents] = useState<Event[]>([]);
+  // Keep backend-provided categories separately instead of re-deriving
+  // them from dates (use backend as source-of-truth).
+  const [upcomingEventsState, setUpcomingEventsState] = useState<Event[]>([]);
+  const [pastEventsState, setPastEventsState] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activeEventTab, setActiveEventTab] = useState<
@@ -519,7 +522,9 @@ function VolunteerProfile() {
         const past = Array.isArray(data?.past_events)
           ? data.past_events.map(mapApiEvent)
           : [];
-        setEvents([...upcoming, ...past]);
+        // prefer categorized lists from backend for UI/state decisions
+        setUpcomingEventsState(upcoming);
+        setPastEventsState(past);
       } catch (err: any) {
         if (err.name === "AbortError") return;
         console.error("Failed to load profile", err);
@@ -533,20 +538,11 @@ function VolunteerProfile() {
     return () => controller.abort();
   }, [authLoading, user?.id]);
 
-  // Categorize events
-  const upcomingEvents = events.filter((event) => {
-    const eventDate = new Date(event.date + "T00:00:00");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return eventDate >= today;
-  });
+  // Use backend-provided categories (do NOT re-derive by date here).
+  const upcomingEvents = upcomingEventsState;
+  const pastEvents = pastEventsState;
 
-  const pastEvents = events.filter((event) => {
-    const eventDate = new Date(event.date + "T00:00:00");
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return eventDate < today;
-  });
+  const totalEventsCount = upcomingEvents.length + pastEvents.length;
 
   useEffect(() => {
     setUserProfile((prev) =>
@@ -556,20 +552,24 @@ function VolunteerProfile() {
 
   // Filter events based on active tab and search term
   const getFilteredEvents = () => {
-    let eventsToFilter = events;
+    let eventsToFilter: Event[] = [];
 
     if (activeEventTab === "upcoming") {
       eventsToFilter = upcomingEvents;
     } else if (activeEventTab === "past") {
       eventsToFilter = pastEvents;
+    } else {
+      eventsToFilter = [...upcomingEvents, ...pastEvents];
     }
 
-    return eventsToFilter.filter(
-      (event) =>
-        event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return eventsToFilter.filter((event) => {
+      const q = searchTerm.toLowerCase();
+      return (
+        event.name.toLowerCase().includes(q) ||
+        event.organization.toLowerCase().includes(q) ||
+        event.description.toLowerCase().includes(q)
+      );
+    });
   };
 
   const filteredEvents = getFilteredEvents();
@@ -813,7 +813,7 @@ function VolunteerProfile() {
                   Welcome back, {firstName}!
                 </div>
                 <div className="text-lg" style={{ color: "#64748B" }}>
-                  {events.length === 0
+                  {totalEventsCount === 0
                     ? "Ready to make a difference today?"
                     : `You have ${upcomingEvents.length} upcoming and ${pastEvents.length} past events`}
                 </div>
@@ -854,7 +854,7 @@ function VolunteerProfile() {
           <div className="flex justify-around gap-8 p-4 flex-col items-center md:flex-row">
             <Card
               icon={<VolunteerSVG size={64} />}
-              title={events.length.toString()}
+              title={totalEventsCount.toString()}
               subtitle="Total events"
             />
             <Card
@@ -883,7 +883,7 @@ function VolunteerProfile() {
                   Your Events
                 </div>
                 <div className="text-xl" style={{ color: "#64748B" }}>
-                  {events.length === 0
+                  {totalEventsCount === 0
                     ? "Events you've signed up for"
                     : `${filteredEvents.length} ${activeEventTab} event${
                         filteredEvents.length !== 1 ? "s" : ""
@@ -935,7 +935,7 @@ function VolunteerProfile() {
                     fontWeight: activeEventTab === "all" ? "600" : "400",
                   }}
                 >
-                  All Events ({events.length})
+                  All Events ({totalEventsCount})
                 </button>
                 <button
                   onClick={() => setActiveEventTab("upcoming")}
@@ -987,7 +987,7 @@ function VolunteerProfile() {
                   className="text-xl font-semibold mb-2"
                   style={{ color: PALETTE.navy }}
                 >
-                  {events.length === 0
+                  {totalEventsCount === 0
                     ? "No Events Signed Up Yet"
                     : activeEventTab === "upcoming"
                     ? "No Upcoming Events"
@@ -996,7 +996,7 @@ function VolunteerProfile() {
                     : "No Events Match Your Search"}
                 </h3>
                 <p className="mb-6" style={{ color: PALETTE.teal }}>
-                  {events.length === 0
+                  {totalEventsCount === 0
                     ? "Browse available events and sign up to see them here!"
                     : activeEventTab === "upcoming"
                     ? "You don't have any upcoming events. Check out available events!"
@@ -1004,7 +1004,7 @@ function VolunteerProfile() {
                     ? "You haven't completed any events yet."
                     : "Try adjusting your search terms."}
                 </p>
-                {events.length === 0 || activeEventTab === "upcoming" ? (
+                {totalEventsCount === 0 || activeEventTab === "upcoming" ? (
                   <button
                     onClick={() => navigate("/user-event-site")}
                     className="font-semibold py-3 px-8 rounded-full shadow-md inline-block transition-transform hover:scale-105"
