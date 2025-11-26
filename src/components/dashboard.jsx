@@ -376,6 +376,7 @@ export default function OrgDashboard() {
   //                            HANDLERS
   // ==============================================================
 
+  const goCreateEvent = () => navigate("/create-event");
   const goEditEvent = (event) =>
     navigate("/create-event", { state: { isEditing: true, event } });
   const goOpenMatching = () => navigate("/matching");
@@ -477,6 +478,9 @@ export default function OrgDashboard() {
             )}
 
             <DarkModeToggle darkMode={darkMode} onToggle={toggleDarkMode} />
+            <Button onClick={goCreateEvent} darkMode={darkMode}>
+              Create Event
+            </Button>
             <Button
               variant="secondary"
               onClick={goOpenMatching}
