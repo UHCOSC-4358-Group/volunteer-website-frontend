@@ -1,16 +1,31 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import EventCard from "./EventCard";
+import { useAuth } from "../hooks/user-context";
+import {
+  getOrgDashboard,
+  getOrgEvents,
+  deleteOrgEvent,
+} from "../services/orgService";
+import type { ApiLocation, ApiOrgEvent } from "../services/orgService";
 
 interface Event {
   id: number;
   name: string;
-  date: string;
-  time: string;
-  location: string;
-  type: string;
   description: string;
+  location: string;
+  locationObj?: ApiLocation | null;
+  requiredSkills: string[];
+  urgency: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  capacity: number;
+  assigned: number;
+  orgId?: number;
   organization: string;
+  time: string;
+  type: string;
   volunteersSignedUp: number;
   maxVolunteers: number;
   requirements: string[];
@@ -24,64 +39,106 @@ const PALETTE = {
   sand: "#F0EADF",
 };
 
+const formatLocation = (location?: ApiLocation | null) => {
+  if (!location) return "No location";
+  const parts = [
+    location.address,
+    location.city,
+    location.state,
+    location.zip_code,
+    location.country,
+  ]
+    .filter(Boolean)
+    .map((s) => s?.trim())
+    .filter(Boolean);
+  return parts.join(", ") || "No location";
+};
+
+const mapEvent = (evt: ApiOrgEvent, orgName: string): Event => {
+  const requiredSkills = Array.isArray(evt.needed_skills)
+    ? evt.needed_skills.map((s) => (typeof s === "string" ? s : s.skill))
+    : [];
+
+  const startTime = evt.start_time || (evt as any).startTime || "";
+  const endTime = evt.end_time || (evt as any).endTime || "";
+  const capacity = evt.capacity ?? 0;
+  const assigned = evt.assigned ?? 0;
+
+  return {
+    id: evt.id,
+    name: evt.name,
+    description: evt.description,
+    location: formatLocation(evt.location),
+    locationObj: evt.location,
+    requiredSkills,
+    urgency: (evt.urgency || "Low").toLowerCase(),
+    date: evt.day || (evt as any).date || "",
+    startTime,
+    endTime,
+    capacity,
+    assigned,
+    orgId: evt.org_id,
+    organization: orgName || "My Organization",
+    time: startTime
+      ? `${startTime}${endTime ? ` - ${endTime}` : ""}`
+      : "TBD",
+    type: "Organization Event",
+    volunteersSignedUp: assigned,
+    maxVolunteers: capacity,
+    requirements: requiredSkills,
+  };
+};
+
 function EventsPage() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
+  const [loadingEvents, setLoadingEvents] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Function to check if an event date has passed
-  const isEventExpired = (eventDate: string, eventTime: string): boolean => {
-    const now = new Date();
-    const eventDateTime = new Date(`${eventDate}T${eventTime}`);
-    return eventDateTime < now;
-  };
-
-  // Function to clean up expired events
-  const cleanupExpiredEvents = (eventsList: Event[]): Event[] => {
-    const activeEvents = eventsList.filter(event => !isEventExpired(event.date, event.time));
-    
-    // If any events were removed, update localStorage
-    if (activeEvents.length !== eventsList.length) {
-      const expiredCount = eventsList.length - activeEvents.length;
-      console.log(`Removed ${expiredCount} expired event(s)`);
-      
-      // Also clean up from signed-up events
-      const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
-      const activeSignedUpEvents = signedUpEvents.filter(
-        (event: Event) => !isEventExpired(event.date, event.time)
-      );
-      localStorage.setItem('signedUpEvents', JSON.stringify(activeSignedUpEvents));
-    }
-    
-    return activeEvents;
-  };
-
-  // Load events from localStorage and clean up expired ones
   useEffect(() => {
-    const savedEvents = localStorage.getItem('events');
-    if (savedEvents) {
-      const parsedEvents = JSON.parse(savedEvents);
-      const activeEvents = cleanupExpiredEvents(parsedEvents);
-      setEvents(activeEvents);
-      localStorage.setItem('events', JSON.stringify(activeEvents));
+    if (loading) return;
+    if (!user?.id) {
+      setLoadingEvents(false);
+      setError("You must be logged in as an admin to view events.");
+      return;
     }
-  }, []);
 
-  // Periodic cleanup - check every minute for expired events
-  useEffect(() => {
-    const intervalId = setInterval(() => {
-      setEvents(currentEvents => {
-        const activeEvents = cleanupExpiredEvents(currentEvents);
-        if (activeEvents.length !== currentEvents.length) {
-          localStorage.setItem('events', JSON.stringify(activeEvents));
-        }
-        return activeEvents;
-      });
-    }, 60000); // Check every 60 seconds
+    const loadEvents = async () => {
+      setLoadingEvents(true);
+      setError(null);
+      try {
+        const [profile, orgEvents] = await Promise.all([
+          getOrgDashboard(user.id),
+          getOrgEvents(),
+        ]);
 
-    return () => clearInterval(intervalId);
-  }, []);
+        const orgName = profile?.organization?.name ?? "My Organization";
+
+        const eventsFromApi =
+          (Array.isArray(orgEvents) && orgEvents.length > 0
+            ? orgEvents
+            : profile?.upcoming_events) || [];
+
+        const mapped = eventsFromApi.map((evt: ApiOrgEvent) =>
+          mapEvent(evt, orgName)
+        );
+
+        setEvents(mapped);
+      } catch (err) {
+        console.error("Failed to load events", err);
+        setError(
+          err instanceof Error ? err.message : "Failed to load events."
+        );
+      } finally {
+        setLoadingEvents(false);
+      }
+    };
+
+    loadEvents();
+  }, [loading, user?.id]);
 
   // Filter events based on search and type
   const filteredEvents = events.filter(event => {
@@ -92,78 +149,21 @@ function EventsPage() {
     return matchesSearch && matchesType;
   });
 
-  const handleSignUp = (eventId: number) => {
-    const eventToSignUp = events.find(event => event.id === eventId);
-    
-    if (!eventToSignUp) {
-      alert("Event not found!");
-      return;
-    }
-
-    // Check if event has expired
-    if (isEventExpired(eventToSignUp.date, eventToSignUp.time)) {
-      alert("This event has already passed and is no longer available.");
-      // Clean up the expired event
-      const activeEvents = events.filter(e => e.id !== eventId);
-      setEvents(activeEvents);
-      localStorage.setItem('events', JSON.stringify(activeEvents));
-      return;
-    }
-
-    // Check if event is already full
-    if (eventToSignUp.volunteersSignedUp >= eventToSignUp.maxVolunteers) {
-      alert("This event is already full!");
-      return;
-    }
-
-    // Check if user already signed up for this event
-    const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
-    const alreadySignedUp = signedUpEvents.some((e: Event) => e.id === eventId);
-    
-    if (alreadySignedUp) {
-      alert("You have already signed up for this event!");
-      return;
-    }
-
-    // Update the main events list - increment volunteersSignedUp
-    const updatedEvents = events.map(event => {
-      if (event.id === eventId) {
-        return {
-          ...event,
-          volunteersSignedUp: event.volunteersSignedUp + 1
-        };
-      }
-      return event;
-    });
-    
-    setEvents(updatedEvents);
-    localStorage.setItem('events', JSON.stringify(updatedEvents));
-    
-    // Save to user's signed-up events
-    const updatedSignedUpEvents = [
-      ...signedUpEvents, 
-      { 
-        ...eventToSignUp, 
-        volunteersSignedUp: eventToSignUp.volunteersSignedUp + 1
-      }
-    ];
-    localStorage.setItem('signedUpEvents', JSON.stringify(updatedSignedUpEvents));
-    
-    alert(`Successfully signed up for ${eventToSignUp.name}!`);
+  const handleSignUp = () => {
+    alert("Sign-ups are managed via the volunteer view.");
   };
 
-  const handleRemoveEvent = (eventId: number) => {
-    // Remove event from main events list
-    const updatedEvents = events.filter(event => event.id !== eventId);
-    setEvents(updatedEvents);
-    localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-    // Also remove from signed-up events
-    const signedUpEvents = JSON.parse(localStorage.getItem('signedUpEvents') || '[]');
-    const updatedSignedUpEvents = signedUpEvents.filter((event: Event) => event.id !== eventId);
-    localStorage.setItem('signedUpEvents', JSON.stringify(updatedSignedUpEvents));
-
-    alert("Event removed successfully!");
+  const handleRemoveEvent = async (eventId: number) => {
+    if (!window.confirm("Remove this event?")) return;
+    try {
+      await deleteOrgEvent(eventId);
+      setEvents((prev) => prev.filter((event) => event.id !== eventId));
+    } catch (err) {
+      console.error("Failed to delete event", err);
+      alert(
+        err instanceof Error ? err.message : "Failed to delete event. Try again."
+      );
+    }
   };
 
   return (
@@ -228,7 +228,16 @@ function EventsPage() {
         </div>
 
         {/* Events Grid */}
-        {filteredEvents.length === 0 ? (
+        {error && (
+          <div className="text-center p-4 mb-4 text-red-600 bg-white rounded-xl border">
+            {error}
+          </div>
+        )}
+        {loadingEvents ? (
+          <div className="text-center p-12 bg-white rounded-2xl shadow-md">
+            Loading events...
+          </div>
+        ) : filteredEvents.length === 0 ? (
           <div className="text-center p-12 bg-white rounded-2xl shadow-md">
             <div className="text-6xl mb-4" style={{ color: PALETTE.mint }}>📋</div>
             <h3 className="text-xl font-semibold mb-2" style={{ color: PALETTE.navy }}>
@@ -256,7 +265,7 @@ function EventsPage() {
               <EventCard 
                 key={event.id} 
                 event={event}
-                onSignUp={() => handleSignUp(event.id)}
+                onSignUp={handleSignUp}
                 showEditButton={true} // Set based on user role (organizer/admin)
                 showRemoveButton={true} // Set based on user role (organizer/admin)
                 onRemove={handleRemoveEvent}
