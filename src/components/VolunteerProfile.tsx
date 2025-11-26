@@ -549,6 +549,7 @@ function VolunteerProfile() {
 
   const filteredEvents = getFilteredEvents();
 
+const [serverNotifications, setServerNotifications] = useState<Notification[]>([]);
 const [notifications, setNotifications] = useState<Notification[]>([]);
 
 useEffect(() => {
@@ -559,7 +560,7 @@ useEffect(() => {
       // If backend returns { notifications: [...] }
       const list = Array.isArray(data) ? data : data.notifications ?? [];
 
-      setNotifications(list);
+      setServerNotifications(list);
     } catch (err) {
       console.error("Failed to load notifications", err);
     }
@@ -567,6 +568,34 @@ useEffect(() => {
 
   loadNotifications();
 }, []);
+
+// Add a local notification about upcoming events (or none) for the volunteer
+useEffect(() => {
+  const nextEvent = upcomingEvents[0];
+  const formattedDate =
+    nextEvent?.date && !Number.isNaN(Date.parse(nextEvent.date))
+      ? new Date(nextEvent.date + "T00:00:00").toLocaleDateString("en-US", {
+          weekday: "long",
+          month: "long",
+          day: "numeric",
+        })
+      : null;
+
+  const localNotification: Notification =
+    upcomingEvents.length > 0 && nextEvent
+      ? {
+          title: "Upcoming event",
+          description: formattedDate
+            ? `You have ${upcomingEvents.length} upcoming event(s). Next: ${nextEvent.name} on ${formattedDate}.`
+            : `You have ${upcomingEvents.length} upcoming event(s). Next: ${nextEvent.name}.`,
+        }
+      : {
+          title: "No upcoming events",
+          description: "You are not signed up for any upcoming events. Find one to join!",
+        };
+
+  setNotifications([...serverNotifications, localNotification]);
+}, [serverNotifications, upcomingEvents]);
 
 
 
