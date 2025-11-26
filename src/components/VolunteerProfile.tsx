@@ -316,7 +316,7 @@ function EventCard(props: Event) {
           className="pt-1 pb-1 pl-8 pr-8 rounded-3xl shadow text-white"
           style={{ backgroundColor: PALETTE.green }}
         >
-          Signed up
+          Signed up 😊
         </button>
       </div>
     </div>

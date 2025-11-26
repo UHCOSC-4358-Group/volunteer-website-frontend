@@ -103,15 +103,15 @@ function UserEventSite() {
         setLoading(true);
         setError(null);
 
-        // Fetch all events (public endpoint - no auth required). Try both with and without trailing slash.
-        let eventsRes = await fetch(`${API_PREFIX}/events`, {
+        // Fetch all events (public endpoint - no auth required). Try trailing slash first (works for some deployments), then without.
+        let eventsRes = await fetch(`${API_PREFIX}/events/`, {
           method: "GET",
           credentials: "include",
           headers: { Accept: "application/json" },
           signal: controller.signal,
         });
         if (eventsRes.status === 404) {
-          eventsRes = await fetch(`${API_PREFIX}/events/`, {
+          eventsRes = await fetch(`${API_PREFIX}/events`, {
             method: "GET",
             credentials: "include",
             headers: { Accept: "application/json" },
@@ -123,10 +123,13 @@ function UserEventSite() {
           throw new Error(`Failed to load events (${eventsRes.status})`);
         }
 
-        const eventsJson: ApiEvent[] = await eventsRes.json();
-        const mappedEvents = Array.isArray(eventsJson)
-          ? eventsJson.map(mapApiEvent)
-          : [];
+        const eventsJson: any = await eventsRes.json();
+        const rawEvents: ApiEvent[] = Array.isArray(eventsJson)
+          ? eventsJson
+          : Array.isArray(eventsJson?.results)
+            ? eventsJson.results
+            : [];
+        const mappedEvents = rawEvents.map(mapApiEvent);
         setEvents(mappedEvents);
 
         // Only fetch volunteer profile if user is logged in
