@@ -500,6 +500,24 @@ if (style) {
   document.head.appendChild(style);
 }
 
+// Date helpers — parse date-only strings as local dates to avoid timezone shifts
+function parseLocalDate(d) {
+  if (!d) return null;
+  if (d instanceof Date) return d;
+  const s = String(d);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, day] = s.split("-").map((n) => Number(n));
+    return new Date(y, m - 1, day);
+  }
+  const dt = new Date(s);
+  return isNaN(dt.getTime()) ? null : dt;
+}
+
+function formatLocalDate(d) {
+  const dt = parseLocalDate(d);
+  return dt ? dt.toLocaleDateString() : "—";
+}
+
 // === Main Component ===
 export default function VolunteerHistoryPage() {
   const [rows, setRows] = useState(SAMPLE);
@@ -770,7 +788,7 @@ export default function VolunteerHistoryPage() {
             if (hours > 0) {
               acc[key].completedHours += hours;
               acc[key].completedEvents += 1;
-              const d = r.event_day ? new Date(r.event_day) : null;
+              const d = r.event_day ? parseLocalDate(r.event_day) : null;
               if (d && (!acc[key].lastEventDate || d > acc[key].lastEventDate))
                 acc[key].lastEventDate = d;
             }
@@ -976,9 +994,7 @@ export default function VolunteerHistoryPage() {
                         {r.event_name || "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-700">
-                        {r.event_day
-                          ? new Date(r.event_day).toLocaleDateString()
-                          : "—"}
+                        {r.event_day ? formatLocalDate(r.event_day) : "—"}
                       </td>
                       <td className="px-4 py-3 text-gray-700">
                         {r.start_time || "—"}

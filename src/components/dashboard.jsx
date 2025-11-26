@@ -33,6 +33,26 @@ const formatLocation = (location) => {
   return parts.join(", ") || "No location";
 };
 
+// Date helpers — parse date-only strings as local dates to avoid timezone shifts
+function parseLocalDate(d) {
+  if (!d) return null;
+  if (d instanceof Date) return d;
+  const s = String(d);
+  // YYYY-MM-DD (date-only) -> construct local date
+  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+    const [y, m, day] = s.split("-").map((n) => Number(n));
+    return new Date(y, m - 1, day);
+  }
+  // otherwise let Date parse (ISO with time, etc.)
+  const dt = new Date(s);
+  return isNaN(dt.getTime()) ? null : dt;
+}
+
+function formatLocalDate(d) {
+  const dt = parseLocalDate(d);
+  return dt ? dt.toLocaleDateString() : "—";
+}
+
 // Small Reusable UI Components (same as before)
 
 function StatCard({ label, value, sublabel, onClick, darkMode = false }) {
@@ -359,8 +379,21 @@ export default function OrgDashboard() {
             (s) => s.toLowerCase() === skill.toLowerCase()
           ));
 
-      const matchesFrom = from ? new Date(evt.date) >= new Date(from) : true;
-      const matchesTo = to ? new Date(evt.date) <= new Date(to) : true;
+      const evtDate = parseLocalDate(evt.date);
+      const fromDate = parseLocalDate(from);
+      const toDate = parseLocalDate(to);
+      const matchesFrom =
+        fromDate && evtDate
+          ? evtDate.getTime() >= fromDate.getTime()
+          : from
+          ? false
+          : true;
+      const matchesTo =
+        toDate && evtDate
+          ? evtDate.getTime() <= toDate.getTime()
+          : to
+          ? false
+          : true;
 
       return (
         matchesSearch &&
@@ -738,7 +771,7 @@ export default function OrgDashboard() {
                             darkMode ? "text-gray-300" : "text-gray-700"
                           }`}
                         >
-                          {new Date(e.date).toLocaleDateString()}
+                          {formatLocalDate(e.date)}
                         </td>
                         <td
                           className={`py-3 pr-4 ${
@@ -841,7 +874,7 @@ export default function OrgDashboard() {
                         >
                           <strong>{v.last_event.name}</strong> —{" "}
                           {v.last_event.day
-                            ? new Date(v.last_event.day).toLocaleDateString()
+                            ? formatLocalDate(v.last_event.day)
                             : ""}
                         </div>
                       )}

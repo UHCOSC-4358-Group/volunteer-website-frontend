@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../hooks/user-context";
+import { formatLocalDate } from "../utils/dateUtils";
 
 type VolunteerMatch = {
   volunteer_id: number;
@@ -70,7 +71,7 @@ function VolunteerRow({
         subject: `Invitation: ${event.name}`,
         body: `Hi ${v.first_name}, we'd like to invite you to join '${
           event.name
-        }' on ${event.day ?? "TBD"}${
+        }' on ${event.day ? formatLocalDate(event.day) : "TBD"}${
           event.start_time ? ` at ${event.start_time}` : ""
         }. Please visit your dashboard to accept.`,
         recipient_id: v.volunteer_id,
@@ -306,7 +307,7 @@ export default function Matching() {
                           {ev.name}
                         </h2>
                         <div className="text-sm text-[#64748B]">
-                          {ev.day ?? "(day unset)"}
+                          {ev.day ? formatLocalDate(ev.day) : "(day unset)"}
                           {ev.start_time ? ` • ${ev.start_time}` : ""}
                           {ev.end_time ? ` - ${ev.end_time}` : ""}
                         </div>

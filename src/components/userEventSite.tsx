@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/user-context";
+import { parseLocalDate } from "../utils/dateUtils";
 
 interface Event {
   id: number;
@@ -127,8 +128,8 @@ function UserEventSite() {
         const rawEvents: ApiEvent[] = Array.isArray(eventsJson)
           ? eventsJson
           : Array.isArray(eventsJson?.results)
-            ? eventsJson.results
-            : [];
+          ? eventsJson.results
+          : [];
         const mappedEvents = rawEvents.map(mapApiEvent);
         setEvents(mappedEvents);
 
@@ -185,10 +186,14 @@ function UserEventSite() {
       filtered = filtered.filter((event) => event.type === filterType);
     }
 
-    // Sort by date (upcoming events first)
-    filtered.sort(
-      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-    );
+    // Sort by date (upcoming events first) — use local-date parsing
+    filtered.sort((a, b) => {
+      const da = parseLocalDate(a.date);
+      const db = parseLocalDate(b.date);
+      const ta = da ? da.getTime() : 0;
+      const tb = db ? db.getTime() : 0;
+      return ta - tb;
+    });
 
     setFilteredEvents(filtered);
   }, [events, searchTerm, filterType]);
@@ -224,7 +229,7 @@ function UserEventSite() {
 
       // Update signed up events list
       setSignedUpEvents((prev) => [...prev, eventId]);
-      
+
       // Update volunteer count for the event
       setEvents((prevEvents) =>
         prevEvents.map((ev) =>
@@ -246,8 +251,9 @@ function UserEventSite() {
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "Date TBD";
-    const date = new Date(dateString + "T00:00:00");
-    return date.toLocaleDateString("en-US", {
+    const d = parseLocalDate(dateString);
+    if (!d) return "Date TBD";
+    return d.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -304,7 +310,7 @@ function UserEventSite() {
             {error}
           </div>
         )}
-        
+
         {/* Header */}
         <div className="text-center mb-8">
           <h1
@@ -481,7 +487,8 @@ function UserEventSite() {
                         className="h-2 rounded-full transition-all"
                         style={{
                           width: `${
-                            (event.volunteersSignedUp / event.maxVolunteers) * 100
+                            (event.volunteersSignedUp / event.maxVolunteers) *
+                            100
                           }%`,
                           backgroundColor: isEventFull(event)
                             ? "#ef4444"
@@ -499,7 +506,9 @@ function UserEventSite() {
                         : PALETTE.teal,
                       color: "white",
                       opacity:
-                        isEventFull(event) && !isUserSignedUp(event.id) ? 0.5 : 1,
+                        isEventFull(event) && !isUserSignedUp(event.id)
+                          ? 0.5
+                          : 1,
                     }}
                     disabled={isEventFull(event) && !isUserSignedUp(event.id)}
                   >
