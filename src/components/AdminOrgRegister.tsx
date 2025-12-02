@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
+import { API_BASE_URL } from "../config/api";
 import * as zod from "zod";
 
 // Zod schema based on backend validation
@@ -33,7 +34,7 @@ export default function AdminOrgRegister() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
 
-  const { user, loading } = useAuth();
+  const { user, loading, token, logout } = useAuth();
 
   // Clean up the object URL when image changes or component unmounts
   useEffect(() => {
@@ -136,9 +137,15 @@ export default function AdminOrgRegister() {
     setFormLoading(true);
     const formData = createFormData();
     try {
-      const response = await fetch("/api/org/create", {
+      if (token === null) {
+        logout();
+        return;
+      }
+      const response = await fetch(`${API_BASE_URL}/org/create`, {
         method: "POST",
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
       const content = await response.json();

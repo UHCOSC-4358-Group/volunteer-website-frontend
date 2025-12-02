@@ -20,19 +20,13 @@ import about, { AboutPage } from "./components/aboutPage";
 import contact, { ContactPage } from "./components/contactPage";
 import AdminOrgRegister from "./components/AdminOrgRegister";
 import { Signup } from "./components/auth/Signup";
-import {
-  AuthContext,
-  AuthProvider,
-  AuthContextType,
-} from "./hooks/user-context";
+import { AuthProvider } from "./hooks/UserContext";
 import { UnauthorizedPage } from "./components/auth/UnauthorizedPage";
 import AdminOrgSearch from "./components/AdminOrgSearch";
 // App functionality with routing
 function App() {
-  const authState: AuthContextType = AuthProvider();
-
   return (
-    <AuthContext.Provider value={authState}>
+    <AuthProvider>
       <Routes>
         <Route path="/" element={<SignIn />} />
         <Route path="/signup" element={<Signup />} />
@@ -56,7 +50,7 @@ function App() {
           element={<Navigate to="/volunteer-profile" replace />}
         />
       </Routes>
-    </AuthContext.Provider>
+    </AuthProvider>
   );
 }
 export default App;

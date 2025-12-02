@@ -14,7 +14,8 @@ import { FaUser, FaLock } from "react-icons/fa";
 // Import useNavigate hook from react-router-dom for navigation
 import { useNavigate } from "react-router-dom";
 
-import { useAuth } from "../../hooks/user-context";
+import { useAuth } from "../../hooks/UserContext";
+import { API_BASE_URL } from "../../config/api";
 
 // Import our external CSS file for styling
 import "./SignIn.css";
@@ -53,15 +54,12 @@ const SignIn: React.FC = () => {
     if (error) setError("");
   };
 
-  // Mock login function - replace with your actual API call
   const loginVolunteer = async (userData: FormData): Promise<void> => {
-    // const baseURL = import.meta.env.VITE_APP_BACKEND_URL as string;
-
-    const response = await fetch("/api/auth/vol/login", {
+    const response = await fetch(`${API_BASE_URL}/auth/vol/login`, {
       method: "POST",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(userData),
     });
@@ -69,32 +67,30 @@ const SignIn: React.FC = () => {
     const content = await response.json();
 
     if (response.ok) {
+      const userInfo = content.user_info;
       const user = {
-        id: content.id,
-        role: content.user_type,
-        first_name: content.first_name,
-        last_name: content.last_name,
-        image_url: content.image_url,
-        email: content.email,
-        name:
-          [content.first_name, content.last_name].filter(Boolean).join(" ") ||
-          content.email,
+        id: userInfo.id,
+        role: userInfo.user_type,
+        first_name: userInfo.first_name,
+        last_name: userInfo.last_name,
+        image_url: userInfo.image_url,
+        email: userInfo.email,
+        name: [userInfo.first_name, userInfo.last_name].join(" "),
       };
-
-      login(user);
+      const token = content.token;
+      console.log(token);
+      login(user, token);
     } else {
       throw Error(content.error.message);
     }
   };
 
   const loginAdmin = async (userData: FormData): Promise<void> => {
-    // const baseURL = import.meta.env.VITE_APP_BACKEND_URL as string;
-
-    const response = await fetch("/api/auth/org/login", {
+    const response = await fetch(`${API_BASE_URL}/auth/org/login`, {
       method: "POST",
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
       body: JSON.stringify(userData),
     });
@@ -102,19 +98,18 @@ const SignIn: React.FC = () => {
     const content = await response.json();
 
     if (response.ok) {
+      const userInfo = content.user_info;
       const user = {
-        id: content.id,
-        role: content.user_type,
-        first_name: content.first_name,
-        last_name: content.last_name,
-        image_url: content.image_url,
-        email: content.email,
-        name:
-          [content.first_name, content.last_name].filter(Boolean).join(" ") ||
-          content.email,
+        id: userInfo.id,
+        role: userInfo.user_type,
+        first_name: userInfo.first_name,
+        last_name: userInfo.last_name,
+        image_url: userInfo.image_url,
+        email: userInfo.email,
+        name: [userInfo.first_name, userInfo.last_name].join(" "),
       };
-
-      login(user);
+      const token = content.token;
+      login(user, token);
     } else {
       throw Error(content.error.message);
     }
@@ -130,10 +125,8 @@ const SignIn: React.FC = () => {
     try {
       if (role === "volunteer") {
         await loginVolunteer(formData);
-        navigate("/volunteer-profile");
       } else {
         await loginAdmin(formData);
-        navigate("/OrgDashboard");
       }
     } catch (err) {
       // Handle errors from API or validation

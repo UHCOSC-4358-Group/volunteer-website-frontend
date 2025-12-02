@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
 import { VolunteerSVG } from "../assets/Svg";
 
 export default function Layout() {

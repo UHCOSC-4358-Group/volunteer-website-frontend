@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/user-context";
+import { useAuth } from "../../hooks/UserContext";
 
 export const UnauthorizedPage = () => {
   const navigate = useNavigate();

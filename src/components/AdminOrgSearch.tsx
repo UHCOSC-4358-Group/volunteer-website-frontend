@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
+import { API_BASE_URL } from "../config/api";
 
 type Org = {
   id: string;
@@ -18,7 +18,7 @@ type Org = {
 };
 
 export default function AdminOrgSearch() {
-  const { user, loading } = useAuth();
+  const { user, loading, token, logout } = useAuth();
 
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Org[]>([]);
@@ -52,9 +52,19 @@ export default function AdminOrgSearch() {
         params.set("limit", "25");
         params.set("offset", "0");
 
-        const res = await fetch(`/api/org/search?${params.toString()}`, {
-          credentials: "include",
-        });
+        if (token === null) {
+          logout();
+          return;
+        }
+
+        const res = await fetch(
+          `${API_BASE_URL}/org/search?${params.toString()}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (!res.ok) {
           const payload = await res.json().catch(() => ({}));
@@ -87,9 +97,15 @@ export default function AdminOrgSearch() {
 
     setJoining((s) => ({ ...s, [id]: true }));
     try {
-      const res = await fetch(`/api/org/${id}/signup`, {
+      if (token === null) {
+        logout();
+        return;
+      }
+      const res = await fetch(`${API_BASE_URL}/org/${id}/signup`, {
         method: "POST",
-        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       const content = await res.json();
 

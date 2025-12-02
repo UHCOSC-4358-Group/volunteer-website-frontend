@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { parseLocalDate, formatLocalDate } from "../utils/dateUtils";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
+import { API_BASE_URL } from "../config/api";
 
 interface Admin {
   id: number;
@@ -84,7 +85,7 @@ const FALLBACK_PROFILE: AdminProfileResponse = {
 };
 
 const AdminProfile: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token, logout } = useAuth();
   const [profileData, setProfileData] = useState<AdminProfileResponse | null>(
     null
   );
@@ -190,11 +191,17 @@ const AdminProfile: React.FC = () => {
       }
 
       const candidateEndpoints = [
-        { url: `/api/org/admin/${user.id}`, label: "org admin by id" },
-        { url: "/api/auth/admin", label: "current admin" },
-        { url: "/api/admin/profile", label: "legacy /admin/profile" },
-        { url: "/api/admin/me", label: "legacy /admin/me" },
-        { url: "/api/user/profile", label: "unified user profile" },
+        {
+          url: `${API_BASE_URL}/org/admin/${user.id}`,
+          label: "org admin by id",
+        },
+        { url: `${API_BASE_URL}/auth/admin`, label: "current admin" },
+        {
+          url: `${API_BASE_URL}/admin/profile`,
+          label: "legacy /admin/profile",
+        },
+        { url: `${API_BASE_URL}/admin/me`, label: "legacy /admin/me" },
+        { url: `${API_BASE_URL}/user/profile`, label: "unified user profile" },
       ];
 
       let lastError = "";
@@ -205,9 +212,16 @@ const AdminProfile: React.FC = () => {
             `[AdminProfile] Trying ${endpoint.label} at ${endpoint.url}`
           );
 
+          if (token === null) {
+            logout();
+            return;
+          }
+
           const response = await fetch(endpoint.url, {
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
           });
 
           if (response.ok) {

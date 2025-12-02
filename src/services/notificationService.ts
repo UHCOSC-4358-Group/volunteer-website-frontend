@@ -1,9 +1,11 @@
-export const getNotifications = async () => {
-  const res = await fetch(`/api/notifications/`, {
+import { API_BASE_URL } from "../config/api";
+
+export const getNotifications = async (token: string) => {
+  const res = await fetch(`${API_BASE_URL}/notifications/`, {
     method: "GET",
-    credentials: "include",
     headers: {
       Accept: "application/json",
+      Authorization: `Bearer ${token}`,
     },
   });
 

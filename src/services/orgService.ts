@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "../config/api";
+
 export interface ApiLocation {
   address?: string;
   city?: string;
@@ -61,27 +63,34 @@ export interface Notification {
   created_at: string;
 }
 
-export const getNotifications = async (limit: number = 50, offset: number = 0) => {
-  const res = await fetch(`/api/notifications?limit=${limit}&offset=${offset}`, {
-    method: "GET",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-  });
+export const getNotifications = async (
+  limit: number = 50,
+  offset: number = 0,
+  token: string
+) => {
+  const res = await fetch(
+    `${API_BASE_URL}/notifications?limit=${limit}&offset=${offset}`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
 
   if (!res.ok) throw new Error("Failed to load notifications");
 
   return res.json();
 };
 
-
-
-export const getOrgDashboard = async (adminId: number) => {
-  const res = await fetch(`/api/org/admin/${adminId}`, {
+export const getOrgDashboard = async (adminId: number, token: string) => {
+  const res = await fetch(`${API_BASE_URL}/org/admin/${adminId}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
+      Authorization: `Bearer ${token}`,
     },
-    credentials: "include",
   });
 
   if (!res.ok) {
@@ -92,13 +101,13 @@ export const getOrgDashboard = async (adminId: number) => {
 };
 
 // List upcoming events for the authenticated admin's org
-export const getOrgEvents = async (): Promise<ApiOrgEvent[]> => {
-  const res = await fetch("/api/org/events", {
+export const getOrgEvents = async (token: string): Promise<ApiOrgEvent[]> => {
+  const res = await fetch(`${API_BASE_URL}/org/events`, {
     method: "GET",
     headers: {
       Accept: "application/json",
+      Authorization: `Bearer ${token}`,
     },
-    credentials: "include",
   });
 
   if (!res.ok) {
@@ -111,6 +120,7 @@ export const getOrgEvents = async (): Promise<ApiOrgEvent[]> => {
 // Create a new event for the admin's org
 export const createOrgEvent = async (
   payload: CreateEventPayload,
+  token: string,
   image?: File
 ) => {
   const formData = new FormData();
@@ -119,9 +129,11 @@ export const createOrgEvent = async (
     formData.append("image", image);
   }
 
-  const res = await fetch("/api/events/create", {
+  const res = await fetch(`${API_BASE_URL}/events/create`, {
     method: "POST",
-    credentials: "include",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     body: formData,
   });
 
@@ -137,6 +149,7 @@ export const createOrgEvent = async (
 export const updateOrgEvent = async (
   eventId: number,
   payload: UpdateEventPayload,
+  token: string,
   image?: File
 ) => {
   const formData = new FormData();
@@ -145,9 +158,11 @@ export const updateOrgEvent = async (
     formData.append("image", image);
   }
 
-  const res = await fetch(`/api/events/${eventId}`, {
+  const res = await fetch(`${API_BASE_URL}/events/${eventId}`, {
     method: "PATCH",
-    credentials: "include",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     body: formData,
   });
 
@@ -160,10 +175,12 @@ export const updateOrgEvent = async (
 };
 
 // Delete an event owned by the current admin's organization
-export const deleteOrgEvent = async (eventId: number) => {
-  const res = await fetch(`/api/events/${eventId}`, {
+export const deleteOrgEvent = async (eventId: number, token: string) => {
+  const res = await fetch(`${API_BASE_URL}/events/${eventId}`, {
     method: "DELETE",
-    credentials: "include",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 
   if (!res.ok) {

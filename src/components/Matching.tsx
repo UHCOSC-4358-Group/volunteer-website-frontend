@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
 import { formatLocalDate } from "../utils/dateUtils";
+import { API_BASE_URL } from "../config/api";
 
 type VolunteerMatch = {
   volunteer_id: number;
@@ -52,9 +53,13 @@ function scoreToNumber(v: number | string) {
 function VolunteerRow({
   v,
   event,
+  token,
+  logout,
 }: {
   v: VolunteerMatch & { _scoreNum?: number };
   event: EventMatch;
+  token: string;
+  logout: () => void;
 }) {
   const num = v._scoreNum ?? scoreToNumber(v.score);
   const pct = Math.round(Math.max(1, Math.min(100, num * 10)));
@@ -78,13 +83,18 @@ function VolunteerRow({
         recipient_type: "volunteer",
       };
 
-      const res = await fetch(`/api/notifications/`, {
+      if (token === null) {
+        logout();
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/notifications/`, {
         method: "POST",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -153,7 +163,7 @@ function VolunteerRow({
 }
 
 export default function Matching() {
-  const { user } = useAuth();
+  const { user, token, logout } = useAuth();
   const [topK, setTopK] = useState<number>(10);
   const [maxDistance, setMaxDistance] = useState<number>(25.0);
   const [distanceUnit, setDistanceUnit] = useState<"km" | "mile">("mile");
@@ -162,6 +172,11 @@ export default function Matching() {
   const [data, setData] = useState<MatchResponse | null>(null);
 
   const canView = user?.role === "admin";
+
+  if (token === null) {
+    logout();
+    return;
+  }
 
   useEffect(() => {
     // fetch on mount
@@ -179,12 +194,20 @@ export default function Matching() {
       params.set("max_distance", String(maxDistance));
       params.set("distance_unit", String(distanceUnit));
 
-      const res = await fetch(`/api/org/events/match?${params.toString()}`, {
-        credentials: "include",
-        headers: {
-          Accept: "application/json",
-        },
-      });
+      if (token === null) {
+        logout();
+        return;
+      }
+
+      const res = await fetch(
+        `${API_BASE_URL}/org/events/match?${params.toString()}`,
+        {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (res.status === 401) {
         setError("Unauthorized. Please sign in.");
@@ -320,7 +343,13 @@ export default function Matching() {
 
                     <div className="space-y-3">
                       {ev.matches.map((v: any) => (
-                        <VolunteerRow key={v.volunteer_id} v={v} event={ev} />
+                        <VolunteerRow
+                          key={v.volunteer_id}
+                          v={v}
+                          event={ev}
+                          token={token}
+                          logout={logout}
+                        />
                       ))}
                     </div>
                   </section>

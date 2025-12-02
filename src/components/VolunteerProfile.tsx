@@ -1,9 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
 import { getNotifications } from "../services/notificationService";
 import { NotificationModal } from "../components/NotificationModal";
+import { API_BASE_URL } from "../config/api";
 import {
   SearchSVG,
   ProfileSVG,
@@ -95,8 +96,6 @@ const PALETTE = {
   mint: "#80ED99",
   sand: "#F0EADF",
 };
-
-const API_PREFIX = "/api";
 
 // Helper function to format skills
 const formatSkills = (skills: string[] = []): string[] =>
@@ -421,7 +420,7 @@ function EventCard(props: Event) {
 
 function VolunteerProfile() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, token, loading: authLoading } = useAuth();
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
   // Keep backend-provided categories separately instead of re-deriving
@@ -477,11 +476,16 @@ function VolunteerProfile() {
       try {
         setLoadingApi(true);
         setError(null);
-        const res = await fetch(`${API_PREFIX}/vol/${user.id}`, {
+        if (token === null) {
+          // Don't logout here - auth might still be initializing
+          setError("Authentication in progress...");
+          return;
+        }
+        const res = await fetch(`${API_BASE_URL}/vol/${user.id}`, {
           method: "GET",
-          credentials: "include",
           headers: {
             Accept: "application/json",
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           signal: controller.signal,
@@ -579,7 +583,11 @@ function VolunteerProfile() {
   useEffect(() => {
     const loadNotifications = async () => {
       try {
-        const data = await getNotifications();
+        if (token === null) {
+          // Don't logout here - auth might still be initializing
+          return;
+        }
+        const data = await getNotifications(token);
 
         // If backend returns { notifications: [...] }
         const list = Array.isArray(data) ? data : data.notifications ?? [];

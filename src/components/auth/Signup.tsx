@@ -3,7 +3,8 @@ import type { ChangeEvent, FormEvent } from "react";
 import SignupFirstForm from "./SignupFirstForm";
 import SignupSecondForm from "./SignupSecondForm";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../hooks/user-context";
+import { useAuth } from "../../hooks/UserContext";
+import { API_BASE_URL } from "../../config/api";
 
 import {
   useFormReducer,
@@ -313,9 +314,7 @@ export const Signup = () => {
   const registerVolunteer = async (userData: UserCreateForm) => {
     const formObj = volunteerIntoFormData(userData);
 
-    // const baseURL = import.meta.env.VITE_APP_BACKEND_URL;
-
-    const response = await fetch(`/api/auth/vol/signup`, {
+    const response = await fetch(`${API_BASE_URL}/auth/vol/signup`, {
       method: "POST",
       body: formObj,
     });
@@ -326,22 +325,31 @@ export const Signup = () => {
       throw Error(content.error.message);
     }
 
-    login({
-      id: content.id,
-      role: content.user_type,
-      first_name: content.first_name,
-      last_name: content.last_name,
-      image_url: content.image_url,
-      email: content.email,
-      name: `${content.first_name} ${content.last_name}`,
-    });
+    const userInfo = content.user_info;
+    const token = content.token;
+
+    login(
+      {
+        id: userInfo.id,
+        role: userInfo.user_type,
+        first_name: userInfo.first_name,
+        last_name: userInfo.last_name,
+        image_url: userInfo.image_url,
+        email: userInfo.email,
+        name: `${userInfo.first_name} ${userInfo.last_name}`,
+      },
+      token
+    );
   };
 
   const registerAdmin = async (userData: UserCreateForm) => {
     const formObj = adminIntoFormData(userData);
 
-    const response = await fetch(`/api/auth/org/signup`, {
+    const response = await fetch(`${API_BASE_URL}/auth/org/signup`, {
       method: "POST",
+      headers: {
+        Accept: "application/json",
+      },
       body: formObj,
     });
 
@@ -353,15 +361,21 @@ export const Signup = () => {
       throw Error(content.error.message);
     }
 
-    login({
-      id: content.id,
-      role: content.user_type,
-      first_name: content.first_name,
-      last_name: content.last_name,
-      image_url: content.image_url,
-      email: content.email,
-      name: `${content.first_name} ${content.last_name}`,
-    });
+    const userInfo = content.user_info;
+    const token = content.token;
+
+    login(
+      {
+        id: userInfo.id,
+        role: userInfo.user_type,
+        first_name: userInfo.first_name,
+        last_name: userInfo.last_name,
+        image_url: userInfo.image_url,
+        email: userInfo.email,
+        name: `${userInfo.first_name} ${userInfo.last_name}`,
+      },
+      token
+    );
   };
 
   // Handle form submission

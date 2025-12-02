@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import EventCard from "./EventCard";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
 import {
   getOrgDashboard,
   getOrgEvents,
@@ -79,9 +79,7 @@ const mapEvent = (evt: ApiOrgEvent, orgName: string): Event => {
     assigned,
     orgId: evt.org_id,
     organization: orgName || "My Organization",
-    time: startTime
-      ? `${startTime}${endTime ? ` - ${endTime}` : ""}`
-      : "TBD",
+    time: startTime ? `${startTime}${endTime ? ` - ${endTime}` : ""}` : "TBD",
     type: "Organization Event",
     volunteersSignedUp: assigned,
     maxVolunteers: capacity,
@@ -91,10 +89,9 @@ const mapEvent = (evt: ApiOrgEvent, orgName: string): Event => {
 
 function EventsPage() {
   const navigate = useNavigate();
-  const { user, loading } = useAuth();
+  const { user, loading, token, logout } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterType, setFilterType] = useState("");
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,9 +107,13 @@ function EventsPage() {
       setLoadingEvents(true);
       setError(null);
       try {
+        if (token === null) {
+          logout();
+          return;
+        }
         const [profile, orgEvents] = await Promise.all([
-          getOrgDashboard(user.id),
-          getOrgEvents(),
+          getOrgDashboard(user.id, token),
+          getOrgEvents(token),
         ]);
 
         const orgName = profile?.organization?.name ?? "My Organization";
@@ -129,9 +130,7 @@ function EventsPage() {
         setEvents(mapped);
       } catch (err) {
         console.error("Failed to load events", err);
-        setError(
-          err instanceof Error ? err.message : "Failed to load events."
-        );
+        setError(err instanceof Error ? err.message : "Failed to load events.");
       } finally {
         setLoadingEvents(false);
       }
@@ -141,12 +140,12 @@ function EventsPage() {
   }, [loading, user?.id]);
 
   // Filter events based on search and type
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === "" || event.type === filterType;
-    return matchesSearch && matchesType;
+  const filteredEvents = events.filter((event) => {
+    const matchesSearch =
+      event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.organization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.description.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
 
   const handleSignUp = () => {
@@ -155,13 +154,19 @@ function EventsPage() {
 
   const handleRemoveEvent = async (eventId: number) => {
     if (!window.confirm("Remove this event?")) return;
+    if (token === null) {
+      logout();
+      return;
+    }
     try {
-      await deleteOrgEvent(eventId);
+      await deleteOrgEvent(eventId, token);
       setEvents((prev) => prev.filter((event) => event.id !== eventId));
     } catch (err) {
       console.error("Failed to delete event", err);
       alert(
-        err instanceof Error ? err.message : "Failed to delete event. Try again."
+        err instanceof Error
+          ? err.message
+          : "Failed to delete event. Try again."
       );
     }
   };
@@ -171,13 +176,16 @@ function EventsPage() {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-4" style={{ color: PALETTE.navy }}>
+          <h1
+            className="text-4xl font-bold mb-4"
+            style={{ color: PALETTE.navy }}
+          >
             Volunteer Opportunities
           </h1>
           <p className="text-lg mb-6" style={{ color: PALETTE.teal }}>
             Find and join events that match your interests and skills
           </p>
-          
+
           {/* Search and Filter Section */}
           <div className="flex flex-col md:flex-row gap-4 justify-center items-center mb-8">
             {/* Search Input */}
@@ -190,20 +198,20 @@ function EventsPage() {
                 className="w-full p-3 pl-10 rounded-full border focus:outline-none focus:ring-2 bg-white"
                 style={{ borderColor: PALETTE.mint }}
               />
-              <svg 
-                className="absolute left-3 top-1/2 transform -translate-y-1/2" 
-                width="20" 
-                height="20" 
+              <svg
+                className="absolute left-3 top-1/2 transform -translate-y-1/2"
+                width="20"
+                height="20"
                 fill={PALETTE.teal}
                 viewBox="0 0 16 16"
               >
-                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z" />
               </svg>
             </div>
 
             {/* Create Event Button */}
             <button
-              onClick={() => navigate('/create-event')}
+              onClick={() => navigate("/create-event")}
               className="font-semibold py-3 px-6 rounded-full shadow-md transition-transform hover:scale-105"
               style={{ backgroundColor: PALETTE.teal, color: "white" }}
             >
@@ -224,19 +232,25 @@ function EventsPage() {
           </div>
         ) : filteredEvents.length === 0 ? (
           <div className="text-center p-12 bg-white rounded-2xl shadow-md">
-            <div className="text-6xl mb-4" style={{ color: PALETTE.mint }}>📋</div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: PALETTE.navy }}>
-              {events.length === 0 ? "No Events Created Yet" : "No Events Match Your Search"}
+            <div className="text-6xl mb-4" style={{ color: PALETTE.mint }}>
+              📋
+            </div>
+            <h3
+              className="text-xl font-semibold mb-2"
+              style={{ color: PALETTE.navy }}
+            >
+              {events.length === 0
+                ? "No Events Created Yet"
+                : "No Events Match Your Search"}
             </h3>
             <p className="mb-6" style={{ color: PALETTE.teal }}>
-              {events.length === 0 
-                ? "Be the first to create a volunteer event!" 
-                : "Try adjusting your search terms or filters."
-              }
+              {events.length === 0
+                ? "Be the first to create a volunteer event!"
+                : "Try adjusting your search terms or filters."}
             </p>
             {events.length === 0 && (
               <button
-                onClick={() => navigate('/create-event')}
+                onClick={() => navigate("/create-event")}
                 className="font-semibold py-3 px-8 rounded-full shadow-md transition-transform hover:scale-105"
                 style={{ backgroundColor: PALETTE.teal, color: "white" }}
               >
@@ -246,9 +260,9 @@ function EventsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map(event => (
-              <EventCard 
-                key={event.id} 
+            {filteredEvents.map((event) => (
+              <EventCard
+                key={event.id}
                 event={event}
                 onSignUp={handleSignUp}
                 showEditButton={true} // Set based on user role (organizer/admin)
@@ -263,20 +277,35 @@ function EventsPage() {
         <div className="mt-12 text-center">
           <div className="inline-flex gap-8 p-6 bg-white rounded-2xl shadow-md">
             <div>
-              <div className="text-2xl font-bold" style={{ color: PALETTE.navy }}>
+              <div
+                className="text-2xl font-bold"
+                style={{ color: PALETTE.navy }}
+              >
                 {events.length}
               </div>
               <div style={{ color: PALETTE.teal }}>Active Events</div>
             </div>
             <div>
-              <div className="text-2xl font-bold" style={{ color: PALETTE.navy }}>
-                {events.reduce((total, event) => total + event.volunteersSignedUp, 0)}
+              <div
+                className="text-2xl font-bold"
+                style={{ color: PALETTE.navy }}
+              >
+                {events.reduce(
+                  (total, event) => total + event.volunteersSignedUp,
+                  0
+                )}
               </div>
               <div style={{ color: PALETTE.teal }}>Volunteers Signed Up</div>
             </div>
             <div>
-              <div className="text-2xl font-bold" style={{ color: PALETTE.navy }}>
-                {events.reduce((total, event) => total + event.maxVolunteers, 0)}
+              <div
+                className="text-2xl font-bold"
+                style={{ color: PALETTE.navy }}
+              >
+                {events.reduce(
+                  (total, event) => total + event.maxVolunteers,
+                  0
+                )}
               </div>
               <div style={{ color: PALETTE.teal }}>Total Spots Available</div>
             </div>

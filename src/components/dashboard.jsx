@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
 import {
   getOrgDashboard,
   getOrgEvents,
@@ -240,7 +240,7 @@ function DarkModeToggle({ darkMode, onToggle }) {
 // ========================================================================
 
 export default function OrgDashboard() {
-  const { user, loading } = useAuth();
+  const { user, loading, token, logout } = useAuth();
   const adminId = user?.id;
 
   const [joinMenuOpen, setJoinMenuOpen] = useState(false);
@@ -287,9 +287,13 @@ export default function OrgDashboard() {
       try {
         // fetch admin dashboard which returns admin, organization, upcoming_events,
         // notifications, nearest_event_matches, recent_volunteers
+        if (token === null) {
+          logout();
+          return;
+        }
         const [profile, orgEvents] = await Promise.all([
-          getOrgDashboard(adminId),
-          getOrgEvents(),
+          getOrgDashboard(adminId, token),
+          getOrgEvents(token),
         ]);
 
         const mapEvent = (evt) => ({

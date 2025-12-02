@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
 import { parseLocalDate } from "../utils/dateUtils";
+import { API_BASE_URL } from "../config/api";
 
 interface Event {
   id: number;
@@ -49,11 +50,9 @@ const PALETTE = {
   sand: "#F0EADF",
 };
 
-const API_PREFIX = "/api";
-
 function UserEventSite() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, token, logout } = useAuth();
 
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
@@ -104,21 +103,20 @@ function UserEventSite() {
         setLoading(true);
         setError(null);
 
+        if (token === null) {
+          logout();
+          return;
+        }
+
         // Fetch all events (public endpoint - no auth required). Try trailing slash first (works for some deployments), then without.
-        let eventsRes = await fetch(`${API_PREFIX}/events/`, {
+        const eventsRes = await fetch(`${API_BASE_URL}/events/`, {
           method: "GET",
-          credentials: "include",
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           signal: controller.signal,
         });
-        if (eventsRes.status === 404) {
-          eventsRes = await fetch(`${API_PREFIX}/events`, {
-            method: "GET",
-            credentials: "include",
-            headers: { Accept: "application/json" },
-            signal: controller.signal,
-          });
-        }
 
         if (!eventsRes.ok) {
           throw new Error(`Failed to load events (${eventsRes.status})`);
@@ -133,12 +131,19 @@ function UserEventSite() {
         const mappedEvents = rawEvents.map(mapApiEvent);
         setEvents(mappedEvents);
 
+        if (token === null) {
+          logout();
+          return;
+        }
+
         // Only fetch volunteer profile if user is logged in
         if (user?.id) {
-          const volRes = await fetch(`${API_PREFIX}/vol/${user.id}`, {
+          const volRes = await fetch(`${API_BASE_URL}/vol/${user.id}`, {
             method: "GET",
-            credentials: "include",
-            headers: { Accept: "application/json" },
+            headers: {
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
             signal: controller.signal,
           });
 
@@ -211,12 +216,16 @@ function UserEventSite() {
     }
 
     try {
-      const res = await fetch(`${API_PREFIX}/events/${eventId}/signup`, {
+      if (token === null) {
+        logout();
+        return;
+      }
+      const res = await fetch(`${API_BASE_URL}/events/${eventId}/signup`, {
         method: "POST",
-        credentials: "include",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
       });
 

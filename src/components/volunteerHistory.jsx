@@ -1,5 +1,7 @@
-import React, { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useAuth } from "../hooks/UserContext";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE_URL } from "../config/api";
 
 // === Brand palette (consistent with other org pages) ===
 const PALETTE = {
@@ -528,6 +530,7 @@ export default function VolunteerHistoryPage() {
   const [editing, setEditing] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const { token, logout } = useAuth();
 
   const filtered = useMemo(
     () =>
@@ -590,10 +593,16 @@ export default function VolunteerHistoryPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("/api/org/past-volunteers", {
+        if (token === null) {
+          logout();
+          return;
+        }
+        const res = await fetch(`${API_BASE_URL}/org/past-volunteers`, {
           method: "GET",
-          credentials: "include",
-          headers: { Accept: "application/json" },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (!res.ok) {
@@ -697,37 +706,37 @@ export default function VolunteerHistoryPage() {
     try {
       const includeHeader = true;
       // call the org report route which uses the authenticated admin's org_id
-      const candidates = [`/api/org/report?include_header=${includeHeader}`];
-
-      let res = null;
-      for (const u of candidates) {
-        res = await fetch(u, { method: "GET", credentials: "include" });
-        if (res.ok) {
-          // got a CSV
-          const blob = await res.blob();
-          const disposition = res.headers.get("Content-Disposition") || "";
-          const filenameMatch = /filename=([^;]+)/i.exec(disposition);
-          const filename = filenameMatch
-            ? filenameMatch[1].replace(/\"|\'/g, "")
-            : `org_report_volunteer_history.csv`;
-
-          const urlObj = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = urlObj;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          a.remove();
-          URL.revokeObjectURL(urlObj);
-          return;
-        }
-        // if 403 or 401, break and show error
-        if (res.status === 401 || res.status === 403) break;
+      if (token === null) {
+        logout();
+        return;
       }
+      const res = await fetch(
+        `${API_BASE_URL}/org/report?include_header=${includeHeader}`,
+        { method: "GET", headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.ok) {
+        // got a CSV
+        const blob = await res.blob();
+        const disposition = res.headers.get("Content-Disposition") || "";
+        const filenameMatch = /filename=([^;]+)/i.exec(disposition);
+        const filename = filenameMatch
+          ? filenameMatch[1].replace(/\"|\'/g, "")
+          : `org_report_volunteer_history.csv`;
 
-      // If we get here, none returned OK
-      const txt = res ? await res.text().catch(() => null) : null;
-      throw new Error(txt || "Failed to generate report.");
+        const urlObj = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = urlObj;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(urlObj);
+        return;
+      }
+      // if 403 or 401, break and show error
+      if (res.status === 401 || res.status === 403) {
+        throw Error("Error occured fetching CSV: " + res.error.message);
+      }
     } catch (err) {
       console.error(err);
       alert(

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../hooks/user-context";
+import { useAuth } from "../hooks/UserContext";
 import SelectStateOptions from "./SelectStateOptions"; // Add this import
 import {
   createOrgEvent,
@@ -10,7 +10,7 @@ import {
   LocationPayload,
 } from "../services/orgService";
 
-type Urgency = "Low" | "Medium" | "High" ;
+type Urgency = "Low" | "Medium" | "High";
 
 interface EventFormData {
   name: string;
@@ -39,8 +39,8 @@ const PALETTE = {
 function CreateEvent() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
-  
+  const { user, token, logout } = useAuth();
+
   // Check if we're editing an existing event
   const isEditing = location.state?.isEditing || false;
   const existingEvent = location.state?.event || null;
@@ -79,13 +79,15 @@ function CreateEvent() {
 
       const formattedUrgency =
         existingEvent.urgency &&
-        (existingEvent.urgency.charAt(0).toUpperCase() +
-          existingEvent.urgency.slice(1));
+        existingEvent.urgency.charAt(0).toUpperCase() +
+          existingEvent.urgency.slice(1);
 
       setFormData({
         name: existingEvent.name || "",
         date: existingEvent.date || existingEvent.day || "",
-        startTime: toTimeInput(existingEvent.startTime || existingEvent.start_time),
+        startTime: toTimeInput(
+          existingEvent.startTime || existingEvent.start_time
+        ),
         endTime: toTimeInput(existingEvent.endTime || existingEvent.end_time),
         locationAddress: loc?.address || "",
         locationCity: loc?.city || "",
@@ -94,14 +96,10 @@ function CreateEvent() {
         locationCountry: loc?.country || "",
         description: existingEvent.description || "",
         maxVolunteers:
-          existingEvent.maxVolunteers ||
-          existingEvent.capacity ||
-          0,
+          existingEvent.maxVolunteers || existingEvent.capacity || 0,
         urgency: (formattedUrgency as Urgency) || "Low",
         requirements:
-          existingEvent.requiredSkills ||
-          existingEvent.requirements ||
-          [],
+          existingEvent.requiredSkills || existingEvent.requirements || [],
       });
     }
   }, [isEditing, existingEvent]);
@@ -114,7 +112,11 @@ function CreateEvent() {
       }
 
       try {
-        const data = await getOrgDashboard(user.id);
+        if (token === null) {
+          logout();
+          return;
+        }
+        const data = await getOrgDashboard(user.id, token);
         setOrgId(data?.organization?.id ?? data?.admin?.org_id ?? null);
         setOrgName(data?.organization?.name ?? "");
       } catch (err) {
@@ -129,11 +131,13 @@ function CreateEvent() {
   }, [user?.id]);
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     if (errorMessage) setErrorMessage("");
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: name === "maxVolunteers" ? parseInt(value) || 0 : value,
     }));
@@ -141,7 +145,7 @@ function CreateEvent() {
 
   const handleAddRequirement = () => {
     if (currentRequirement.trim()) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         requirements: [...prev.requirements, currentRequirement.trim()],
       }));
@@ -150,7 +154,7 @@ function CreateEvent() {
   };
 
   const handleRemoveRequirement = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       requirements: prev.requirements.filter((_, i) => i !== index),
     }));
@@ -226,8 +230,12 @@ function CreateEvent() {
 
     setSubmitting(true);
     try {
+      if (token === null) {
+        logout();
+        return;
+      }
       if (isEditing && existingEvent?.id) {
-        await updateOrgEvent(existingEvent.id, basePayload);
+        await updateOrgEvent(existingEvent.id, basePayload, token);
         alert(`Event "${formData.name}" updated successfully!`);
       } else {
         if (!orgId) {
@@ -238,10 +246,13 @@ function CreateEvent() {
           return;
         }
 
-        await createOrgEvent({
-          ...basePayload,
-          org_id: orgId,
-        });
+        await createOrgEvent(
+          {
+            ...basePayload,
+            org_id: orgId,
+          },
+          token
+        );
 
         alert(`Event "${formData.name}" created successfully!`);
       }
@@ -260,12 +271,20 @@ function CreateEvent() {
   return (
     <div className="min-h-screen p-6" style={{ backgroundColor: PALETTE.sand }}>
       <div className="max-w-3xl mx-auto">
-        <div className="bg-white p-8 rounded-2xl shadow-md border-t-4" style={{ borderColor: PALETTE.teal }}>
-          <h1 className="text-3xl font-bold mb-2 text-center" style={{ color: PALETTE.navy }}>
+        <div
+          className="bg-white p-8 rounded-2xl shadow-md border-t-4"
+          style={{ borderColor: PALETTE.teal }}
+        >
+          <h1
+            className="text-3xl font-bold mb-2 text-center"
+            style={{ color: PALETTE.navy }}
+          >
             {isEditing ? "Edit Event" : "Create New Event"}
           </h1>
           <p className="text-center mb-6" style={{ color: PALETTE.teal }}>
-            {isEditing ? "Update your event information" : "Fill in the details to create a volunteer opportunity"}
+            {isEditing
+              ? "Update your event information"
+              : "Fill in the details to create a volunteer opportunity"}
           </p>
           {errorMessage && (
             <p className="text-center mb-4 text-red-600 font-semibold">
@@ -276,7 +295,10 @@ function CreateEvent() {
           <form onSubmit={handleSubmit}>
             {/* Event Name */}
             <div className="mb-4">
-              <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+              <label
+                className="block font-semibold mb-2"
+                style={{ color: PALETTE.navy }}
+              >
                 Event Name *
               </label>
               <input
@@ -293,7 +315,10 @@ function CreateEvent() {
 
             {/* Organization */}
             <div className="mb-4">
-              <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+              <label
+                className="block font-semibold mb-2"
+                style={{ color: PALETTE.navy }}
+              >
                 Organization
               </label>
               <input
@@ -315,7 +340,10 @@ function CreateEvent() {
             {/* Date and Time */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+                <label
+                  className="block font-semibold mb-2"
+                  style={{ color: PALETTE.navy }}
+                >
                   Date *
                 </label>
                 <input
@@ -329,7 +357,10 @@ function CreateEvent() {
                 />
               </div>
               <div>
-                <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+                <label
+                  className="block font-semibold mb-2"
+                  style={{ color: PALETTE.navy }}
+                >
                   Start Time *
                 </label>
                 <input
@@ -343,7 +374,10 @@ function CreateEvent() {
                 />
               </div>
               <div>
-                <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+                <label
+                  className="block font-semibold mb-2"
+                  style={{ color: PALETTE.navy }}
+                >
                   End Time *
                 </label>
                 <input
@@ -360,7 +394,10 @@ function CreateEvent() {
 
             {/* Location */}
             <div className="mb-4">
-              <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+              <label
+                className="block font-semibold mb-2"
+                style={{ color: PALETTE.navy }}
+              >
                 Location (optional)
               </label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -418,7 +455,10 @@ function CreateEvent() {
 
             {/* Type */}
             <div className="mb-4">
-              <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+              <label
+                className="block font-semibold mb-2"
+                style={{ color: PALETTE.navy }}
+              >
                 Urgency *
               </label>
               <select
@@ -437,7 +477,10 @@ function CreateEvent() {
 
             {/* Max Volunteers */}
             <div className="mb-4">
-              <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+              <label
+                className="block font-semibold mb-2"
+                style={{ color: PALETTE.navy }}
+              >
                 Maximum Volunteers *
               </label>
               <input
@@ -454,7 +497,10 @@ function CreateEvent() {
 
             {/* Description */}
             <div className="mb-4">
-              <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+              <label
+                className="block font-semibold mb-2"
+                style={{ color: PALETTE.navy }}
+              >
                 Description *
               </label>
               <textarea
@@ -471,7 +517,10 @@ function CreateEvent() {
 
             {/* Requirements */}
             <div className="mb-6">
-              <label className="block font-semibold mb-2" style={{ color: PALETTE.navy }}>
+              <label
+                className="block font-semibold mb-2"
+                style={{ color: PALETTE.navy }}
+              >
                 Requirements (Optional)
               </label>
               <div className="flex gap-2 mb-2">
@@ -479,7 +528,10 @@ function CreateEvent() {
                   type="text"
                   value={currentRequirement}
                   onChange={(e) => setCurrentRequirement(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRequirement())}
+                  onKeyPress={(e) =>
+                    e.key === "Enter" &&
+                    (e.preventDefault(), handleAddRequirement())
+                  }
                   className="flex-1 p-3 rounded border focus:outline-none focus:ring-2"
                   style={{ borderColor: PALETTE.mint }}
                   placeholder="e.g., Must be 18+ or Bring your own gloves"
@@ -500,7 +552,10 @@ function CreateEvent() {
                     <div
                       key={index}
                       className="flex items-center justify-between p-2 rounded border"
-                      style={{ borderColor: PALETTE.mint, backgroundColor: PALETTE.sand }}
+                      style={{
+                        borderColor: PALETTE.mint,
+                        backgroundColor: PALETTE.sand,
+                      }}
                     >
                       <span>{req}</span>
                       <button
@@ -520,7 +575,7 @@ function CreateEvent() {
             <div className="flex gap-4 justify-center">
               <button
                 type="button"
-                onClick={() => navigate('/OrgDashboard')}
+                onClick={() => navigate("/OrgDashboard")}
                 className="px-8 py-3 rounded-full font-semibold border transition-transform hover:scale-105"
                 style={{
                   color: PALETTE.navy,
