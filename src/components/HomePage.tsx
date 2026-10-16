@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FiArrowRight,
@@ -8,7 +8,6 @@ import {
   FiUserPlus,
   FiHeart,
 } from "react-icons/fi";
-import { VolunteerSVG } from "../assets/Svg";
 import PublicEventCard from "./PublicEventCard";
 import {
   fetchUpcomingEvents,
@@ -145,46 +144,16 @@ export default function HomePage() {
 
   const isFiltered = filter !== "all" || debouncedQuery !== "";
 
-  return (
-    <div className="min-h-screen bg-white text-slate-900">
-      {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link to="/" className="flex items-center gap-2 text-green">
-            <VolunteerSVG size={28} />
-            <span className="text-lg font-semibold tracking-tight text-slate-900">
-              Volunteer
-            </span>
-          </Link>
-          <nav className="flex items-center gap-1 text-sm sm:gap-2">
-            <a
-              href="#events"
-              className="hidden rounded-full px-3 py-2 text-slate-600 hover:text-slate-900 sm:block"
-            >
-              Events
-            </a>
-            <Link
-              to="/about"
-              className="hidden rounded-full px-3 py-2 text-slate-600 hover:text-slate-900 sm:block"
-            >
-              About
-            </Link>
-            <Link
-              to="/signin"
-              className="rounded-full px-3 py-2 text-slate-600 hover:text-slate-900"
-            >
-              Sign in
-            </Link>
-            <Link
-              to="/signup"
-              className="rounded-full bg-green px-4 py-2 font-medium text-white transition-opacity hover:opacity-90"
-            >
-              Get started
-            </Link>
-          </nav>
-        </div>
-      </header>
+  // Header "Events" link points at /#events; scroll there when arriving from another page
+  const location = useLocation();
+  useEffect(() => {
+    if (location.hash === "#events") {
+      document.getElementById("events")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [location.hash]);
 
+  return (
+    <div>
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute -top-32 left-1/2 h-96 w-[48rem] -translate-x-1/2 rounded-full bg-mint/25 blur-3xl" />
@@ -217,7 +186,7 @@ export default function HomePage() {
             </a>
             <Link
               to="/signup"
-              className="inline-flex items-center justify-center rounded-full border border-slate-200 px-6 py-3 font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white px-6 py-3 font-medium text-slate-700 transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
               Join as a volunteer
             </Link>
@@ -226,7 +195,7 @@ export default function HomePage() {
       </section>
 
       {/* Events */}
-      <section id="events" className="scroll-mt-20 bg-slate-50/60 py-16 sm:py-20">
+      <section id="events" className="scroll-mt-20 py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
           <motion.div
             {...fadeUp}
@@ -383,13 +352,13 @@ export default function HomePage() {
       <section className="px-4 pb-16 sm:px-6 sm:pb-24">
         <motion.div
           {...fadeUp}
-          className="mx-auto flex max-w-6xl flex-col items-start gap-6 rounded-3xl bg-slate-900 px-6 py-10 sm:px-12 md:flex-row md:items-center md:justify-between"
+          className="mx-auto flex max-w-6xl flex-col items-start gap-6 rounded-3xl border border-slate-200 bg-white px-6 py-10 sm:px-12 md:flex-row md:items-center md:justify-between"
         >
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-white">
+            <h2 className="text-2xl font-semibold tracking-tight text-slate-900">
               Run an organization?
             </h2>
-            <p className="mt-2 max-w-md text-slate-400">
+            <p className="mt-2 max-w-md text-slate-500">
               Post events, get matched with qualified volunteers, and track
               participation in one place.
             </p>
@@ -403,27 +372,6 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-100">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <div className="flex items-center gap-2 text-green">
-            <VolunteerSVG size={20} />
-            <span className="text-slate-700">Volunteer</span>
-          </div>
-          <div className="flex gap-6">
-            <Link to="/about" className="hover:text-slate-900">
-              About
-            </Link>
-            <Link to="/contact" className="hover:text-slate-900">
-              Contact
-            </Link>
-            <Link to="/signin" className="hover:text-slate-900">
-              Sign in
-            </Link>
-          </div>
-          <p>© {new Date().getFullYear()} Volunteer</p>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -349,7 +349,7 @@ function EventCard({ event, onSignUp, showEditButton = false, showRemoveButton =
 
             {/* MODAL FOOTER */}
             <div 
-              className="p-6 border-t bg-gray-50 rounded-b-2xl"
+              className="p-6 border-t bg-white rounded-b-2xl"
               style={{ borderColor: PALETTE.mint }}
             >
               <div className="flex flex-wrap gap-3 justify-between items-center">

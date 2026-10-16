@@ -1031,13 +1031,6 @@ function VolunteerProfile() {
         </section>
       </main>
 
-      <footer
-        className="p-10 font-bold text-white flex justify-center items-center"
-        style={{ backgroundColor: PALETTE.teal }}
-      >
-        <div>Made by COSC 4358 team!</div>
-      </footer>
-
       <NotificationModal
         isOpen={isNotificationModalOpen}
         onClose={() => setIsNotificationModalOpen(false)}

@@ -28,7 +28,7 @@ export function ContactPage() {
           {/* Contact Methods */}
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             {/* Email */}
-            <div className="bg-gray-50 rounded-xl p-6 text-center">
+            <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
               <div className="text-4xl mb-4">📧</div>
               <h3 className="text-xl font-semibold mb-3" style={{ color: PALETTE.teal }}>
                 Email Us
@@ -48,7 +48,7 @@ export function ContactPage() {
             </div>
 
             {/* Phone */}
-            <div className="bg-gray-50 rounded-xl p-6 text-center">
+            <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
               <div className="text-4xl mb-4">📞</div>
               <h3 className="text-xl font-semibold mb-3" style={{ color: PALETTE.teal }}>
                 Call Us
@@ -68,7 +68,7 @@ export function ContactPage() {
             </div>
 
             {/* Office */}
-            <div className="bg-gray-50 rounded-xl p-6 text-center">
+            <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
               <div className="text-4xl mb-4">🏫</div>
               <h3 className="text-xl font-semibold mb-3" style={{ color: PALETTE.teal }}>
                 Visit Our Office
@@ -80,7 +80,7 @@ export function ContactPage() {
             </div>
 
             {/* Support */}
-            <div className="bg-gray-50 rounded-xl p-6 text-center">
+            <div className="bg-white border border-gray-100 rounded-xl p-6 text-center">
               <div className="text-4xl mb-4">💬</div>
               <h3 className="text-xl font-semibold mb-3" style={{ color: PALETTE.teal }}>
                 Student Support
@@ -143,7 +143,7 @@ export function ContactPage() {
           </div>
 
           {/* FAQ Section */}
-          <div className="bg-gray-50 rounded-xl p-8">
+          <div className="bg-white border border-gray-100 rounded-xl p-8">
             <h2 className="text-2xl font-bold mb-6 text-center" style={{ color: PALETTE.navy }}>
               Frequently Asked Questions
             </h2>
@@ -181,14 +181,6 @@ export function ContactPage() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer
-        className="p-8 font-bold text-white text-center mt-12"
-        style={{ backgroundColor: PALETTE.teal }}
-      >
-        <div>We're here to help you make a difference! 🌟</div>
-      </footer>
     </div>
   );
 }

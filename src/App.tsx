@@ -29,11 +29,11 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route element={<Layout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/signin" element={<SignIn />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/unauthorized" element={<UnauthorizedPage />} />
           <Route path="/admin-profile" element={<AdminProfile />} />
           <Route path="/volunteer-profile" element={<VolunteerProfile />} />
           <Route path="/volunteer-history" element={<VolunteerHistory />} />

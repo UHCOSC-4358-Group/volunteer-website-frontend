@@ -12,7 +12,7 @@ export const UnauthorizedPage = () => {
   };
 
   return (
-    <div className="flex justify-center items-center w-[100vw] h-[100vh] font-medium">
+    <div className="flex justify-center items-center w-full min-h-[calc(100vh-4rem)] font-medium">
       <div className="bg-navy text-white rounded-2xl p-5 flex flex-col gap-5">
         <h1 className="font-extrabold">Access Denied.</h1>
         <p>You don't have permission to access this page.</p>

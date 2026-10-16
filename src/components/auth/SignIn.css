@@ -1,7 +1,9 @@
 /* ===== AUTH PAGE (Warm Modern Card) ===== */
 
 .auth-container {
-  height: 100vh;
+  min-height: calc(100vh - 4rem);
+  padding: 48px 16px;
+  box-sizing: border-box;
   display: flex;
   justify-content: center;
   align-items: center;

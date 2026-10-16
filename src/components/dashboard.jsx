@@ -442,7 +442,7 @@ export default function OrgDashboard() {
   return showNoOrg && !loadingEvents ? (
     <div
       className={`min-h-screen w-full flex items-center justify-center transition-colors duration-300 ${
-        darkMode ? "bg-gray-900 text-white" : "bg-gray-50"
+        darkMode ? "bg-gray-900 text-white" : "bg-sand"
       }`}
     >
       <div
@@ -481,11 +481,11 @@ export default function OrgDashboard() {
   ) : (
     <div
       className={`min-h-screen w-full transition-colors duration-300 ${
-        darkMode ? "bg-gray-900 text-white" : "bg-gray-50"
+        darkMode ? "bg-gray-900 text-white" : "bg-sand"
       }`}
     >
       <header
-        className={`sticky top-0 z-10 backdrop-blur border-b transition-colors duration-300 ${
+        className={`sticky top-16 z-10 backdrop-blur border-b transition-colors duration-300 ${
           darkMode
             ? "bg-gray-800/80 border-gray-700"
             : "bg-white/80 border-gray-200"

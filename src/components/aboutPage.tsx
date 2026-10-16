@@ -32,7 +32,7 @@ export function AboutPage() {
             <h2 className="text-3xl font-bold mb-6 text-center" style={{ color: PALETTE.navy }}>
               Our Mission
             </h2>
-            <div className="bg-gray-50 rounded-xl p-8 text-center">
+            <div className="bg-white border border-gray-100 rounded-xl p-8 text-center">
               <p className="text-lg text-gray-700 leading-relaxed">
                 To make volunteering accessible to everyone by bridging the gap between 
                 organizations in need and individuals who want to make a positive impact. 
@@ -158,7 +158,7 @@ export function AboutPage() {
           </div>
 
           {/* Call to Action */}
-          <div className="text-center bg-gray-50 rounded-xl p-8">
+          <div className="text-center bg-white border border-gray-100 rounded-xl p-8">
             <h2 className="text-2xl font-bold mb-4" style={{ color: PALETTE.navy }}>
               Ready to Make a Difference?
             </h2>
@@ -191,14 +191,6 @@ export function AboutPage() {
           </div>
         </div>
       </main>
-
-      {/* Footer */}
-      <footer
-        className="p-8 font-bold text-white text-center mt-12"
-        style={{ backgroundColor: PALETTE.teal }}
-      >
-        <div>Made with by COSC 4353 team</div>
-      </footer>
     </div>
   );
 }

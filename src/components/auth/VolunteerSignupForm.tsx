@@ -229,7 +229,7 @@ function VolunteerSignupForm({
   const [errors, setErrors] = useState(initialVolunteerCreateErrorsSecondForm);
 
   return (
-    <div className="bg-sand min-h-screen flex justify-center items-center p-6">
+    <div className="bg-sand min-h-[calc(100vh-4rem)] flex justify-center items-center p-6">
       <div className="w-full max-w-4xl p-8 rounded-2xl shadow-md bg-[#fff] border-t-6 border-t-teal">
         <h2 className="text-2xl font-bold mb-1 text-center text-navy">
           Volunteer Profile Information

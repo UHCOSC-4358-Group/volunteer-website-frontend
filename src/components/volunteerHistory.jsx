@@ -32,53 +32,6 @@ const URGENCY = [
   { value: "High", color: "bg-red-100 text-red-800" },
 ];
 
-// === Volunteer directory (for join dates; replace with real data) ===
-const VOLUNTEERS = {
-  "Alex Nguyen": { joinedAt: "2025-06-10" },
-  "Bianca Torres": { joinedAt: "2025-05-22" },
-  "Chris Johnson": { joinedAt: "2025-07-01" },
-};
-
-// === Demo data (replace with API data) ===
-const SAMPLE = [
-  {
-    id: "1",
-    volunteerName: "Alex Nguyen",
-    eventName: "Food Bank Packaging",
-    description: "Prepare and pack food boxes for distribution.",
-    location: "Houston Food Bank, TX",
-    requiredSkills: ["Packaging", "Teamwork"],
-    urgency: "High",
-    eventDate: "2025-10-04",
-    status: "Assigned",
-    hours: 3.5,
-  },
-  {
-    id: "2",
-    volunteerName: "Bianca Torres",
-    eventName: "Park Cleanup",
-    description: "Buffalo Bayou trash pickup and light maintenance.",
-    location: "Buffalo Bayou Park, TX",
-    requiredSkills: ["Outdoor", "Lifting"],
-    urgency: "Medium",
-    eventDate: "2025-10-11",
-    status: "Completed",
-    hours: 4,
-  },
-  {
-    id: "3",
-    volunteerName: "Chris Johnson",
-    eventName: "Senior Center Tech Help",
-    description: "Assist seniors with phones and laptops.",
-    location: "Heights Senior Center, TX",
-    requiredSkills: ["Tech Support", "Patience"],
-    urgency: "Low",
-    eventDate: "2025-10-19",
-    status: "No-show",
-    hours: 0,
-  },
-];
-
 // === Validation ===
 const MAX = { name: 50, short: 100 };
 
@@ -522,15 +475,15 @@ function formatLocalDate(d) {
 
 // === Main Component ===
 export default function VolunteerHistoryPage() {
-  const [rows, setRows] = useState(SAMPLE);
+  const [rows, setRows] = useState([]);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [urgencyFilter, setUrgencyFilter] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const { token, logout } = useAuth();
+  const { token, loading: authLoading, logout } = useAuth();
 
   const filtered = useMemo(
     () =>
@@ -588,6 +541,9 @@ export default function VolunteerHistoryPage() {
 
   // Fetch past volunteers (organization-scoped) and transform into table rows
   useEffect(() => {
+    // On a fresh load the token is still being restored from localStorage
+    if (authLoading) return;
+
     let mounted = true;
     const load = async () => {
       setLoading(true);
@@ -684,7 +640,7 @@ export default function VolunteerHistoryPage() {
         });
 
         if (mounted) {
-          setRows(assignments.length ? assignments : SAMPLE);
+          setRows(assignments);
         }
       } catch (err) {
         console.error(err);
@@ -699,7 +655,7 @@ export default function VolunteerHistoryPage() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [authLoading, token]);
 
   // Trigger the CSV download by calling backend report route
   async function handleGenerateReport() {
@@ -747,7 +703,7 @@ export default function VolunteerHistoryPage() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: "#0F172A0D" }}>
+    <div className="min-h-screen" style={{ background: PALETTE.sand }}>
       <header
         className="px-6 py-5 border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60"
         style={{ borderColor: "#E5E7EB" }}
@@ -1063,13 +1019,18 @@ export default function VolunteerHistoryPage() {
                     </tr>
                   ))
                 )}
-                {filtered.length === 0 && (
+                {!loading && filtered.length === 0 && (
                   <tr>
                     <td
                       colSpan={16}
                       className="px-4 py-12 text-center text-gray-500"
+                      style={error ? { color: PALETTE.error } : undefined}
                     >
-                      No records match your filters.
+                      {error
+                        ? `Couldn't load volunteer history. ${error}`
+                        : rows.length === 0
+                        ? "No volunteer history yet. Volunteers show up here after they work one of your organization's events."
+                        : "No records match your filters."}
                     </td>
                   </tr>
                 )}

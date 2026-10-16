@@ -145,10 +145,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           };
 
           dispatch({ type: "LOGIN", payload: { user, token } });
-          if (user.role === "volunteer") {
-            navigate("/volunteer-profile");
-          } else {
-            navigate("/OrgDashboard");
+          // Only send signed-in users to their home page from the entry pages,
+          // so refreshing any other page keeps them where they were
+          if (["/", "/signin", "/signup"].includes(window.location.pathname)) {
+            if (user.role === "volunteer") {
+              navigate("/volunteer-profile");
+            } else {
+              navigate("/OrgDashboard");
+            }
           }
         } else {
           if (response.status === 401 || response.status === 403) {

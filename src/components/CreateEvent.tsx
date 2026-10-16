@@ -554,7 +554,7 @@ function CreateEvent() {
                       className="flex items-center justify-between p-2 rounded border"
                       style={{
                         borderColor: PALETTE.mint,
-                        backgroundColor: PALETTE.sand,
+                        backgroundColor: "#fff",
                       }}
                     >
                       <span>{req}</span>
