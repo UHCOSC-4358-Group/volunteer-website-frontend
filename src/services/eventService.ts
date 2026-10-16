@@ -23,12 +23,34 @@ export interface PublicEvent {
   needed_skills: string[];
 }
 
+export interface EventQuery {
+  limit?: number;
+  offset?: number;
+  q?: string;
+  urgent?: boolean;
+  withinDays?: number;
+}
+
+export interface EventPage {
+  results: PublicEvent[];
+  // Matching events across all pages (null if the API doesn't report it)
+  total: number | null;
+}
+
 // Public endpoint, no auth header needed
 export async function fetchUpcomingEvents(
-  limit = 24,
+  { limit = 9, offset = 0, q, urgent, withinDays }: EventQuery = {},
   signal?: AbortSignal
-): Promise<PublicEvent[]> {
-  const res = await fetch(`${API_BASE_URL}/events/?limit=${limit}`, {
+): Promise<EventPage> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  if (q) params.set("q", q);
+  if (urgent) params.set("urgent", "true");
+  if (withinDays !== undefined) params.set("within_days", String(withinDays));
+
+  const res = await fetch(`${API_BASE_URL}/events/?${params}`, {
     headers: { Accept: "application/json" },
     signal,
   });
@@ -38,5 +60,8 @@ export async function fetchUpcomingEvents(
   }
 
   const json = await res.json();
-  return Array.isArray(json?.results) ? json.results : [];
+  return {
+    results: Array.isArray(json?.results) ? json.results : [],
+    total: typeof json?.total === "number" ? json.total : null,
+  };
 }

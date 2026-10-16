@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -10,7 +10,11 @@ import {
 } from "react-icons/fi";
 import { VolunteerSVG } from "../assets/Svg";
 import PublicEventCard from "./PublicEventCard";
-import { fetchUpcomingEvents, type PublicEvent } from "../services/eventService";
+import {
+  fetchUpcomingEvents,
+  type EventQuery,
+  type PublicEvent,
+} from "../services/eventService";
 
 type Filter = "all" | "week" | "urgent";
 
@@ -45,38 +49,69 @@ const fadeUp = {
   transition: { duration: 0.4 },
 };
 
-function matchesFilter(event: PublicEvent, filter: Filter) {
-  if (filter === "urgent") {
-    const u = event.urgency?.toLowerCase();
-    return u === "high" || u === "critical";
-  }
-  if (filter === "week") {
-    if (!event.day) return false;
-    const [y, m, d] = event.day.split("-").map(Number);
-    const eventDate = new Date(y, m - 1, d);
-    const weekOut = new Date();
-    weekOut.setHours(0, 0, 0, 0);
-    weekOut.setDate(weekOut.getDate() + 7);
-    return eventDate <= weekOut;
-  }
-  return true;
+const PAGE_SIZE = 9;
+
+function filterParams(filter: Filter, q: string): EventQuery {
+  return {
+    q: q || undefined,
+    urgent: filter === "urgent" || undefined,
+    withinDays: filter === "week" ? 7 : undefined,
+  };
 }
 
 export default function HomePage() {
   const [events, setEvents] = useState<PublicEvent[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [allTotal, setAllTotal] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [reloadKey, setReloadKey] = useState(0);
+  const [moreError, setMoreError] = useState<string | null>(null);
+  // Identifies the current search/filter so a late "load more" can't append to a new list
+  const listKey = `${filter}|${debouncedQuery}|${reloadKey}`;
+  const listKeyRef = useRef(listKey);
+  listKeyRef.current = listKey;
 
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedQuery(query.trim()), 300);
+    return () => clearTimeout(id);
+  }, [query]);
+
+  const applyPage = (
+    page: { results: PublicEvent[]; total: number | null },
+    loadedBefore: number
+  ) => {
+    const loaded = loadedBefore + page.results.length;
+    setTotal(page.total);
+    // Older API versions don't send a total; fall back to "was the page full?"
+    setHasMore(
+      page.total !== null ? loaded < page.total : page.results.length === PAGE_SIZE
+    );
+  };
+
+  // First page; resets whenever the search or filter changes
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError(null);
+    setMoreError(null);
 
-    fetchUpcomingEvents(24, controller.signal)
-      .then(setEvents)
+    fetchUpcomingEvents(
+      { limit: PAGE_SIZE, offset: 0, ...filterParams(filter, debouncedQuery) },
+      controller.signal
+    )
+      .then((page) => {
+        setEvents(page.results);
+        applyPage(page, 0);
+        if (filter === "all" && !debouncedQuery) {
+          setAllTotal(page.total ?? page.results.length);
+        }
+      })
       .catch((err) => {
         if (err.name !== "AbortError") setError(err.message);
       })
@@ -85,29 +120,30 @@ export default function HomePage() {
       });
 
     return () => controller.abort();
-  }, [reloadKey]);
+  }, [filter, debouncedQuery, reloadKey]);
 
-  const visibleEvents = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return events.filter((e) => {
-      if (!matchesFilter(e, filter)) return false;
-      if (!q) return true;
-      return [
-        e.name,
-        e.description,
-        e.org_name,
-        e.location?.city,
-        ...e.needed_skills,
-      ]
-        .filter(Boolean)
-        .some((s) => String(s).toLowerCase().includes(q));
-    });
-  }, [events, query, filter]);
+  const loadMore = async () => {
+    const key = listKey;
+    setLoadingMore(true);
+    setMoreError(null);
+    try {
+      const page = await fetchUpcomingEvents({
+        limit: PAGE_SIZE,
+        offset: events.length,
+        ...filterParams(filter, debouncedQuery),
+      });
+      if (listKeyRef.current !== key) return;
+      const seen = new Set(events.map((e) => e.id));
+      setEvents([...events, ...page.results.filter((e) => !seen.has(e.id))]);
+      applyPage(page, events.length);
+    } catch (err) {
+      if (listKeyRef.current === key) setMoreError((err as Error).message);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
-  const totalSpots = events.reduce(
-    (sum, e) => sum + Math.max(0, e.capacity - e.assigned),
-    0
-  );
+  const isFiltered = filter !== "all" || debouncedQuery !== "";
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
@@ -158,9 +194,11 @@ export default function HomePage() {
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-green/20 bg-green/5 px-3 py-1 text-xs font-medium text-green">
             <span className="h-1.5 w-1.5 rounded-full bg-green" />
-            {loading
-              ? "Loading upcoming events"
-              : `${events.length} upcoming volunteer events`}
+            {allTotal === null
+              ? error
+                ? "Upcoming volunteer events"
+                : "Loading upcoming events"
+              : `${allTotal} upcoming volunteer events`}
           </span>
           <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">
             Find a way to help{" "}
@@ -184,11 +222,6 @@ export default function HomePage() {
               Join as a volunteer
             </Link>
           </div>
-          {!loading && !error && totalSpots > 0 && (
-            <p className="mt-6 text-sm text-slate-400">
-              {totalSpots} open volunteer spots right now
-            </p>
-          )}
         </motion.div>
       </section>
 
@@ -264,25 +297,51 @@ export default function HomePage() {
                   Try again
                 </button>
               </div>
-            ) : visibleEvents.length === 0 ? (
+            ) : events.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center">
                 <p className="font-medium text-slate-900">
-                  {events.length === 0
-                    ? "No upcoming events yet."
-                    : "No events match your search."}
+                  {isFiltered
+                    ? "No events match your search."
+                    : "No upcoming events yet."}
                 </p>
                 <p className="mt-1 text-sm text-slate-500">
-                  {events.length === 0
-                    ? "Check back soon, organizations post new events every week."
-                    : "Try a different keyword or filter."}
+                  {isFiltered
+                    ? "Try a different keyword or filter."
+                    : "Check back soon, organizations post new events every week."}
                 </p>
               </div>
             ) : (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {visibleEvents.map((event, i) => (
-                  <PublicEventCard key={event.id} event={event} index={i} />
-                ))}
-              </div>
+              <>
+                <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {events.map((event, i) => (
+                    <PublicEventCard
+                      key={event.id}
+                      event={event}
+                      index={i % PAGE_SIZE}
+                    />
+                  ))}
+                </div>
+                <div className="mt-10 flex flex-col items-center gap-3">
+                  <p className="text-sm text-slate-500">
+                    Showing {events.length}
+                    {total !== null && ` of ${total}`} events
+                  </p>
+                  {moreError && (
+                    <p className="text-sm text-red-600">
+                      Couldn't load more events. {moreError}
+                    </p>
+                  )}
+                  {hasMore && (
+                    <button
+                      onClick={loadMore}
+                      disabled={loadingMore}
+                      className="rounded-full border border-green px-6 py-2.5 text-sm font-medium text-green transition-colors hover:bg-green hover:text-white disabled:opacity-60"
+                    >
+                      {loadingMore ? "Loading…" : "Load more events"}
+                    </button>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </div>
