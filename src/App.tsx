@@ -23,12 +23,14 @@ import { Signup } from "./components/auth/Signup";
 import { AuthProvider } from "./hooks/UserContext";
 import { UnauthorizedPage } from "./components/auth/UnauthorizedPage";
 import AdminOrgSearch from "./components/AdminOrgSearch";
+import HomePage from "./components/HomePage";
 // App functionality with routing
 function App() {
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<SignIn />} />
+        <Route path="/" element={<HomePage />} />
+        <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
         <Route element={<Layout />}>
@@ -47,7 +49,7 @@ function App() {
         </Route>
         <Route
           path="*"
-          element={<Navigate to="/volunteer-profile" replace />}
+          element={<Navigate to="/" replace />}
         />
       </Routes>
     </AuthProvider>

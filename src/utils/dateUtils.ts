@@ -19,3 +19,12 @@ export function formatLocalDate(
   if (options) return dt.toLocaleDateString(undefined, options);
   return dt.toLocaleDateString();
 }
+
+// "14:30:00" -> "2:30 PM"
+export function formatTime(t: string | null | undefined): string {
+  if (!t) return "";
+  const [h, m] = String(t).split(":").map((n) => Number(n));
+  if (Number.isNaN(h)) return "";
+  const dt = new Date(2000, 0, 1, h, m || 0);
+  return dt.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}

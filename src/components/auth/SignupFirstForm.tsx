@@ -148,7 +148,7 @@ const SignupFirstForm = ({
           <span
             className="font-bold cursor-pointer"
             onClick={() => {
-              navigate("/");
+              navigate("/signin");
             }}
           >
             Sign in

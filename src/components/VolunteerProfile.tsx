@@ -647,7 +647,7 @@ function VolunteerProfile() {
           </p>
           <div className="flex justify-center gap-3">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/signin")}
               className="font-semibold py-2 px-6 rounded-full shadow-md"
               style={{ backgroundColor: PALETTE.teal, color: "white" }}
             >

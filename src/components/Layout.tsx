@@ -89,6 +89,12 @@ export default function Layout() {
             ) : (
               <>
                 <Link to="/" className="hover:opacity-80 transition-opacity">
+                  Home
+                </Link>
+                <Link
+                  to="/signin"
+                  className="hover:opacity-80 transition-opacity"
+                >
                   Login
                 </Link>
                 <Link
